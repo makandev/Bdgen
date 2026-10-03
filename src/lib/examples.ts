@@ -33,7 +33,7 @@ export const EXAMPLES: Example[] = [
     id: "papa", title: "Für Papa vom Sohn", relation: "Papa", preset: "blocks", occasion: "geburtstag", address: "du", name: "Papa",
     notes: "repariert alles mit Panzertape · spielt heimlich Videospiele",
     greeting: "Neues Level freigeschaltet! Drück den Knopf, um deinen Geburtstags-Bonus abzuholen.",
-    list: ["Den Rasen mähen", "Den Rechner von Onkel Jürgen reparieren", "Panzertape-Notfälle", "Früh ins Bett gehen"],
+    list: ["Den Rasen mähen", "Den Drucker der Nachbarn reparieren", "Panzertape-Notfälle", "Früh ins Bett gehen"],
     highlight: "Heute gewinnst du jedes Spiel. Versprochen.",
     heartfelt: ["Du kannst einfach alles reparieren – zur Not mit Panzertape.", "Danke, dass du immer Zeit für eine Runde mit mir hast, auch wenn du müde bist."],
     quote: "Ich wünsche dir ein Jahr mit unendlich vielen Leben, keinen Bugs und ganz viel Zeit zum Zocken.",
@@ -59,7 +59,7 @@ export const EXAMPLES: Example[] = [
   {
     id: "bruder", title: "Für den Bruder (Gamer)", relation: "Bruder", preset: "matrix", occasion: "geburtstag", address: "du", name: "Max",
     notes: "programmiert nachts · trinkt zu viel Energy",
-    greeting: "System-Update erkannt: Max.exe wird heute ein Jahr älter. Installation starten?",
+    greeting: "System-Update erkannt: {{name}}.exe wird heute ein Jahr älter. Installation starten?",
     list: ["Bugs fixen", "Updates installieren", "Vor 3 Uhr ins Bett", "Energydrinks zählen"],
     highlight: "Einzige Aufgabe: Spaß.exe ausführen",
     heartfelt: ["Du bist der Einzige, der mir jeden Computer-Unsinn erklärt, ohne genervt zu sein.", "Bester Bruder. Kein Bug, sondern Feature."],

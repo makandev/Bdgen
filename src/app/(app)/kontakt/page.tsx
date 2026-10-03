@@ -8,6 +8,8 @@ import { TopBar } from "@/components/TopBar";
 import { MOODS, NOTE_STARTERS, OCCASIONS, PRESETS } from "@/lib/presets";
 import { RelationPicker } from "@/components/RelationPicker";
 import { PresetGrid } from "@/components/Swatch";
+import { Thumb } from "@/components/Thumb";
+import { EXAMPLES } from "@/lib/examples";
 import { contactInput } from "@/lib/records";
 import { repo } from "@/lib/repo";
 import type { Address, Card, Contact, Occasion } from "@/lib/types";
@@ -34,8 +36,9 @@ function ContactEditor() {
   const [busy, setBusy] = useState<"" | "create">("");
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const params = useSearchParams();
+  const [example, setExample] = useState(() => EXAMPLES.find((e) => e.id === params.get("vorlage")) ?? null);
   const [preset, setPreset] = useState(() => {
-    const d = params.get("design");
+    const d = example?.preset ?? params.get("design");
     return d && PRESETS[d] ? d : "gold";
   });
   const [extra, setExtra] = useState("");
@@ -45,7 +48,8 @@ function ContactEditor() {
   useEffect(() => {
     repo.aiSource().then((s) => setAi(s !== "none")).catch(() => setAi(false));
     if (isNew) {
-      setForm(EMPTY);
+      const ex = EXAMPLES.find((e) => e.id === new URLSearchParams(window.location.search).get("vorlage"));
+      setForm(ex ? { ...EMPTY, relation: ex.relation, occasion: ex.occasion, address: ex.address } : EMPTY);
       setCards([]);
       setLoaded(true);
       return;
@@ -93,7 +97,7 @@ function ContactEditor() {
     if (!contact) return setBusy("");
     setMsg(null);
     try {
-      const d = await repo.createCard(contact.id, { preset, mode, extra });
+      const d = await repo.createCard(contact.id, { preset, mode, extra, example: example?.id });
       if (d.warning) sessionStorage.setItem("bdgen-warning", d.warning);
       router.push(`/karte/?id=${d.card.id}`);
     } catch (e) {
@@ -260,10 +264,35 @@ function ContactEditor() {
           <section className="panel stack">
             <div>
               <div className="eyebrow">Neue Karte</div>
-              <h2>Design wählen</h2>
+              <h2>{example ? "Deine Vorlage" : "Design wählen"}</h2>
             </div>
-            <PresetGrid value={preset} onPick={setPreset} />
-            <Link href="/beispiele/" className="small">👀 Alle Designs als fertige Beispiele ansehen →</Link>
+            {example ? (
+              <div className="template-banner">
+                <Thumb e={example} small />
+                <div className="stack" style={{ gap: 6 }}>
+                  <strong>{example.title}</strong>
+                  <span className="tag" style={{ justifySelf: "start" }}>{PRESETS[preset]?.label ?? PRESETS[example.preset].label}</span>
+                  <span className="muted small">Design, Effekte und Aufbau werden übernommen – die KI schreibt die Texte neu für deine Person.</span>
+                  <div className="row">
+                    <Link href="/beispiele/" className="btn ghost sm">Andere Vorlage</Link>
+                    <button type="button" className="btn ghost sm" onClick={() => setExample(null)}>Ohne Vorlage</button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {example ? (
+              <details className="optional">
+                <summary>🎨 Anderes Design für diese Vorlage (optional)</summary>
+                <div className="inner">
+                  <PresetGrid value={preset} onPick={setPreset} />
+                </div>
+              </details>
+            ) : (
+              <>
+                <PresetGrid value={preset} onPick={setPreset} />
+                <Link href="/beispiele/" className="small">👀 Oder eine fertige Vorlage aus den Beispielen nehmen →</Link>
+              </>
+            )}
             <label className="field">
               <span>Besonderer Wunsch an die KI (optional)</span>
               <input
@@ -279,7 +308,7 @@ function ContactEditor() {
                   <span className="spinner" /> KI schreibt …
                 </>
               ) : (
-                "✨ Karte mit KI erstellen"
+                example ? "✨ Mit KI für diese Person schreiben" : "✨ Karte mit KI erstellen"
               )}
             </button>
             <button
@@ -288,7 +317,7 @@ function ContactEditor() {
               onClick={() => createCard("template")}
               disabled={!!busy || !form.name.trim()}
             >
-              oder ohne KI mit einer Vorlage starten
+              {example ? "oder Vorlage 1:1 übernehmen (nur den Namen einsetzen)" : "oder ohne KI mit einer Vorlage starten"}
             </button>
             {ai === false && (
               <p className="muted small" style={{ margin: 0 }}>

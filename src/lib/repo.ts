@@ -1,12 +1,11 @@
 import { aiEnabled } from "./ai";
 import { BASE } from "./base";
-import { occasionLabel, PRESETS } from "./presets";
+import { startData, type CreateOpts } from "./cardbase";
 import { generateCard, restyle, restyleOffline, rewriteScene, testAI, type Brief } from "./prompts";
 import type { Backup, ContactInput } from "./records";
 import { getAI } from "./settings";
 import { encodeCard } from "./share";
 import * as local from "./store";
-import { defaultCardData } from "./templates";
 import type { Card, CardData, Cinema, Contact, Effects, Scene, Theme } from "./types";
 
 export const SERVER = process.env.NEXT_PUBLIC_MODE === "server";
@@ -21,7 +20,7 @@ export interface Repo {
   saveContact(id: string | null, input: ContactInput): Promise<Contact>;
   deleteContact(id: string): Promise<void>;
   getCard(id: string): Promise<{ card: Card; contact: Contact | null } | null>;
-  createCard(contactId: string, opts: { preset: string; mode: "ai" | "template"; extra: string }): Promise<{ card: Card; warning?: string }>;
+  createCard(contactId: string, opts: CreateOpts): Promise<{ card: Card; warning?: string }>;
   saveCard(id: string, patch: { title?: string; data?: CardData; shared?: boolean }): Promise<Card>;
   deleteCard(id: string): Promise<void>;
   shareLink(card: Card, data: CardData): Promise<string>;
@@ -69,13 +68,12 @@ const browserRepo: Repo = {
   async createCard(contactId, opts) {
     const contact = local.contacts.get(contactId);
     if (!contact) throw new Error("Diese Person gibt es nicht mehr.");
-    const preset = PRESETS[opts.preset] ? opts.preset : "gold";
-    const data = defaultCardData({ recipientName: contact.name, address: contact.address, occasion: contact.occasion, preset });
-    let card = local.cards.create({ contactId, title: `${occasionLabel(contact.occasion)} ${new Date().getFullYear()}`, data });
+    const { data, title, aiExtra } = startData(contact, opts);
+    let card = local.cards.create({ contactId, title, data });
     if (opts.mode !== "ai") return { card };
     if (!aiEnabled()) return { card, warning: "Keine KI eingerichtet – die Karte wurde aus der Vorlage erstellt." };
     try {
-      const gen = await generateCard(briefFor(card), opts.extra);
+      const gen = await generateCard(briefFor(card), aiExtra);
       card = local.cards.update(card.id, { data: { ...data, scenes: gen.scenes, cinema: gen.cinema, topLine: gen.topLine } })!;
       return { card };
     } catch (e) {
