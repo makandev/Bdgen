@@ -1,6 +1,6 @@
-# ✦ Bdgen – persönliche Überraschungskarten
+# ✦ Funkelpost – persönliche Überraschungen, mit KI gezaubert
 
-Bdgen macht aus ein paar Stichworten eine animierte, interaktive Überraschungskarte – für Familie,
+Funkelpost macht aus ein paar Stichworten eine animierte, interaktive Überraschungskarte – für Familie,
 Freunde, Kolleginnen und Kollegen. Statt fertiger Texte gibst du **Situationen, Gefühle und
 Kleinigkeiten** ein; die KI macht daraus eine kleine Geschichte in sieben Seiten:
 
@@ -10,9 +10,14 @@ Kleinigkeiten** ein; die KI macht daraus eine kleine Geschichte in sieben Seiten
 4. **Liste** – „Für heute offiziell gestrichen“
 5. **Der ehrliche Teil** – hier zählen deine Stichworte am meisten
 6. **Schein-Ende** – „Protokoll erfolgreich abgeschlossen“ …
-7. **Finale** – Wunsch, Signatur und ein **Kino-Finale** mit Sternenhimmel
+7. **Finale** – Wunsch, Signatur und ein **Kino-Finale**
 
-Jede Seite, Farbe und jeder Effekt lässt sich einzeln ändern – von Hand oder per Wunsch an die KI.
+**12 Designs:** Gold-Eleganz · Schwarz & Gold · Rosé-Gold · Holo-Glanz · Sternennacht · Matrix (mit Zeichenregen) ·
+Block-Welt (Roblox-Stil) · Neon-Party · Rosé-Pastell · Bunte Party · Salbei & Natur · Schlicht – dazu fünf Kartenstile,
+fünf Hintergrund-Effekte und Konfetti als Streifen, Herzen, Sterne, Quadrate oder Zeichen. Alles per KI-Wunsch
+änderbar („wie in einem Videospiel“, „schwarz-gold und luxuriös“) – selbst schreiben ist optional.
+
+In der App: **👀 Beispiele** (zwölf fertige Karten zum Anschauen) und **ℹ️ Infos** (Neuigkeiten, Pläne, KI-Leitfaden).
 
 ## Zwei Versionen – eine Codebasis
 
@@ -27,27 +32,17 @@ Jede Seite, Farbe und jeder Effekt lässt sich einzeln ändern – von Hand oder
 Oberfläche, Karten, Vorlagen und KI-Prompts sind identisch. Eine Sicherung aus der Browser-Version
 lässt sich in die Server-Version einspielen (⚙ Einstellungen → Sicherung).
 
-## Server-Version starten
-
-Voraussetzung: **Node.js 22.5+** (nutzt das eingebaute SQLite) oder Docker.
+## Server-Version installieren
 
 ```bash
-cp .env.example .env        # APP_PASSWORD, AUTH_SECRET und KI-Schlüssel eintragen
-npm ci
-npm run build:server
-npm run start:server        # http://localhost:3000
+git clone https://github.com/makandev/Bdgen.git funkelpost && cd funkelpost
+./install.sh
 ```
 
-Mit Docker:
-
-```bash
-docker build -t bdgen .
-docker run -d --name bdgen -p 3000:3000 --env-file .env -v bdgen-data:/app/data --restart unless-stopped bdgen
-```
-
-Die Datenbank liegt im Volume `bdgen-data` (bzw. unter `DATABASE_PATH`). Für den Zugriff von außen
-gehört ein Reverse-Proxy mit HTTPS davor (z. B. Caddy: `bdgen.example.de { reverse_proxy localhost:3000 }`).
-Läuft der Server ohne HTTPS (nur im Heimnetz), `COOKIE_SECURE=false` setzen.
+Das Skript installiert bei Bedarf Docker, fragt Passwort, KI-Schlüssel und (optional) eine Domain ab,
+richtet bei Domain automatisch HTTPS ein und startet alles. Danach: `./update.sh` zum Aktualisieren,
+`./backup.sh` für Sicherungen. **Ausführliche Anleitung für Einsteiger: [docs/SERVER.md](docs/SERVER.md)**
+(inkl. Heimnetz, Raspberry Pi, ohne Docker, Fehlerbehebung).
 
 | Variable | Pflicht | Bedeutung |
 |---|---|---|
@@ -55,7 +50,8 @@ Läuft der Server ohne HTTPS (nur im Heimnetz), `COOKIE_SECURE=false` setzen.
 | `AUTH_SECRET` | empfohlen | Zufallswert zum Signieren der Anmeldung |
 | `GEMINI_API_KEY` / `OPENROUTER_API_KEY` | mind. einer | KI-Schlüssel |
 | `GEMINI_MODEL`, `OPENROUTER_MODEL`, `AI_PROVIDER` | nein | Modellwahl / Reihenfolge |
-| `DATABASE_PATH` | nein | Standard `./data/bdgen.db` |
+| `DATABASE_PATH` | nein | Standard `./data/funkelpost.db` |
+| `COOKIE_SECURE` | nein | `false`, wenn ohne HTTPS (Heimnetz) betrieben |
 | `NEXT_PUBLIC_BASE_PATH` | nein | falls unter einem Unterpfad betrieben (beim Bauen setzen) |
 
 ## Browser-Version: so funktioniert’s
@@ -123,12 +119,14 @@ src/
   lib/ai.ts            Gemini/OpenRouter-Anbindung mit Fallback
   lib/share.ts         Karte ⇄ Link (komprimiert)
   lib/vault.ts         verschlüsselter Zugang
+  lib/examples.ts      Beispielkarten für die Galerie
   lib/repo.ts          Weiche: Browser-Speicher oder Server-API (gleiche Schnittstelle)
   lib/store.ts         Speicher im Browser, Sicherung
   lib/validate.ts      prüft und begrenzt alle Daten (auch KI-Antworten und Links)
   app/**/*.server.ts   API-Routen und Login-Schutz – nur im Server-Build enthalten
   server/              SQLite-Datenbank, Session, Server-Hilfen
 scripts/build-vault.ts erzeugt zugang.json beim Veröffentlichen
+install.sh, update.sh, backup.sh, docker-compose.yml, deploy/   Server-Betrieb
 ```
 
 Texte unterstützen `{{name}}` (Anrede), `**fett**`, `*betont*` und Zeilenumbrüche.

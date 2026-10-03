@@ -14,7 +14,7 @@ import { repo, SERVER } from "@/lib/repo";
 import { blankScene } from "@/lib/templates";
 import type { Card, CardData, Contact, Scene, SceneType } from "@/lib/types";
 
-type Tab = "texts" | "design" | "ai" | "share";
+type Tab = "texts" | "design" | "share";
 type Msg = { kind: "ok" | "err" | ""; text: string } | null;
 
 function fileName(name: string) {
@@ -311,7 +311,7 @@ function CardEditor() {
       <div className="editor" data-view={view}>
         <div className="editor-main panel">
           <nav className="tabs">
-            {([["texts", "Texte"], ["design", "Design & Effekte"], ["ai", "✨ KI-Studio"], ["share", "Teilen"]] as [Tab, string][]).map(([k, l]) => (
+            {([["texts", "✨ Texte"], ["design", "🎨 Design"], ["share", "📨 Teilen"]] as [Tab, string][]).map(([k, l]) => (
               <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>
                 {l}
               </button>
@@ -320,12 +320,34 @@ function CardEditor() {
 
           {tab === "texts" && (
             <div className="stack">
-              <div className="tip">
-                <span aria-hidden="true">💡</span>
-                <span>Tippe auf eine Seite, um sie zu öffnen. Mit den ✨-Knöpfen schreibt die KI sie um – oder du änderst den Text einfach selbst.</span>
+              <div className="ai-hero">
+                <h2>✨ Ganze Karte von der KI schreiben lassen</h2>
+                <p className="muted small" style={{ margin: 0 }}>
+                  Die KI nutzt die Stichworte {contact ? <>zu <b>{contact.relation || contact.name}</b></> : "der Person"}. Design und Effekte bleiben gleich. Der Name wird nie an die KI geschickt.
+                </p>
+                <input
+                  type="text"
+                  value={extra}
+                  placeholder="Wunsch (optional): „mehr Humor“, „kürzer“, „Anspielung auf den Umzug“ …"
+                  onChange={(e) => setExtra(e.target.value)}
+                />
+                <div className="row">
+                  <button className="btn" onClick={regenerateAll} disabled={!!busy || !aiReady}>
+                    {busy === "all" ? <><span className="spinner" /> KI schreibt …</> : "✨ Alle Texte neu schreiben"}
+                  </button>
+                  {contact && (
+                    <Link href={`/kontakt/?id=${contact.id}`} className="btn ghost sm">Stichworte ändern</Link>
+                  )}
+                </div>
+                {!aiReady && (
+                  <div className="notice">
+                    Die KI ist noch nicht eingerichtet. <Link href="/einstellungen/">Mehr dazu →</Link>
+                  </div>
+                )}
               </div>
-              <Text label="Zeile ganz oben" value={data.topLine} onChange={(v) => update((d) => ({ ...d, topLine: v }))} />
+
               <div>
+                <h3 style={{ margin: "4px 0 10px" }}>Einzelne Seiten</h3>
                 {data.scenes.map((s, i) => (
                   <div key={i} className={`scene${open === i ? " open" : ""}`}>
                     <div className="scene-head" onClick={() => toggleScene(i)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && toggleScene(i)}>
@@ -339,37 +361,48 @@ function CardEditor() {
                     {open === i && (
                       <div className="scene-body">
                         <SceneAI busy={busy === `scene-${i}`} disabled={!aiReady || (!!busy && busy !== `scene-${i}`)} onRun={(ins) => rewrite(i, ins)} />
-                        <SceneFields scene={s} onChange={(ns) => setScene(i, ns)} />
-                        <div className="row" style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
-                          <button className="btn ghost sm" onClick={() => moveScene(i, -1)} disabled={i === 0}>↑ Nach oben</button>
-                          <button className="btn ghost sm" onClick={() => moveScene(i, 1)} disabled={i === data.scenes.length - 1}>↓ Nach unten</button>
-                          <button className="btn ghost sm" onClick={() => duplicateScene(i)}>Duplizieren</button>
-                          <button className="btn danger sm" onClick={() => removeScene(i)} disabled={data.scenes.length <= 1}>Entfernen</button>
-                        </div>
+                        <details className="optional">
+                          <summary>✏️ Selbst ändern (optional)</summary>
+                          <div className="inner">
+                            <SceneFields scene={s} onChange={(ns) => setScene(i, ns)} />
+                            <div className="row" style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+                              <button className="btn ghost sm" onClick={() => moveScene(i, -1)} disabled={i === 0}>↑ Nach oben</button>
+                              <button className="btn ghost sm" onClick={() => moveScene(i, 1)} disabled={i === data.scenes.length - 1}>↓ Nach unten</button>
+                              <button className="btn ghost sm" onClick={() => duplicateScene(i)}>Duplizieren</button>
+                              <button className="btn danger sm" onClick={() => removeScene(i)} disabled={data.scenes.length <= 1}>Entfernen</button>
+                            </div>
+                          </div>
+                        </details>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-              <div className="row">
-                <select value={addType} onChange={(e) => setAddType(e.target.value as SceneType)} style={{ width: "auto" }}>
-                  {(Object.keys(SCENE_LABELS) as SceneType[]).map((t) => (
-                    <option key={t} value={t}>{SCENE_LABELS[t]}</option>
-                  ))}
-                </select>
-                <button className="btn ghost sm" onClick={addScene}>+ Seite hinzufügen</button>
-              </div>
 
-              {data.effects.cinema && (
-                <div className="sub" style={{ marginTop: 6 }}>
-                  <h3>🎬 Kino-Finale</h3>
-                  <Text label="1. Einblendung" value={data.cinema.kicker} onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, kicker: v } }))} />
-                  <Text label="2. Über dem Namen" value={data.cinema.forLabel} onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, forLabel: v } }))} />
-                  <Text label="3. Großer Titel" multiline value={data.cinema.title} onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, title: v } }))} />
-                  <Text label="4. Schlusssatz" value={data.cinema.final} hint="*Wort* wird farbig hervorgehoben" onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, final: v } }))} />
-                  <Text label="Emoji" value={data.cinema.emoji} onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, emoji: v } }))} />
+              <details className="optional">
+                <summary>🧩 Seiten hinzufügen, Kopfzeile & Kino-Finale (optional)</summary>
+                <div className="inner">
+                  <div className="row">
+                    <select value={addType} onChange={(e) => setAddType(e.target.value as SceneType)} style={{ width: "auto" }}>
+                      {(Object.keys(SCENE_LABELS) as SceneType[]).map((t) => (
+                        <option key={t} value={t}>{SCENE_LABELS[t]}</option>
+                      ))}
+                    </select>
+                    <button className="btn ghost sm" onClick={addScene}>+ Seite hinzufügen</button>
+                  </div>
+                  <Text label="Zeile ganz oben" value={data.topLine} onChange={(v) => update((d) => ({ ...d, topLine: v }))} />
+                  {data.effects.cinema && (
+                    <div className="sub">
+                      <h3>🎬 Kino-Finale</h3>
+                      <Text label="1. Einblendung" value={data.cinema.kicker} onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, kicker: v } }))} />
+                      <Text label="2. Über dem Namen" value={data.cinema.forLabel} onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, forLabel: v } }))} />
+                      <Text label="3. Großer Titel" multiline value={data.cinema.title} onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, title: v } }))} />
+                      <Text label="4. Schlusssatz" value={data.cinema.final} hint="*Wort* wird farbig hervorgehoben" onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, final: v } }))} />
+                      <Text label="Emoji" value={data.cinema.emoji} onChange={(v) => update((d) => ({ ...d, cinema: { ...d.cinema, emoji: v } }))} />
+                    </div>
+                  )}
                 </div>
-              )}
+              </details>
             </div>
           )}
 
@@ -382,46 +415,6 @@ function CardEditor() {
               onChange={(theme, effects) => update((d) => ({ ...d, theme, effects }))}
               onPrompt={changeStyle}
             />
-          )}
-
-          {tab === "ai" && (
-            <div className="stack">
-              <div>
-                <h2>Ganze Karte neu schreiben</h2>
-                <p className="muted small" style={{ margin: "4px 0 0" }}>
-                  Die KI nutzt die Stichworte der Person. Design und Effekte bleiben, nur die Texte werden neu geschrieben. Der Name wird nicht an die KI geschickt.
-                </p>
-              </div>
-              {contact && (
-                <div className="sub">
-                  <div className="small">
-                    <strong>{contact.relation || "Person"}</strong> · {contact.address === "sie" ? "Sie" : "du"} · {occasionLabel(contact.occasion)}
-                    {contact.mood.length > 0 && <> · Stimmung: {contact.mood.join(", ")}</>}
-                  </div>
-                  <div className="small muted" style={{ whiteSpace: "pre-wrap" }}>{contact.notes || "Noch keine Stichworte hinterlegt."}</div>
-                  <div>
-                    <Link href={`/kontakt/?id=${contact.id}`} className="btn ghost sm">Stichworte bearbeiten</Link>
-                  </div>
-                </div>
-              )}
-              <Text
-                label="Zusätzlicher Wunsch für diese Fassung"
-                multiline
-                value={extra}
-                placeholder="z. B. „mehr Humor, weniger Pathos“, „Anspielung auf den Umzug“, „sehr kurz halten“"
-                onChange={setExtra}
-              />
-              <div>
-                <button className="btn" onClick={regenerateAll} disabled={!!busy || !aiReady}>
-                  {busy === "all" ? <><span className="spinner" /> KI schreibt …</> : "✨ Alle Texte neu schreiben"}
-                </button>
-              </div>
-              {!aiReady && (
-                <div className="notice">
-                  Die KI ist noch nicht eingerichtet. <Link href="/einstellungen/">Jetzt einrichten →</Link>
-                </div>
-              )}
-            </div>
           )}
 
           {tab === "share" && (

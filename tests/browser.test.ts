@@ -46,5 +46,5 @@ test("store: renaming a contact renames its cards, deleting removes them", async
   assert.equal(cards.list().length, 0);
   assert.deepEqual(importBackup(JSON.parse(JSON.stringify(backup))), { contacts: 1, cards: 1 });
   assert.equal(cards.get(k.id)!.data.recipientName, "Lenchen");
-  assert.throws(() => importBackup({ foo: 1 }), /keine Bdgen-Sicherung/);
+  assert.throws(() => importBackup({ foo: 1 }), /keine Funkelpost-Sicherung/);
 });

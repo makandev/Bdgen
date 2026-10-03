@@ -12,7 +12,7 @@ const g = globalThis as unknown as { __bdgenDb?: DatabaseSyncType };
 
 function db(): DatabaseSyncType {
   if (g.__bdgenDb) return g.__bdgenDb;
-  const path = resolve(/*turbopackIgnore: true*/ process.env.DATABASE_PATH || "./data/bdgen.db");
+  const path = resolve(/*turbopackIgnore: true*/ process.env.DATABASE_PATH || "./data/funkelpost.db");
   mkdirSync(dirname(path), { recursive: true });
   const d = new DatabaseSync(path);
   d.exec(`

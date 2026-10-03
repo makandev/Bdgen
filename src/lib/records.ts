@@ -30,7 +30,7 @@ export interface Backup {
 export function normalizeBackup(raw: unknown): { contacts: Contact[]; cards: Card[] } {
   const b = raw as Partial<Backup>;
   if (!b || b.app !== "bdgen" || !Array.isArray(b.contacts) || !Array.isArray(b.cards)) {
-    throw new Error("Das ist keine Bdgen-Sicherung.");
+    throw new Error("Das ist keine Funkelpost-Sicherung.");
   }
   const t = new Date().toISOString();
   const contacts: Contact[] = [];

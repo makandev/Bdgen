@@ -97,7 +97,15 @@ export interface Cinema {
   emoji: string;
 }
 
-export type HeadingFont = "serif" | "sans" | "script";
+export type HeadingFont = "serif" | "sans" | "script" | "mono" | "block";
+
+/** Shape of the card itself: soft glass, gold luxury, iridescent, hacker terminal or chunky blocks. */
+export type CardStyle = "glass" | "luxe" | "holo" | "terminal" | "pixel";
+
+/** Animated background layer. */
+export type Backdrop = "dots" | "sparkle" | "matrix" | "blocks" | "aurora";
+
+export type ConfettiShape = "strip" | "square" | "heart" | "star" | "glyph";
 
 export interface Theme {
   preset: string;
@@ -113,6 +121,7 @@ export interface Theme {
   cinemaBg: string;
   confetti: string[];
   headingFont: HeadingFont;
+  style: CardStyle;
   dark: boolean;
 }
 
@@ -127,6 +136,8 @@ export interface Effects {
   progress: boolean;
   clock: boolean;
   speed: number;
+  backdrop: Backdrop;
+  confettiShape: ConfettiShape;
 }
 
 export interface CardData {

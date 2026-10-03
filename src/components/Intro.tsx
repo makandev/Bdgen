@@ -5,7 +5,7 @@ import { useState } from "react";
 const STEPS = [
   {
     icon: "🎁",
-    title: "Willkommen!",
+    title: "Willkommen bei Funkelpost!",
     text: "Hier bastelst du kleine digitale Überraschungen für Menschen, die du magst – zum Geburtstag, zum Danke-Sagen oder einfach so.",
   },
   {
@@ -26,7 +26,7 @@ const STEPS = [
   {
     icon: "📨",
     title: "4. Verschicken",
-    text: "Tippe auf „Link teilen“ und schick ihn per WhatsApp, SMS oder Mail. Fertig! Deine Daten bleiben übrigens nur auf diesem Gerät.",
+    text: "Tippe auf „Link teilen“ und schick ihn per WhatsApp, SMS oder Mail. Fertig! Fertige Beispiele findest du oben unter 👀.",
   },
 ];
 

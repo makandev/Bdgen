@@ -1,6 +1,6 @@
 {
-  "name": "Bdgen – persönliche Überraschungen",
-  "short_name": "Bdgen",
+  "name": "Funkelpost – persönliche Überraschungen",
+  "short_name": "Funkelpost",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

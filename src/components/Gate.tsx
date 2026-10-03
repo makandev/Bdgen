@@ -84,7 +84,7 @@ export function Gate({ children }: { children: React.ReactNode }) {
         <form className="panel stack" onSubmit={unlock}>
           <div style={{ fontSize: "1.25rem", letterSpacing: ".55em", color: "var(--accent)" }}>✦ ✧ ✦</div>
           <div className="eyebrow">Privater Bereich</div>
-          <h1>Bdgen</h1>
+          <h1>Funkelpost</h1>
           <p className="muted" style={{ margin: 0 }}>Persönliche Überraschungen für die Menschen, die dir wichtig sind.</p>
           <input type="password" placeholder="Passwort" autoFocus autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} />
           {err && <div className="notice err">{err}</div>}
