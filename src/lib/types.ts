@@ -143,10 +143,8 @@ export interface CardData {
 
 export interface Card {
   id: string;
-  slug: string;
   contactId: string | null;
   title: string;
-  shared: boolean;
   data: CardData;
   createdAt: string;
   updatedAt: string;
