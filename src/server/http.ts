@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { AIError } from "@/lib/ai";
-import type { Brief } from "@/lib/prompts";
+import { briefFromCard } from "@/lib/cardbase";
+import { chooseVariant, pickSamples } from "@/lib/learning";
+import type { Brief, GenOptions } from "@/lib/prompts";
 import type { AIConfig } from "@/lib/settings";
 import type { Card } from "@/lib/types";
-import { contacts } from "./db";
+import { str } from "@/lib/validate";
+import { contacts, ratings } from "./db";
 
 export function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -49,12 +52,22 @@ export function serverAI(): AIConfig | null {
 
 /** Context for the AI. Deliberately excludes the recipient's name. */
 export function briefFor(card: Card): Brief {
-  const c = card.contactId ? contacts.get(card.contactId) : null;
+  return briefFromCard(card, card.contactId ? contacts.get(card.contactId) : null);
+}
+
+/** Learning on the server: writing style and style examples from all ratings. */
+export function serverGenOptions(card: Card, rawFeedback?: unknown): GenOptions {
+  const rs = ratings.list();
+  const f = rawFeedback && typeof rawFeedback === "object" ? (rawFeedback as Record<string, unknown>) : null;
   return {
-    relation: c?.relation ?? "",
-    address: card.data.address,
-    occasion: card.data.occasion,
-    mood: c?.mood ?? [],
-    notes: c?.notes ?? "",
+    variant: chooseVariant(rs),
+    samples: pickSamples(rs, card.data.occasion, card.data.address),
+    feedback: f
+      ? {
+          reasons: Array.isArray(f.reasons) ? f.reasons.map((x) => str(x, "", 40)).filter(Boolean).slice(0, 8) : [],
+          text: str(f.text, "", 300),
+          previous: str(f.previous, "", 400),
+        }
+      : undefined,
   };
 }

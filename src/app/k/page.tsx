@@ -36,5 +36,14 @@ export default function Viewer() {
   }
   if (!html) return <main className="login"><span className="spinner" /></main>;
   // Sandboxed without same-origin: a crafted link can never reach this site's storage.
-  return <iframe className="viewer" title="Überraschung" srcDoc={html} sandbox="allow-scripts" allow="fullscreen" />;
+  // Popups/web-share only so the recipient can send a reaction back via WhatsApp or the share sheet.
+  return (
+    <iframe
+      className="viewer"
+      title="Überraschung"
+      srcDoc={html}
+      sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+      allow="fullscreen; web-share"
+    />
+  );
 }

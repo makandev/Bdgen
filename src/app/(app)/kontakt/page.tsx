@@ -42,6 +42,7 @@ function ContactEditor() {
     return d && PRESETS[d] ? d : "gold";
   });
   const [extra, setExtra] = useState("");
+  const [gift, setGift] = useState("");
   const [ai, setAi] = useState<boolean | null>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
@@ -97,7 +98,7 @@ function ContactEditor() {
     if (!contact) return setBusy("");
     setMsg(null);
     try {
-      const d = await repo.createCard(contact.id, { preset, mode, extra, example: example?.id });
+      const d = await repo.createCard(contact.id, { preset, mode, extra, example: example?.id, gift });
       if (d.warning) sessionStorage.setItem("bdgen-warning", d.warning);
       router.push(`/karte/?id=${d.card.id}`);
     } catch (e) {
@@ -293,6 +294,11 @@ function ContactEditor() {
                 <Link href="/beispiele/" className="small">👀 Oder eine fertige Vorlage aus den Beispielen nehmen →</Link>
               </>
             )}
+            <label className="field">
+              <span>🎁 Schenkst du etwas dazu? (optional)</span>
+              <input type="text" value={gift} placeholder="z. B. Konzertkarten, ein Wellness-Tag" onChange={(e) => setGift(e.target.value)} />
+              <small>Dann bekommt die Karte eine Seite mit einem Päckchen zum Auspacken.</small>
+            </label>
             <label className="field">
               <span>Besonderer Wunsch an die KI (optional)</span>
               <input

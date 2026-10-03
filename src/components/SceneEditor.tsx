@@ -10,6 +10,7 @@ export const SCENE_LABELS: Record<Scene["type"], string> = {
   quiz: "Quiz",
   list: "Liste",
   check: "Schein-Ende",
+  gift: "Geschenk",
   finale: "Finale",
 };
 
@@ -115,6 +116,17 @@ export function SceneFields({ scene, onChange }: { scene: Scene; onChange: (s: S
           <Text label="Text" multiline value={scene.text} onChange={(v) => up({ text: v })} hint={markup} />
           <Text label="Status-Siegel" value={scene.status} onChange={(v) => up({ status: v })} />
           <Text label="Kleingedrucktes" value={scene.tiny} onChange={(v) => up({ tiny: v })} />
+          <Text label="Button" value={scene.button} onChange={(v) => up({ button: v })} />
+        </>
+      );
+    case "gift":
+      return (
+        <>
+          <Text label="Kleine Zeile oben" value={scene.eyebrow} onChange={(v) => up({ eyebrow: v })} />
+          <Text label="Überschrift" value={scene.title} onChange={(v) => up({ title: v })} />
+          <Text label="Hinweis zum Auspacken" value={scene.teaser} onChange={(v) => up({ teaser: v })} />
+          <Text label="🎁 Das Geschenk" value={scene.gift} onChange={(v) => up({ gift: v })} hint="Erscheint groß, wenn das Päckchen aufgeht." />
+          <Text label="Text darunter" multiline value={scene.detail} onChange={(v) => up({ detail: v })} />
           <Text label="Button" value={scene.button} onChange={(v) => up({ button: v })} />
         </>
       );

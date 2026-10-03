@@ -10,9 +10,13 @@ import { SCENE_LABELS, SceneAI, SceneFields, sceneSummary } from "@/components/S
 import { TopBar } from "@/components/TopBar";
 import { occasionLabel } from "@/lib/presets";
 import { renderCardHTML } from "@/lib/render";
-import { repo, SERVER } from "@/lib/repo";
+import { buildRating, repo, SERVER } from "@/lib/repo";
+import { RatingBar } from "@/components/RatingBar";
+import { defaultCardData, giftScene, withGift } from "@/lib/templates";
+import { normalizeCardData } from "@/lib/validate";
+import type { Generated } from "@/lib/prompts";
 import { blankScene } from "@/lib/templates";
-import type { Card, CardData, Contact, Scene, SceneType } from "@/lib/types";
+import type { Card, CardData, Contact, Reaction, Scene, SceneType } from "@/lib/types";
 
 type Tab = "texts" | "design" | "share";
 type Msg = { kind: "ok" | "err" | ""; text: string } | null;
@@ -49,6 +53,9 @@ function CardEditor() {
   const [extra, setExtra] = useState("");
   const [addType, setAddType] = useState<SceneType>("text");
   const [canShare, setCanShare] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [ratingKey, setRatingKey] = useState(0);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
   const [link, setLink] = useState("");
   const [html, setHtml] = useState("");
   const loadedId = useRef("");
@@ -64,7 +71,14 @@ function CardEditor() {
       }
       loadedId.current = id;
       firstSave.current = true;
+      // Cards saved by older versions may lack newer fields – fill them with defaults.
+      const fresh = normalizeCardData(
+        r.card.data,
+        defaultCardData({ recipientName: r.card.data.recipientName, address: r.card.data.address, occasion: r.card.data.occasion, preset: r.card.data.theme?.preset }),
+      );
+      r.card = { ...r.card, data: fresh };
       setCard(r.card);
+      if (SERVER) repo.reactions(r.card.id).then(setReactions).catch(() => {});
       setData(r.card.data);
       setContact(r.contact);
       setHistory([]);
@@ -102,7 +116,7 @@ function CardEditor() {
 
   useEffect(() => {
     if (!data) return;
-    const t = setTimeout(() => setHtml(renderCardHTML(data, { startScene: previewStart })), 250);
+    const t = setTimeout(() => setHtml(renderCardHTML(data, { startScene: previewStart, preview: true })), 250);
     return () => clearTimeout(t);
   }, [data, previewStart, previewKey]);
 
@@ -174,6 +188,46 @@ function CardEditor() {
     }
   }
 
+  function applyGen(d: CardData, r: Generated): CardData {
+    return { ...d, scenes: r.scenes, cinema: r.cinema, topLine: r.topLine, reactions: r.reactions, meta: { variant: r.variant, provider: r.provider } };
+  }
+
+  function rate(value: 1 | -1, reasons: string[]) {
+    if (!card || !data) return;
+    repo.addRating(buildRating(card, data, contact, { value, reasons, attempt })).catch(() => {});
+  }
+
+  async function retry(reasons: string[], text: string) {
+    if (!data || !card) return;
+    setBusy("all");
+    setMsg(null);
+    try {
+      const r = await repo.generate(card, extra, { reasons, text, previous: data });
+      remember();
+      update((d) => applyGen(d, r));
+      setAttempt((a) => a + 1);
+      setRatingKey((k) => k + 1);
+      setPreviewStart(1);
+      setPreviewKey((k) => k + 1);
+      setView("preview");
+      setMsg({ kind: "ok", text: "Neue Fassung ist da – schau sie dir in der Vorschau an. Die alte holst du mit „↶ Rückgängig“ zurück." });
+    } catch (e) {
+      setMsg({ kind: "err", text: errText(e) });
+    } finally {
+      setBusy("");
+    }
+  }
+
+  function addGift() {
+    if (!data) return;
+    const gift = giftScene(data.address);
+    const scenes = withGift(data.scenes, gift);
+    setData({ ...data, scenes });
+    const i = scenes.findIndex((x) => x.type === "gift");
+    setOpen(i);
+    setPreviewStart(i + 1);
+  }
+
   async function regenerateAll() {
     if (!data || !card) return;
     setBusy("all");
@@ -181,7 +235,9 @@ function CardEditor() {
     try {
       const r = await repo.generate(card, extra);
       remember();
-      update((d) => ({ ...d, scenes: r.scenes, cinema: r.cinema, topLine: r.topLine }));
+      update((d) => applyGen(d, r));
+      setAttempt(0);
+      setRatingKey((k) => k + 1);
       setPreviewStart(1);
       setPreviewKey((k) => k + 1);
       setOpen(0);
@@ -283,7 +339,7 @@ function CardEditor() {
           <div className="eyebrow">
             {contact ? <Link href={`/kontakt/?id=${contact.id}`}>{contact.name}</Link> : "Karte"} · {occasionLabel(data.occasion)}
           </div>
-          <h1>{card.title}</h1>
+          <h1>{card.title} {reactions.length > 0 && <button type="button" className="badge" style={{ border: 0, cursor: "pointer", verticalAlign: "middle" }} onClick={() => setTab("share")}>💌 {reactions.length}</button>}</h1>
         </div>
         <div className="row">
           <button className="btn sm" onClick={shareLink} disabled={!link || card.shared === false}>
@@ -310,6 +366,7 @@ function CardEditor() {
 
       <div className="editor" data-view={view}>
         <div className="editor-main panel">
+          <RatingBar key={ratingKey} attempt={attempt} aiReady={aiReady} busy={busy === "all"} onRate={rate} onRetry={retry} />
           <nav className="tabs">
             {([["texts", "✨ Texte"], ["design", "🎨 Design"], ["share", "📨 Teilen"]] as [Tab, string][]).map(([k, l]) => (
               <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>
@@ -338,6 +395,9 @@ function CardEditor() {
                   {contact && (
                     <Link href={`/kontakt/?id=${contact.id}`} className="btn ghost sm">Stichworte ändern</Link>
                   )}
+                  {!data.scenes.some((x) => x.type === "gift") && (
+                    <button type="button" className="btn ghost sm" onClick={addGift}>🎁 Geschenk-Seite</button>
+                  )}
                 </div>
                 {!aiReady && (
                   <div className="notice">
@@ -360,6 +420,12 @@ function CardEditor() {
                     </div>
                     {open === i && (
                       <div className="scene-body">
+                        {s.type === "gift" && (
+                          <label className="gift-quick">
+                            <span aria-hidden="true">🎁</span>
+                            <input type="text" value={s.gift} placeholder="Was schenkst du? z. B. Konzertkarten" onChange={(e) => setScene(i, { ...s, gift: e.target.value })} />
+                          </label>
+                        )}
                         <SceneAI busy={busy === `scene-${i}`} disabled={!aiReady || (!!busy && busy !== `scene-${i}`)} onRun={(ins) => rewrite(i, ins)} />
                         <details className="optional">
                           <summary>✏️ Selbst ändern (optional)</summary>
@@ -419,6 +485,27 @@ function CardEditor() {
 
           {tab === "share" && (
             <div className="stack">
+              {SERVER && (
+                <div className="sub">
+                  <h3>💌 Reaktionen {reactions.length > 0 && <span className="badge">{reactions.length}</span>}</h3>
+                  {reactions.length === 0 ? (
+                    <p className="muted small" style={{ margin: 0 }}>Noch keine Reaktion – sobald die Person auf einen Knopf am Ende der Karte tippt, siehst du es hier.</p>
+                  ) : (
+                    <div className="reaction-list">
+                      {reactions.map((r) => (
+                        <div key={r.id} className="reaction-item">
+                          <span className="em">{r.emoji}</span>
+                          <div>
+                            <strong>{r.label}</strong>
+                            <div className="muted small">{new Date(r.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}</div>
+                            {r.message && <div style={{ marginTop: 4 }}>„{r.message}“</div>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <Text label="Titel der Karte (nur für dich)" value={card.title} onChange={(v) => setCard({ ...card, title: v })} />
               <Text
                 label="Name / Anrede in der Karte"
@@ -457,6 +544,41 @@ function CardEditor() {
                   {canShare && <button className="btn ghost sm" onClick={shareFile}>Datei teilen …</button>}
                 </div>
               </div>
+              <details className="optional">
+                <summary>💬 Reaktions-Knöpfe am Ende der Karte (optional)</summary>
+                <div className="inner">
+                  <p className="muted small" style={{ margin: 0 }}>
+                    {SERVER
+                      ? "Die Person tippt eine Reaktion an – sie kommt direkt hier bei dir an."
+                      : "Die Person tippt eine Reaktion an und schickt sie dir per WhatsApp oder Nachricht zurück."}{" "}
+                    Die KI wählt die Knöpfe passend zur Karte aus.
+                  </p>
+                  <label className="toggle">
+                    <input type="checkbox" checked={data.reactions?.enabled ?? false} onChange={(e) => update((d) => ({ ...d, reactions: { ...d.reactions, enabled: e.target.checked } }))} />
+                    Reaktions-Knöpfe anzeigen
+                  </label>
+                  {data.reactions?.enabled && (
+                    <>
+                      <Text label="Frage" value={data.reactions.question} onChange={(v) => update((d) => ({ ...d, reactions: { ...d.reactions, question: v } }))} />
+                      {data.reactions.options.map((o, k) => (
+                        <div className="row" key={k} style={{ flexWrap: "nowrap" }}>
+                          <input type="text" value={o.emoji} style={{ width: 64, textAlign: "center" }} aria-label="Emoji"
+                            onChange={(e) => update((d) => ({ ...d, reactions: { ...d.reactions, options: d.reactions.options.map((x, j) => (j === k ? { ...x, emoji: e.target.value } : x)) } }))} />
+                          <input type="text" value={o.label} aria-label="Text"
+                            onChange={(e) => update((d) => ({ ...d, reactions: { ...d.reactions, options: d.reactions.options.map((x, j) => (j === k ? { ...x, label: e.target.value } : x)) } }))} />
+                          <button type="button" className="btn ghost sm icon" disabled={data.reactions.options.length <= 1}
+                            onClick={() => update((d) => ({ ...d, reactions: { ...d.reactions, options: d.reactions.options.filter((_, j) => j !== k) } }))}>✕</button>
+                        </div>
+                      ))}
+                      {data.reactions.options.length < 5 && (
+                        <div>
+                          <button type="button" className="btn ghost sm" onClick={() => update((d) => ({ ...d, reactions: { ...d.reactions, options: [...d.reactions.options, { emoji: "✨", label: "" }] } }))}>+ Knopf</button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </details>
               <div>
                 <button className="btn danger sm" onClick={deleteCard}>Karte löschen</button>
               </div>

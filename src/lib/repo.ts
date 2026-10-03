@@ -1,12 +1,13 @@
 import { aiEnabled } from "./ai";
 import { BASE } from "./base";
-import { startData, type CreateOpts } from "./cardbase";
-import { generateCard, restyle, restyleOffline, rewriteScene, testAI, type Brief } from "./prompts";
+import { briefFromCard, startData, type CreateOpts } from "./cardbase";
+import { chooseVariant, excerpt, pickSamples, relationGroup } from "./learning";
+import { generateCard, restyle, restyleOffline, rewriteScene, testAI, type Brief, type Generated, type GenOptions } from "./prompts";
 import type { Backup, ContactInput } from "./records";
-import { getAI } from "./settings";
+import { getAI, learnFromTexts } from "./settings";
 import { encodeCard } from "./share";
 import * as local from "./store";
-import type { Card, CardData, Cinema, Contact, Effects, Scene, Theme } from "./types";
+import type { Card, CardData, Contact, Effects, Rating, Reaction, Scene, Theme } from "./types";
 
 export const SERVER = process.env.NEXT_PUBLIC_MODE === "server";
 
@@ -24,24 +25,64 @@ export interface Repo {
   saveCard(id: string, patch: { title?: string; data?: CardData; shared?: boolean }): Promise<Card>;
   deleteCard(id: string): Promise<void>;
   shareLink(card: Card, data: CardData): Promise<string>;
-  generate(card: Card, extra: string): Promise<{ scenes: Scene[]; cinema: Cinema; topLine: string }>;
+  /** New texts for the whole card; with feedback the AI gets another try after a 👎. */
+  generate(card: Card, extra: string, feedback?: Feedback): Promise<Generated>;
   rewrite(card: Card, scene: Scene, instruction: string): Promise<{ scene: Scene }>;
   restyle(card: Card, data: CardData, instruction: string): Promise<{ theme: Theme; effects: Effects; summary: string }>;
   aiSource(): Promise<AISource>;
   testAI(): Promise<string>;
   exportBackup(): Promise<Backup>;
   importBackup(raw: unknown): Promise<{ contacts: number; cards: number }>;
+  addRating(r: Rating): Promise<void>;
+  listRatings(): Promise<Rating[]>;
+  clearRatings(): Promise<void>;
+  /** Reactions from recipients – only the server version can receive them. */
+  reactions(cardId: string): Promise<Reaction[]>;
+  recentReactions(): Promise<(Reaction & { cardTitle: string; contactId: string | null; contactName: string })[]>;
+}
+
+export interface Feedback {
+  reasons: string[];
+  text: string;
+  previous: CardData;
+}
+
+/** Builds a rating from the current card; never contains the name or the notes. */
+export function buildRating(card: Card, data: CardData, contact: Contact | null, input: { value: 1 | -1; reasons: string[]; attempt: number }): Rating {
+  return {
+    id: crypto.randomUUID(),
+    cardId: card.id,
+    value: input.value,
+    reasons: input.reasons,
+    attempt: input.attempt,
+    variant: data.meta?.variant ?? "",
+    provider: data.meta?.provider ?? "",
+    preset: data.theme.preset,
+    occasion: data.occasion,
+    address: data.address,
+    relationGroup: relationGroup(contact?.relation ?? ""),
+    mood: contact?.mood ?? [],
+    ...(input.value > 0 && learnFromTexts() ? { sample: excerpt(data) } : {}),
+    createdAt: new Date().toISOString(),
+  };
 }
 
 function briefFor(card: Card): Brief {
-  const c = card.contactId ? local.contacts.get(card.contactId) : null;
+  return briefFromCard(card, card.contactId ? local.contacts.get(card.contactId) : null);
+}
+
+/** Learning in the browser version: writing style and style examples from this device's ratings. */
+function localGenOptions(card: Card, feedback?: Feedback): GenOptions {
+  const rs = local.ratings.list();
   return {
-    relation: c?.relation ?? "",
-    address: card.data.address,
-    occasion: card.data.occasion,
-    mood: c?.mood ?? [],
-    notes: c?.notes ?? "",
+    variant: chooseVariant(rs),
+    samples: pickSamples(rs, card.data.occasion, card.data.address),
+    feedback: feedback ? { reasons: feedback.reasons, text: feedback.text, previous: excerpt(feedback.previous, 300) } : undefined,
   };
+}
+
+function applyGenerated(data: CardData, gen: Generated): CardData {
+  return { ...data, scenes: gen.scenes, cinema: gen.cinema, topLine: gen.topLine, reactions: gen.reactions, meta: { variant: gen.variant, provider: gen.provider } };
 }
 
 const browserRepo: Repo = {
@@ -73,8 +114,8 @@ const browserRepo: Repo = {
     if (opts.mode !== "ai") return { card };
     if (!aiEnabled()) return { card, warning: "Keine KI eingerichtet – die Karte wurde aus der Vorlage erstellt." };
     try {
-      const gen = await generateCard(briefFor(card), aiExtra);
-      card = local.cards.update(card.id, { data: { ...data, scenes: gen.scenes, cinema: gen.cinema, topLine: gen.topLine } })!;
+      const gen = await generateCard(briefFor(card), aiExtra, undefined, localGenOptions(card));
+      card = local.cards.update(card.id, { data: applyGenerated(data, gen) })!;
       return { card };
     } catch (e) {
       return { card, warning: `Die KI war nicht erreichbar, deshalb wurde die Karte aus der Vorlage erstellt. ${e instanceof Error ? e.message : ""}` };
@@ -91,7 +132,7 @@ const browserRepo: Repo = {
   async shareLink(_card, data) {
     return `${window.location.origin}${BASE}/k/#${await encodeCard(data)}`;
   },
-  generate: (card, extra) => generateCard(briefFor(card), extra),
+  generate: (card, extra, feedback) => generateCard(briefFor(card), extra, undefined, localGenOptions(card, feedback)),
   rewrite: (card, scene, instruction) => rewriteScene(briefFor(card), scene, instruction),
   async restyle(_card, data, instruction) {
     return aiEnabled() ? restyle(data.theme, data.effects, instruction) : restyleOffline(data, instruction);
@@ -105,6 +146,21 @@ const browserRepo: Repo = {
   },
   async importBackup(raw) {
     return local.importBackup(raw);
+  },
+  async addRating(r) {
+    local.ratings.add(r);
+  },
+  async listRatings() {
+    return local.ratings.list();
+  },
+  async clearRatings() {
+    local.ratings.clear();
+  },
+  async reactions() {
+    return [];
+  },
+  async recentReactions() {
+    return [];
   },
 };
 
@@ -158,7 +214,10 @@ const serverRepo: Repo = {
   async shareLink(card) {
     return `${window.location.origin}${BASE}/k/${card.slug}/`;
   },
-  generate: (card, extra) => call(`cards/${encodeURIComponent(card.id)}/generate/`, { body: { extra } }),
+  generate: (card, extra, feedback) =>
+    call(`cards/${encodeURIComponent(card.id)}/generate/`, {
+      body: { extra, feedback: feedback ? { reasons: feedback.reasons, text: feedback.text, previous: excerpt(feedback.previous, 300) } : undefined },
+    }),
   rewrite: (card, scene, instruction) => call("ai/scene/", { body: { cardId: card.id, scene, instruction } }),
   restyle: (card, data, instruction) => call("ai/style/", { body: { cardId: card.id, instruction, theme: data.theme, effects: data.effects } }),
   async aiSource() {
@@ -170,6 +229,21 @@ const serverRepo: Repo = {
   },
   exportBackup: () => call("backup/"),
   importBackup: (raw) => call("backup/", { body: raw }),
+  async addRating(r) {
+    await call("ratings/", { body: r });
+  },
+  async listRatings() {
+    return (await call<{ ratings: Rating[] }>("ratings/")).ratings;
+  },
+  async clearRatings() {
+    await call("ratings/", { method: "DELETE" });
+  },
+  async reactions(cardId) {
+    return (await call<{ reactions: Reaction[] }>(`cards/${encodeURIComponent(cardId)}/reactions/`)).reactions;
+  },
+  async recentReactions() {
+    return (await call<{ reactions: (Reaction & { cardTitle: string; contactId: string | null; contactName: string })[] }>("reactions/")).reactions;
+  },
 };
 
 export const repo: Repo = SERVER ? serverRepo : browserRepo;

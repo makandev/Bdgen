@@ -54,3 +54,20 @@ export function markIntroSeen() {
     localStorage.setItem(INTRO, "1");
   } catch {}
 }
+
+const LEARN = "bdgen:learn-samples";
+
+/** Whether liked texts may be kept (without names) as style examples. Default: yes. */
+export function learnFromTexts(): boolean {
+  try {
+    return localStorage.getItem(LEARN) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+export function setLearnFromTexts(on: boolean) {
+  try {
+    localStorage.setItem(LEARN, on ? "1" : "0");
+  } catch {}
+}

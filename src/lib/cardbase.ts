@@ -1,7 +1,8 @@
 import { EXAMPLES, exampleCard } from "./examples";
 import { occasionLabel, PRESETS, presetEffects, presetTheme } from "./presets";
-import { defaultCardData, defaultCinema, defaultScenes } from "./templates";
-import type { CardData, Contact } from "./types";
+import type { Brief } from "./prompts";
+import { defaultCardData, defaultCinema, defaultReactions, defaultScenes, giftScene, withGift } from "./templates";
+import type { Card, CardData, Contact } from "./types";
 
 export interface CreateOpts {
   preset: string;
@@ -9,6 +10,27 @@ export interface CreateOpts {
   extra: string;
   /** Id of a gallery example to start from (design, effects and – if they fit – texts). */
   example?: string;
+  /** What is given as a present – gets its own unwrapping page. */
+  gift?: string;
+}
+
+/** Context for the AI. Deliberately excludes the recipient's name. */
+export function briefFromCard(card: Card, contact: Contact | null): Brief {
+  const gift = card.data.scenes.find((s) => s.type === "gift");
+  return {
+    relation: contact?.relation ?? "",
+    address: card.data.address,
+    occasion: card.data.occasion,
+    mood: contact?.mood ?? [],
+    notes: contact?.notes ?? "",
+    gift: gift && gift.type === "gift" ? gift.gift : undefined,
+  };
+}
+
+function finish(data: CardData, contact: Contact, opts: CreateOpts): CardData {
+  if (opts.gift?.trim()) data.scenes = withGift(data.scenes, giftScene(contact.address, opts.gift));
+  data.reactions = defaultReactions(contact.occasion, contact.address, contact.mood);
+  return data;
 }
 
 /** Starting point for a new card, shared by the browser and the server version. */
@@ -17,11 +39,8 @@ export function startData(contact: Contact, opts: CreateOpts): { data: CardData;
   const ex = opts.example ? EXAMPLES.find((e) => e.id === opts.example) : undefined;
   if (!ex) {
     const preset = PRESETS[opts.preset] ? opts.preset : "gold";
-    return {
-      data: defaultCardData({ recipientName: contact.name, address: contact.address, occasion: contact.occasion, preset }),
-      title,
-      aiExtra: opts.extra,
-    };
+    const data = defaultCardData({ recipientName: contact.name, address: contact.address, occasion: contact.occasion, preset });
+    return { data: finish(data, contact, opts), title, aiExtra: opts.extra };
   }
   const data = exampleCard(ex);
   data.recipientName = contact.name;
@@ -39,5 +58,5 @@ export function startData(contact: Contact, opts: CreateOpts): { data: CardData;
   const hint =
     `Stil-Vorbild (nur Tonfall, Humor und Länge übernehmen – KEINE Inhalte oder Fakten daraus): ` +
     `Begrüßung „${ex.greeting}“, gestrichene Dinge „${ex.list.join("“, „")}“, Wunsch „${ex.quote}“.`;
-  return { data, title, aiExtra: [opts.extra.trim(), hint].filter(Boolean).join("\n") };
+  return { data: finish(data, contact, opts), title, aiExtra: [opts.extra.trim(), hint].filter(Boolean).join("\n") };
 }

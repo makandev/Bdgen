@@ -11,7 +11,7 @@ export function Thumb({ e, small }: { e: Example; small?: boolean }) {
   const [visible, setVisible] = useState(false);
   const html = useMemo(() => {
     const d = exampleCard(e);
-    return renderCardHTML({ ...d, effects: { ...d.effects, confetti: 0, ribbons: 0, sparks: false } });
+    return renderCardHTML({ ...d, effects: { ...d.effects, confetti: 0, ribbons: 0, sparks: false } }, { preview: true });
   }, [e]);
   useEffect(() => {
     const el = ref.current;

@@ -19,6 +19,13 @@ fünf Hintergrund-Effekte und Konfetti als Streifen, Herzen, Sterne, Quadrate od
 
 In der App: **👀 Beispiele** (zwölf fertige Karten zum Anschauen) und **ℹ️ Infos** (Neuigkeiten, Pläne, KI-Leitfaden).
 
+**Außerdem:**
+
+- **⚡ Schnell-Karte:** Name, Beziehung, ein bis zwei passende Fragen mit Antwort-Ideen – die KI macht den Rest und wählt ein passendes Design.
+- **🎁 Geschenk-Seite:** ein Päckchen, das beim Antippen aufgeht und das Geschenk zeigt.
+- **💌 Reaktionen:** Am Ende antwortet die beschenkte Person mit Knöpfen, die zur Situation passen (❤️, 😂, 🥂, 💪 …). In der Server-Version kommt die Reaktion samt kurzer Nachricht direkt beim Absender an, in der Browser-Version per WhatsApp/Teilen.
+- **👍 / 👎 und Lernen:** Bei 👎 nennt man den Grund, und die KI bekommt bis zu zwei weitere Versuche. Aus allen Bewertungen lernt Funkelpost: beliebte Designs werden zuerst vorgeschlagen, von zwei Schreibstilen setzt sich der besser bewertete durch, gelungene Formulierungen (ohne Namen) dienen als Vorbild. Gespeichert werden nur Merkmale, nie Namen oder Stichworte.
+
 ## Zwei Versionen – eine Codebasis
 
 | | **Browser-Version** (GitHub Pages) | **Server-Version** (eigener Server) |
@@ -120,6 +127,8 @@ src/
   lib/share.ts         Karte ⇄ Link (komprimiert)
   lib/vault.ts         verschlüsselter Zugang
   lib/examples.ts      Beispielkarten für die Galerie
+  lib/learning.ts      Lernen aus Bewertungen (Schreibstil, Design-Vorschläge, Vorbilder)
+  lib/questions.ts     Fragen der Schnell-Karte je nach Beziehung
   lib/repo.ts          Weiche: Browser-Speicher oder Server-API (gleiche Schnittstelle)
   lib/store.ts         Speicher im Browser, Sicherung
   lib/validate.ts      prüft und begrenzt alle Daten (auch KI-Antworten und Links)

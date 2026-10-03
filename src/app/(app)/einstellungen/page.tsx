@@ -7,7 +7,9 @@ import { useApp } from "@/components/Gate";
 import { TopBar } from "@/components/TopBar";
 import type { Provider } from "@/lib/ai";
 import { repo, SERVER, type AISource } from "@/lib/repo";
-import { clearAI, getAI, setAI, type StoredAI } from "@/lib/settings";
+import { clearAI, getAI, learnFromTexts, setAI, setLearnFromTexts, type StoredAI } from "@/lib/settings";
+import { learningStats, type LearningStats } from "@/lib/learning";
+import { PRESETS } from "@/lib/presets";
 
 type Msg = { kind: "ok" | "err"; text: string } | null;
 
@@ -15,6 +17,8 @@ export default function SettingsPage() {
   const { showIntro, hasVault, lock } = useApp();
   const [ai, setAiState] = useState<StoredAI | null>(null);
   const [source, setSource] = useState<AISource | null>(null);
+  const [stats, setStats] = useState<LearningStats | null>(null);
+  const [learnTexts, setLearnTexts] = useState(true);
   const [form, setForm] = useState({ gemini: "", openrouter: "", provider: "" as Provider | "", geminiModel: "", openrouterModel: "", openrouterBaseUrl: "" });
   const [msg, setMsg] = useState<Msg>(null);
   const [busy, setBusy] = useState(false);
@@ -23,6 +27,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     repo.aiSource().then(setSource).catch(() => setSource("none"));
+    repo.listRatings().then((r) => setStats(learningStats(r))).catch(() => {});
+    setLearnTexts(learnFromTexts());
     if (SERVER) return;
     const cur = getAI();
     setAiState(cur);
@@ -206,6 +212,66 @@ export default function SettingsPage() {
               <b>Tipp fürs iPhone:</b> Öffne die App in Safari, tippe auf „Teilen“ → „Zum Home-Bildschirm“. Dann startet sie wie eine echte App – und iOS löscht deine Daten nicht nach längerer Pause.
             </span>
           </div>
+        </section>
+
+        <section className="panel stack">
+          <h2>🧠 Lernen aus Bewertungen</h2>
+          <p className="muted small" style={{ margin: 0 }}>
+            Mit 👍 und 👎 lernt Funkelpost, was gut ankommt: welche Designs, welcher Schreibstil und welche Formulierungen. Gespeichert werden nur
+            Merkmale (Design, Anlass, Art der Beziehung, Bewertung) – nie Namen oder Stichworte. {SERVER ? "Die Bewertungen liegen auf deinem Server." : "Die Bewertungen bleiben auf diesem Gerät."}
+          </p>
+          {stats && stats.total > 0 ? (
+            <div className="stack" style={{ gap: 6 }}>
+              <div>
+                <b>{stats.total}</b> Bewertungen · 👍 {stats.likes} · 👎 {stats.dislikes}
+                {stats.retriesSaved > 0 && <> · <b>{stats.retriesSaved}×</b> hat die KI dich im zweiten Anlauf überzeugt</>}
+              </div>
+              {stats.presets.length > 0 && (
+                <div className="small">
+                  Beliebteste Designs:{" "}
+                  {stats.presets.slice(0, 3).map((p, i) => (
+                    <span key={p.preset}>{i > 0 && " · "}{PRESETS[p.preset]?.label ?? p.preset} ({p.likes}👍 {p.dislikes}👎)</span>
+                  ))}
+                </div>
+              )}
+              {stats.variants.length > 0 && (
+                <div className="small">
+                  Schreibstile:{" "}
+                  {stats.variants.map((v, i) => (
+                    <span key={v.variant}>{i > 0 && " · "}{v.variant === "A" ? "erzählerisch" : v.variant === "B" ? "pointiert" : v.variant} ({v.likes}👍 {v.dislikes}👎)</span>
+                  ))}
+                </div>
+              )}
+              {stats.reasons.length > 0 && <div className="small">Häufigste Kritik: {stats.reasons.map(([r, n]) => `${r} (${n})`).join(", ")}</div>}
+            </div>
+          ) : (
+            <p className="small" style={{ margin: 0 }}>Noch keine Bewertungen. Bewerte deine nächste Karte mit 👍 oder 👎!</p>
+          )}
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={learnTexts}
+              onChange={(e) => {
+                setLearnTexts(e.target.checked);
+                setLearnFromTexts(e.target.checked);
+              }}
+            />
+            Gut bewertete Formulierungen (ohne Namen) als Vorbild für neue Karten nutzen
+          </label>
+          {stats && stats.total > 0 && (
+            <div>
+              <button
+                className="btn ghost sm"
+                onClick={async () => {
+                  if (!confirm("Alle Bewertungen löschen? Funkelpost fängt dann wieder von vorn an zu lernen.")) return;
+                  await repo.clearRatings();
+                  setStats(learningStats([]));
+                }}
+              >
+                Bewertungen löschen
+              </button>
+            </div>
+          )}
         </section>
 
         <section className="panel stack">

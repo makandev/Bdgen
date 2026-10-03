@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { DatabaseSync as DatabaseSyncType } from "node:sqlite";
 import type { Backup, ContactInput } from "@/lib/records";
-import type { Card, CardData, Contact } from "@/lib/types";
+import type { Card, CardData, Contact, Rating, Reaction } from "@/lib/types";
 
 // Loaded via getBuiltinModule so the bundler never tries to resolve node:sqlite.
 const { DatabaseSync } = process.getBuiltinModule("node:sqlite") as typeof import("node:sqlite");
@@ -41,6 +41,20 @@ function db(): DatabaseSyncType {
       updated_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS cards_contact ON cards(contact_id);
+    CREATE TABLE IF NOT EXISTS reactions (
+      id TEXT PRIMARY KEY,
+      card_id TEXT NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+      emoji TEXT NOT NULL,
+      label TEXT NOT NULL,
+      message TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS reactions_card ON reactions(card_id);
+    CREATE TABLE IF NOT EXISTS ratings (
+      id TEXT PRIMARY KEY,
+      data TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
   `);
   g.__bdgenDb = d;
   return d;
@@ -176,6 +190,66 @@ export const cards = {
   },
   remove(id: string): void {
     db().prepare("DELETE FROM cards WHERE id = ?").run(id);
+  },
+};
+
+function toReaction(r: Row): Reaction {
+  return {
+    id: String(r.id),
+    cardId: String(r.card_id),
+    emoji: String(r.emoji),
+    label: String(r.label),
+    message: String(r.message),
+    createdAt: String(r.created_at),
+  };
+}
+
+export const reactions = {
+  forCard(cardId: string): Reaction[] {
+    return (db().prepare("SELECT * FROM reactions WHERE card_id = ? ORDER BY created_at DESC").all(cardId) as Row[]).map(toReaction);
+  },
+  recent(limit = 20): (Reaction & { cardTitle: string; contactId: string | null; contactName: string })[] {
+    const rows = db()
+      .prepare(
+        `SELECT r.*, k.title AS card_title, k.contact_id AS contact_id, c.name AS contact_name
+         FROM reactions r JOIN cards k ON k.id = r.card_id LEFT JOIN contacts c ON c.id = k.contact_id
+         ORDER BY r.created_at DESC LIMIT ?`,
+      )
+      .all(limit) as Row[];
+    return rows.map((r) => ({
+      ...toReaction(r),
+      cardTitle: String(r.card_title),
+      contactId: r.contact_id ? String(r.contact_id) : null,
+      contactName: r.contact_name ? String(r.contact_name) : "",
+    }));
+  },
+  count(cardId: string): number {
+    return Number((db().prepare("SELECT COUNT(*) AS n FROM reactions WHERE card_id = ?").get(cardId) as Row).n);
+  },
+  add(cardId: string, emoji: string, label: string): Reaction {
+    const id = randomUUID();
+    db().prepare("INSERT INTO reactions (id, card_id, emoji, label, message, created_at) VALUES (?, ?, ?, ?, '', ?)").run(id, cardId, emoji, label, now());
+    return toReaction(db().prepare("SELECT * FROM reactions WHERE id = ?").get(id) as Row);
+  },
+  get(id: string): Reaction | null {
+    const r = db().prepare("SELECT * FROM reactions WHERE id = ?").get(id) as Row | undefined;
+    return r ? toReaction(r) : null;
+  },
+  setMessage(id: string, message: string): void {
+    db().prepare("UPDATE reactions SET message = ? WHERE id = ?").run(message, id);
+  },
+};
+
+export const ratings = {
+  list(): Rating[] {
+    return (db().prepare("SELECT data FROM ratings ORDER BY created_at").all() as Row[]).map((r) => JSON.parse(String(r.data)) as Rating);
+  },
+  add(r: Rating): void {
+    db().prepare("INSERT OR REPLACE INTO ratings (id, data, created_at) VALUES (?, ?, ?)").run(r.id, JSON.stringify(r), r.createdAt);
+    db().prepare("DELETE FROM ratings WHERE id NOT IN (SELECT id FROM ratings ORDER BY created_at DESC LIMIT 2000)").run();
+  },
+  clear(): void {
+    db().exec("DELETE FROM ratings");
   },
 };
 

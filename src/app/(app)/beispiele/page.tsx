@@ -10,7 +10,7 @@ import { renderCardHTML } from "@/lib/render";
 
 export default function ExamplesPage() {
   const [open, setOpen] = useState<Example | null>(null);
-  const full = useMemo(() => (open ? renderCardHTML(exampleCard(open)) : ""), [open]);
+  const full = useMemo(() => (open ? renderCardHTML(exampleCard(open), { preview: true }) : ""), [open]);
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && setOpen(null);

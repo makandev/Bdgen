@@ -1,7 +1,7 @@
 import { DEFAULT_EFFECTS, OCCASIONS, PRESETS } from "./presets";
-import { blankScene } from "./templates";
+import { blankScene, defaultReactions } from "./templates";
 import type {
-  Address, Backdrop, CardData, CardStyle, Cinema, ConfettiShape, DayText, Effects, HeadingFont, Occasion, QuizOption, Scene,
+  Address, Backdrop, CardData, ReactionOption, Reactions, CardStyle, Cinema, ConfettiShape, DayText, Effects, HeadingFont, Occasion, QuizOption, Scene,
   SceneType, Theme,
 } from "./types";
 
@@ -56,7 +56,7 @@ export function occasion(v: unknown, fallback: Occasion = "geburtstag"): Occasio
   return OCCASIONS.some((o) => o.id === v) ? (v as Occasion) : fallback;
 }
 
-const SCENE_TYPES: SceneType[] = ["greeting", "text", "quiz", "list", "check", "finale"];
+const SCENE_TYPES: SceneType[] = ["greeting", "text", "quiz", "list", "check", "gift", "finale"];
 
 function dayText(v: unknown, fb: DayText): DayText {
   const o = isObj(v) ? v : {};
@@ -137,6 +137,18 @@ export function normalizeScene(raw: unknown, addr: Address, forceType?: SceneTyp
         button: str(o.button, f.button, 80),
       };
     }
+    case "gift": {
+      const f = fb as Extract<Scene, { type: "gift" }>;
+      return {
+        type,
+        eyebrow: str(o.eyebrow, f.eyebrow, 120),
+        title: str(o.title, f.title, 200),
+        teaser: str(o.teaser, f.teaser, 200),
+        gift: str(o.gift, f.gift, 160),
+        detail: str(o.detail, f.detail, 400),
+        button: str(o.button, f.button, 80),
+      };
+    }
     case "finale": {
       const f = fb as Extract<Scene, { type: "finale" }>;
       return {
@@ -213,6 +225,19 @@ export function normalizeCinema(raw: unknown, fb: Cinema): Cinema {
   };
 }
 
+export function normalizeReactions(raw: unknown, fb: Reactions): Reactions {
+  const o = isObj(raw) ? raw : {};
+  let options: ReactionOption[] = Array.isArray(o.options)
+    ? o.options
+        .filter(isObj)
+        .map((x) => ({ emoji: str(x.emoji, "", 16).trim(), label: str(x.label, "", 40).trim() }))
+        .filter((x) => x.emoji && x.label)
+        .slice(0, 5)
+    : fb.options;
+  if (!options.length) options = fb.options;
+  return { enabled: bool(o.enabled, fb.enabled), question: str(o.question, fb.question, 120), options };
+}
+
 export function normalizeCardData(raw: unknown, fb: CardData): CardData {
   const o = isObj(raw) ? raw : {};
   const a = address(o.address, fb.address);
@@ -226,5 +251,30 @@ export function normalizeCardData(raw: unknown, fb: CardData): CardData {
     scenes: normalizeScenes(o.scenes, a, fb.scenes),
     cinema: normalizeCinema(o.cinema, fb.cinema),
     iosHint: bool(o.iosHint, fb.iosHint),
+    reactions: normalizeReactions(o.reactions, fb.reactions ?? defaultReactions(occasion(o.occasion, fb.occasion), a)),
+    ...(isObj(o.meta) ? { meta: { variant: str(o.meta.variant, "", 8), provider: str(o.meta.provider, "", 20) } } : fb.meta ? { meta: fb.meta } : {}),
+  };
+}
+
+/** Ratings come from the client (or a backup) – keep only known, harmless fields. */
+export function normalizeRating(raw: unknown): import("./types").Rating | null {
+  if (!isObj(raw) || typeof raw.id !== "string" || typeof raw.cardId !== "string") return null;
+  const value = raw.value === 1 ? 1 : raw.value === -1 ? -1 : null;
+  if (!value) return null;
+  return {
+    id: str(raw.id, "", 64),
+    cardId: str(raw.cardId, "", 64),
+    value,
+    reasons: Array.isArray(raw.reasons) ? raw.reasons.map((x) => str(x, "", 40)).filter(Boolean).slice(0, 8) : [],
+    attempt: num(raw.attempt, 0, 0, 10),
+    variant: str(raw.variant, "", 8),
+    provider: str(raw.provider, "", 20),
+    preset: str(raw.preset, "", 30),
+    occasion: occasion(raw.occasion),
+    address: address(raw.address),
+    relationGroup: str(raw.relationGroup, "", 40),
+    mood: Array.isArray(raw.mood) ? raw.mood.map((x) => str(x, "", 30)).filter(Boolean).slice(0, 8) : [],
+    ...(typeof raw.sample === "string" && raw.sample.trim() ? { sample: str(raw.sample, "", 600) } : {}),
+    createdAt: str(raw.createdAt, new Date().toISOString(), 40),
   };
 }
