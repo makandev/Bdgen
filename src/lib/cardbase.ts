@@ -1,6 +1,6 @@
 import { EXAMPLES, exampleCard } from "./examples";
 import { occasionLabel, PRESETS, presetEffects, presetTheme } from "./presets";
-import type { Brief } from "./prompts";
+import type { Brief, Generated } from "./prompts";
 import { defaultCardData, defaultCinema, defaultReactions, defaultScenes, giftScene, withGift } from "./templates";
 import type { Card, CardData, Contact } from "./types";
 
@@ -27,6 +27,14 @@ export function briefFromCard(card: Card, contact: Contact | null): Brief {
   };
 }
 
+/** New AI texts on top of a card. The AI never sees vouchers, so they are carried over to the new gift page. */
+export function withGenerated(data: CardData, gen: Pick<Generated, "scenes" | "cinema" | "topLine" | "reactions" | "variant" | "provider">): CardData {
+  const old = data.scenes.find((s) => s.type === "gift");
+  const voucher = old && old.type === "gift" ? old.voucher : null;
+  const scenes = voucher ? gen.scenes.map((s) => (s.type === "gift" && !s.voucher ? { ...s, voucher } : s)) : gen.scenes;
+  return { ...data, scenes, cinema: gen.cinema, topLine: gen.topLine, reactions: gen.reactions, meta: { variant: gen.variant, provider: gen.provider } };
+}
+
 function finish(data: CardData, contact: Contact, opts: CreateOpts): CardData {
   if (opts.gift?.trim()) data.scenes = withGift(data.scenes, giftScene(contact.address, opts.gift));
   data.reactions = defaultReactions(contact.occasion, contact.address, contact.mood);
@@ -51,6 +59,9 @@ export function startData(contact: Contact, opts: CreateOpts): { data: CardData;
   }
   data.address = contact.address;
   data.occasion = contact.occasion;
+  // A gallery gift page stays, but its demo code never ends up in a real card.
+  if (ex.gift && !data.scenes.some((s) => s.type === "gift")) data.scenes = withGift(data.scenes, giftScene(contact.address, ex.gift));
+  data.scenes = data.scenes.map((s) => (s.type === "gift" && s.voucher ? { ...s, voucher: { ...s.voucher, code: "" } } : s));
   if (PRESETS[opts.preset] && opts.preset !== ex.preset) {
     data.theme = presetTheme(opts.preset);
     data.effects = presetEffects(opts.preset);

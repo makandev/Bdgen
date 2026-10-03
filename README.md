@@ -12,17 +12,21 @@ Kleinigkeiten** ein; die KI macht daraus eine kleine Geschichte in sieben Seiten
 6. **Schein-Ende** – „Protokoll erfolgreich abgeschlossen“ …
 7. **Finale** – Wunsch, Signatur und ein **Kino-Finale**
 
-**12 Designs:** Gold-Eleganz · Schwarz & Gold · Rosé-Gold · Holo-Glanz · Sternennacht · Matrix (mit Zeichenregen) ·
+**13 Designs:** Gold-Eleganz · Schwarz & Gold · Rosé-Gold · Holo-Glanz · Sternennacht · Silvester · Matrix (mit Zeichenregen) ·
 Block-Welt (Roblox-Stil) · Neon-Party · Rosé-Pastell · Bunte Party · Salbei & Natur · Schlicht – dazu fünf Kartenstile,
-fünf Hintergrund-Effekte und Konfetti als Streifen, Herzen, Sterne, Quadrate oder Zeichen. Alles per KI-Wunsch
+sechs Hintergrund-Effekte (inkl. Feuerwerk), Konfetti als Streifen, Herzen, Sterne, Quadrate oder Zeichen und
+**KI-Effekt-Rezepte** (die KI erfindet z. B. aufsteigende Ballons oder Schneefall – geprüft und mit eigenem Code gezeichnet). Alles per KI-Wunsch
 änderbar („wie in einem Videospiel“, „schwarz-gold und luxuriös“) – selbst schreiben ist optional.
 
-In der App: **👀 Beispiele** (zwölf fertige Karten zum Anschauen) und **ℹ️ Infos** (Neuigkeiten, Pläne, KI-Leitfaden).
+In der App: **👀 Beispiele** (dreizehn fertige Karten zum Anschauen) und **ℹ️ Infos** (Neuigkeiten, Pläne, KI-Leitfaden).
 
 **Außerdem:**
 
 - **⚡ Schnell-Karte:** Name, Beziehung, ein bis zwei passende Fragen mit Antwort-Ideen – die KI macht den Rest und wählt ein passendes Design.
 - **🎁 Geschenk-Seite:** ein Päckchen, das beim Antippen aufgeht und das Geschenk zeigt.
+- **🎟️ Gutschein mit Feuerwerk:** optional ein Gutschein als Code (mit Kopieren-Knopf), Foto oder PDF – nach Countdown und Feuerwerk-Show fliegt er herein. Die KI sieht Gutscheine nie.
+- **📲 Als App installieren:** Knopf unten rechts mit passender Anleitung für iPhone/iPad (Safari, Chrome), Android, Mac und PC.
+- **Ältere iPhones:** Die Empfänger-Ansicht ist ein eigenes, kleines Skript (ohne Next.js) und läuft ab iOS 11.
 - **💌 Reaktionen:** Am Ende antwortet die beschenkte Person mit Knöpfen, die zur Situation passen (❤️, 😂, 🥂, 💪 …). In der Server-Version kommt die Reaktion samt kurzer Nachricht direkt beim Absender an, in der Browser-Version per WhatsApp/Teilen.
 - **👍 / 👎 und Lernen:** Bei 👎 nennt man den Grund, und die KI bekommt bis zu zwei weitere Versuche. Aus allen Bewertungen lernt Funkelpost: beliebte Designs werden zuerst vorgeschlagen, von zwei Schreibstilen setzt sich der besser bewertete durch, gelungene Formulierungen (ohne Namen) dienen als Vorbild. Gespeichert werden nur Merkmale, nie Namen oder Stichworte.
 
@@ -117,7 +121,7 @@ npm run build:server # Server-Version → .next
 ```
 src/
   app/(app)/           App-Seiten: Übersicht, Person (kontakt), Karten-Editor (karte), Einstellungen
-  app/k/               Empfänger-Ansicht für geteilte Links
+  app/k/[slug]/        Empfänger-Ansicht der Server-Version (kurze Links)
   components/          Sperre (Gate), Einführung (Intro), Editor-Bausteine
   lib/render.ts        Karten-Renderer: erzeugt die komplette, eigenständige HTML-Karte
   lib/templates.ts     Textvorlagen (du/Sie, verschiedene Anlässe)
@@ -135,6 +139,8 @@ src/
   app/**/*.server.ts   API-Routen und Login-Schutz – nur im Server-Build enthalten
   server/              SQLite-Datenbank, Session, Server-Hilfen
 scripts/build-vault.ts erzeugt zugang.json beim Veröffentlichen
+scripts/viewer/        Empfänger-Ansicht für Links /k/#… (eigenständig, für alte iPhones gebaut)
+scripts/prepare-public.mjs  baut vor dev/build public/k/ und kopiert pdf.js nach public/vendor/
 install.sh, update.sh, backup.sh, docker-compose.yml, deploy/   Server-Betrieb
 ```
 

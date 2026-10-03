@@ -10,7 +10,10 @@ function deep<T>(value: T, address: Address): T {
   if (typeof value === "string") return addr(value, address) as T;
   if (Array.isArray(value)) return value.map((v) => deep(v, address)) as T;
   if (value && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, deep(v, address)])) as T;
+    // Plain loop instead of Object.fromEntries: this also runs in the card viewer on old iPhones.
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(value)) out[k] = deep((value as Record<string, unknown>)[k], address);
+    return out as T;
   }
   return value;
 }
@@ -76,6 +79,18 @@ const WORDS: Record<Occasion, OccasionWords> = {
     wish: "Ich wünsche [[Ihnen|dir]], dass die nächsten Jahre mindestens so gut werden wie die, auf die [[Sie|du]] heute [[zurückblicken|zurückblickst]].",
     signature: "Herzlichen Glückwunsch, {{name}}. 🥂",
     emoji: "🥂",
+  },
+  neujahr: {
+    dayGreet: "Frohes neues Jahr",
+    eveningGreet: "Einen funkelnden Silvesterabend",
+    quizRight: "Fürs Anstoßen auf ein richtig gutes Jahr",
+    checkTitle: "Jahreswechsel-Protokoll erfolgreich abgeschlossen.",
+    checkText: "Frohes neues Jahr, {{name}}. [[Starten Sie|Starte]] mit Rückenwind – der Rest ergibt sich.",
+    status: "Status: Neues Jahr geladen",
+    cinemaTitle: "Frohes\nneues Jahr.",
+    wish: "Ich wünsche [[Ihnen|dir]] ein Jahr voller Gesundheit, Mut für Neues und vieler Momente, an die [[Sie|du]] gern [[zurückdenken|zurückdenkst]].",
+    signature: "Auf ein großartiges Jahr, {{name}}. 🎆",
+    emoji: "🎆",
   },
   einfach: {
     dayGreet: "Hallo",
@@ -241,6 +256,12 @@ const REACTIONS: Record<Occasion, ReactionOption[]> = {
     { emoji: "🥹", label: "Ganz gerührt" },
     { emoji: "😂", label: "Hab gelacht" },
   ],
+  neujahr: [
+    { emoji: "❤️", label: "Hab mich riesig gefreut" },
+    { emoji: "🥂", label: "Prost aufs neue Jahr" },
+    { emoji: "🎆", label: "Wow, das Feuerwerk!" },
+    { emoji: "🥹", label: "Bin gerührt" },
+  ],
   einfach: [
     { emoji: "❤️", label: "Hab mich so gefreut" },
     { emoji: "☀️", label: "Hat meinen Tag gerettet" },
@@ -267,7 +288,7 @@ export function blankScene(type: SceneType, address: Address): Scene {
   if (type === "gift") return giftScene(address);
   const base = defaultScenes("geburtstag", address);
   const found = base.find((s) => s.type === type);
-  if (found) return structuredClone(found);
+  if (found) return JSON.parse(JSON.stringify(found)) as Scene;
   return base[1];
 }
 

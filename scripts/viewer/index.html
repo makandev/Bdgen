@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Eine kleine Überraschung ✨</title>
+<meta name="description" content="Für dich. Einfach öffnen.">
+<meta property="og:title" content="Eine kleine Überraschung ✨">
+<meta property="og:description" content="Für dich. Einfach öffnen.">
+<meta property="og:type" content="website">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#fbf7ed">
+<style>
+html,body{margin:0;height:100%;background:#fbf7ed;color:#3a2f1b;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+iframe{position:fixed;top:0;left:0;width:100%;height:100%;border:0;display:block;background:#fbf7ed}
+.msg{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center}
+.msg[hidden]{display:none}
+.panel{max-width:420px;background:#fffdf7;border:1px solid #ead9b0;border-radius:18px;padding:24px;box-shadow:0 18px 50px rgba(112,82,25,.1)}
+.star{font-size:2.4rem;color:#b88a2c}
+.spin{width:34px;height:34px;border-radius:50%;border:3px solid #ead9b0;border-top-color:#b88a2c;-webkit-animation:s 1s linear infinite;animation:s 1s linear infinite}
+@-webkit-keyframes s{to{-webkit-transform:rotate(360deg)}}@keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="msg" id="wait"><div class="spin" aria-label="Lädt"></div></div>
+<div class="msg" id="fail" hidden><div class="panel"><div class="star">✦</div><p>Dieser Link ist unvollständig. Bitte den ganzen Link öffnen – manchmal wird er beim Kopieren abgeschnitten.</p></div></div>
+<noscript><div class="msg"><div class="panel"><p>Bitte JavaScript erlauben, um die Überraschung zu sehen.</p></div></div></noscript>
+<script>/*VIEWER*/</script>
+</body>
+</html>

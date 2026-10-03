@@ -7,6 +7,7 @@ export const OCCASIONS: { id: Occasion; label: string; emoji: string }[] = [
   { id: "danke", label: "Dankeschön", emoji: "💛" },
   { id: "besserung", label: "Gute Besserung", emoji: "🌿" },
   { id: "jubilaeum", label: "Jubiläum", emoji: "🥂" },
+  { id: "neujahr", label: "Silvester & Neujahr", emoji: "🎆" },
   { id: "einfach", label: "Einfach so", emoji: "✨" },
 ];
 
@@ -97,6 +98,7 @@ export const BACKDROP_LABELS: Record<Backdrop, string> = {
   matrix: "Zeichenregen",
   blocks: "Schwebende Blöcke",
   aurora: "Polarlicht",
+  fireworks: "Feuerwerk",
 };
 
 export const CONFETTI_LABELS: Record<ConfettiShape, string> = {
@@ -130,6 +132,7 @@ export const DEFAULT_EFFECTS: Effects = {
   speed: 1,
   backdrop: "dots",
   confettiShape: "strip",
+  particles: null,
 };
 
 export const PRESETS: Record<string, PresetDef> = {
@@ -187,6 +190,17 @@ export const PRESETS: Record<string, PresetDef> = {
       headingFont: "serif", style: "glass", dark: true,
     },
     effects: { ambient: 1.6, ribbons: 0.5, backdrop: "sparkle", confettiShape: "star" },
+  },
+  silvester: {
+    label: "Silvester",
+    hint: "Nachthimmel voller Feuerwerk",
+    theme: {
+      bg: "#070a1f", bg2: "#1a1240", card: "#121436", text: "#fff8ec", text2: "#e9e3f5", muted: "#a9a3c9",
+      accent: "#ffcf5a", accentLight: "#fff0b8", accentDark: "#d88a1c", cinemaBg: "#1b1550",
+      confetti: ["#ff4f8b", "#ffcf5a", "#4fd8ff", "#9b6bff", "#5dff9e", "#ffffff"],
+      headingFont: "serif", style: "luxe", dark: true,
+    },
+    effects: { backdrop: "fireworks", confettiShape: "star", confetti: 1.4, ribbons: 1.1, ambient: 1.2 },
   },
   matrix: {
     label: "Matrix",
@@ -269,7 +283,7 @@ export const PRESETS: Record<string, PresetDef> = {
 
 export function presetTheme(id: string): Theme {
   const p = PRESETS[id] ?? PRESETS.gold;
-  return { preset: PRESETS[id] ? id : "gold", ...structuredClone(p.theme) };
+  return { preset: PRESETS[id] ? id : "gold", ...p.theme, confetti: [...p.theme.confetti] };
 }
 
 export function presetEffects(id: string): Effects {

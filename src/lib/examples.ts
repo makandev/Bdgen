@@ -1,5 +1,5 @@
-import { defaultCardData } from "./templates";
-import type { Address, CardData, Occasion, Scene } from "./types";
+import { defaultCardData, giftScene, withGift } from "./templates";
+import type { Address, CardData, Occasion, Scene, Voucher } from "./types";
 
 export interface Example {
   id: string;
@@ -16,6 +16,9 @@ export interface Example {
   highlight: string;
   heartfelt: string[];
   quote: string;
+  /** Optional gift page, optionally with a voucher. */
+  gift?: string;
+  voucher?: Voucher;
 }
 
 /** Demo cards for the gallery – texts written the way the AI would turn notes into a card. */
@@ -120,6 +123,17 @@ export const EXAMPLES: Example[] = [
     quote: "Ich wünsche euch ein Wochenende ohne Mails und mit ganz viel Stolz auf euch selbst.",
   },
   {
+    id: "silvester", title: "Silvester für die Clique", relation: "Freunde", preset: "silvester", occasion: "neujahr", address: "du", name: "ihr Lieben",
+    notes: "feiern jedes Jahr zusammen · Brunch am Neujahrsmorgen ist Tradition",
+    greeting: "Bevor um Mitternacht die Raketen steigen: Hier ist schon mal das erste Feuerwerk – nur für euch.",
+    list: ["Vorsätze aufschreiben", "Bis zwölf wach bleiben", "Bleigießen deuten", "Am 1. Januar früh aufstehen"],
+    highlight: "Einziger Vorsatz: mehr Zeit mit euch.",
+    heartfelt: ["Mit euch war dieses Jahr laut, chaotisch und wunderschön.", "Egal was das neue bringt – wir stoßen gemeinsam darauf an."],
+    quote: "Ich wünsche euch ein Jahr voller Lachen, Abenteuer und Abende wie diesen.",
+    gift: "Neujahrs-Brunch für alle",
+    voucher: { kind: "code", label: "Brunch am 1. Januar", code: "NEUJAHR-BRUNCH", image: "", pdf: "", note: "Einlösbar bei mir in der Küche · ab 11 Uhr 🥐", show: true },
+  },
+  {
     id: "nachbar", title: "Danke an den Nachbarn", relation: "Nachbar", preset: "minimal", occasion: "danke", address: "sie", name: "Herr Weber",
     notes: "hat im Urlaub die Blumen gegossen",
     greeting: "Ein kleines, schlichtes Dankeschön von nebenan.",
@@ -139,5 +153,6 @@ export function exampleCard(e: Example): CardData {
     if (s.type === "finale") return { ...s, quote: e.quote };
     return s;
   });
+  if (e.gift) d.scenes = withGift(d.scenes, { ...giftScene(e.address, e.gift), voucher: e.voucher ?? null });
   return d;
 }

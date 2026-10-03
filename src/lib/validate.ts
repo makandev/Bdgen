@@ -1,7 +1,7 @@
 import { DEFAULT_EFFECTS, OCCASIONS, PRESETS } from "./presets";
 import { blankScene, defaultReactions } from "./templates";
 import type {
-  Address, Backdrop, CardData, ReactionOption, Reactions, CardStyle, Cinema, ConfettiShape, DayText, Effects, HeadingFont, Occasion, QuizOption, Scene,
+  Address, Backdrop, CardData, ParticleMotion, Particles, Voucher, ReactionOption, Reactions, CardStyle, Cinema, ConfettiShape, DayText, Effects, HeadingFont, Occasion, QuizOption, Scene,
   SceneType, Theme,
 } from "./types";
 
@@ -11,7 +11,12 @@ function oneOf<T extends string>(v: unknown, allowed: readonly T[], fallback: T)
 
 const FONTS: HeadingFont[] = ["serif", "sans", "script", "mono", "block"];
 const STYLES: CardStyle[] = ["glass", "luxe", "holo", "terminal", "pixel"];
-const BACKDROPS: Backdrop[] = ["dots", "sparkle", "matrix", "blocks", "aurora"];
+const BACKDROPS: Backdrop[] = ["dots", "sparkle", "matrix", "blocks", "aurora", "fireworks"];
+const MOTIONS: ParticleMotion[] = ["rise", "fall", "float", "swirl", "pop"];
+
+/** Size caps for pictures inside a card (data URLs). */
+export const MAX_IMAGE_CHARS = 1_600_000;
+export const MAX_PDF_CHARS = 4_000_000;
 const SHAPES: ConfettiShape[] = ["strip", "square", "heart", "star", "glyph"];
 
 type Obj = Record<string, unknown>;
@@ -147,6 +152,7 @@ export function normalizeScene(raw: unknown, addr: Address, forceType?: SceneTyp
         gift: str(o.gift, f.gift, 160),
         detail: str(o.detail, f.detail, 400),
         button: str(o.button, f.button, 80),
+        voucher: normalizeVoucher(o.voucher),
       };
     }
     case "finale": {
@@ -164,6 +170,39 @@ export function normalizeScene(raw: unknown, addr: Address, forceType?: SceneTyp
       };
     }
   }
+}
+
+function dataUrl(v: unknown, kind: RegExp, max: number): string {
+  return typeof v === "string" && v.length <= max && kind.test(v) && /^[^,]+,[A-Za-z0-9+/=]+$/.test(v) ? v : "";
+}
+
+/** Voucher on a gift scene. Pictures must be real base64 data URLs – nothing that could load from elsewhere. */
+export function normalizeVoucher(raw: unknown): Voucher | null {
+  if (!isObj(raw)) return null;
+  const image = dataUrl(raw.image, /^data:image\/(jpeg|png|webp);base64,/, MAX_IMAGE_CHARS);
+  const code = str(raw.code, "", 120).trim();
+  const kind = raw.kind === "image" && image ? "image" : code ? "code" : image ? "image" : null;
+  if (!kind) return null;
+  return {
+    kind,
+    label: str(raw.label, "", 120),
+    code: kind === "code" ? code : "",
+    image: kind === "image" ? image : "",
+    pdf: kind === "image" ? dataUrl(raw.pdf, /^data:application\/pdf;base64,/, MAX_PDF_CHARS) : "",
+    note: str(raw.note, "", 240),
+    show: bool(raw.show, true),
+  };
+}
+
+/** AI effect recipe: only short symbol strings (no letters/markup), a known motion and bounded numbers. */
+export function normalizeParticles(raw: unknown): Particles | null {
+  if (!isObj(raw)) return null;
+  const emoji = (Array.isArray(raw.emoji) ? raw.emoji : [])
+    .map((e) => (typeof e === "string" ? e.trim() : ""))
+    .filter((e) => e && e.length <= 8 && !/[A-Za-z0-9<>&"'\\]/.test(e))
+    .slice(0, 5);
+  if (!emoji.length) return null;
+  return { emoji, motion: oneOf(raw.motion, MOTIONS, "float"), amount: num(raw.amount, 1, 0.2, 2), size: num(raw.size, 1, 0.5, 2) };
 }
 
 export function normalizeScenes(raw: unknown, addr: Address, fallback: Scene[]): Scene[] {
@@ -211,6 +250,7 @@ export function normalizeEffects(raw: unknown, fb: Effects = DEFAULT_EFFECTS): E
     speed: num(o.speed, fb.speed, 0.5, 1.6),
     backdrop: oneOf(o.backdrop, BACKDROPS, oneOf(fb.backdrop, BACKDROPS, "dots")),
     confettiShape: oneOf(o.confettiShape, SHAPES, oneOf(fb.confettiShape, SHAPES, "strip")),
+    particles: "particles" in o ? normalizeParticles(o.particles) : (fb.particles ?? null),
   };
 }
 

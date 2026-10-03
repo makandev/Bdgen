@@ -6,7 +6,7 @@ const STEPS = [
   {
     icon: "🎁",
     title: "Willkommen bei Funkelpost!",
-    text: "Hier bastelst du kleine digitale Überraschungen für Menschen, die du magst – zum Geburtstag, zum Danke-Sagen oder einfach so.",
+    text: "Hier bastelst du kleine digitale Überraschungen für Menschen, die du magst – zum Geburtstag, zum Danke-Sagen oder einfach so. Kinder machen am besten gemeinsam mit einem Erwachsenen mit.",
   },
   {
     icon: "👤",

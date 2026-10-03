@@ -3,7 +3,7 @@ import type { AIConfig } from "./settings";
 import { contrast, luminance, mix } from "./color";
 import { occasionLabel, PRESETS, presetTheme } from "./presets";
 import { defaultReactions, giftScene, withGift } from "./templates";
-import type { Address, CardData, Cinema, Effects, Occasion, Reactions, Scene, Theme } from "./types";
+import type { Address, CardData, Cinema, Effects, Occasion, Particles, Reactions, Scene, Theme } from "./types";
 import { normalizeCinema, normalizeEffects, normalizeReactions, normalizeScene, normalizeScenes, normalizeTheme, str } from "./validate";
 
 export interface Brief {
@@ -132,7 +132,7 @@ export async function rewriteScene(brief: Brief, scene: Scene, instruction: stri
   const user = `${briefText(brief)}
 
 Hier ist eine einzelne Szene der Karte (Typ "${scene.type}"):
-${JSON.stringify(scene, null, 1)}
+${JSON.stringify(scene.type === "gift" ? { ...scene, voucher: undefined } : scene, null, 1)}
 
 Änderungswunsch: ${instruction.trim() || "Formuliere die Szene neu – frischer, persönlicher, gleiche Länge."}
 
@@ -141,6 +141,8 @@ Gib die überarbeitete Szene als JSON-Objekt mit exakt derselben Struktur und de
   const o = (json && typeof json === "object" && "scene" in (json as object) ? (json as { scene: unknown }).scene : json) as unknown;
   const out = normalizeScene({ ...(o as object), type: scene.type }, brief.address, scene.type);
   if (!out) throw new Error("Die KI-Antwort passte nicht zur Szene.");
+  // Vouchers (codes, pictures) never go to the AI and always stay as they were.
+  if (out.type === "gift") out.voucher = scene.type === "gift" ? (scene.voucher ?? null) : null;
   return { scene: out, provider };
 }
 
@@ -164,9 +166,13 @@ effects:
 - ribbons (0–2): fallende Bänder, 0 = aus
 - sparks, orbit, shine, cinema, progress, clock: true/false (Funken, Glitzer in der Karte, Glanzstreifen, Kino-Finale, Fortschrittsbalken, Uhr)
 - speed (0.5–1.6): Tempo der Animationen, 1 = normal
-- backdrop: "dots" (Lichtpunkte) | "sparkle" (Funkelsterne) | "matrix" (grüner Zeichenregen) | "blocks" (schwebende bunte Blöcke) | "aurora" (Polarlicht)
+- backdrop: "dots" (Lichtpunkte) | "sparkle" (Funkelsterne) | "matrix" (grüner Zeichenregen) | "blocks" (schwebende bunte Blöcke) | "aurora" (Polarlicht) | "fireworks" (buntes Feuerwerk, wirkt am besten auf dunklem Hintergrund)
 - confettiShape: "strip" | "square" | "heart" | "star" | "glyph" (Computerzeichen)
-Am besten wirken Stil, Hintergrund, Konfetti und Schrift, wenn sie zusammenpassen (z. B. Matrix: terminal + matrix + glyph + mono).`;
+- particles: ein eigenes Effekt-Rezept, das du frei erfinden darfst, oder null zum Ausschalten:
+  {"emoji":[1–5 Emoji oder Symbole, z. B. "🎈","❄️","🌸","🦋","⚽","✦"],"motion":"rise"|"fall"|"float"|"swirl"|"pop","amount":0.2–2,"size":0.5–2}
+  rise = steigt auf (Ballons, Blasen), fall = fällt (Schnee, Blätter), float = schwebt, swirl = wirbelt im Kreis, pop = ploppt auf und verblasst.
+  Nutze es, wenn der Wunsch nach etwas klingt, das es oben nicht gibt (z. B. „Fußbälle“, „Schmetterlinge“, „Schneeflocken“).
+Am besten wirken Stil, Hintergrund, Konfetti und Schrift, wenn sie zusammenpassen (z. B. Matrix: terminal + matrix + glyph + mono; Silvester: dunkel + fireworks + star).`;
 
 export async function restyle(
   theme: Theme,
@@ -206,6 +212,7 @@ export function fixContrast(t: Theme): Theme {
 }
 
 const COLOR_WORDS: [RegExp, string][] = [
+  [/feuerwerk|silvester|neujahr|rakete/i, "silvester"],
   [/matrix|hacker|computer|code/i, "matrix"],
   [/roblox|minecraft|block|pixel|videospiel|gaming|spiel/i, "blocks"],
   [/schwarz.?gold|luxus|luxuriös|vip/i, "schwarzgold"],
@@ -218,6 +225,15 @@ const COLOR_WORDS: [RegExp, string][] = [
   [/grün|natur|salbei|wald/i, "salbei"],
   [/schlicht|minimal|ruhig|dezent|elegant grau/i, "minimal"],
   [/gold|klassisch|edel/i, "gold"],
+];
+
+const PARTICLE_WORDS: [RegExp, Particles, string][] = [
+  [/ballon/, { emoji: ["🎈", "🎈", "🎉"], motion: "rise", amount: 1.2, size: 1.2 }, "Ballons"],
+  [/schnee|winter|flocke/, { emoji: ["❄️", "❅", "✦"], motion: "fall", amount: 1.5, size: 0.9 }, "Schneefall"],
+  [/blüte|blume|frühling/, { emoji: ["🌸", "🌷", "💮"], motion: "swirl", amount: 1.2, size: 1 }, "Blütenwirbel"],
+  [/schmetterling/, { emoji: ["🦋"], motion: "float", amount: 1, size: 1 }, "Schmetterlinge"],
+  [/blätter|herbst/, { emoji: ["🍂", "🍁"], motion: "fall", amount: 1.2, size: 1 }, "Herbstlaub"],
+  [/fußball|fussball/, { emoji: ["⚽"], motion: "pop", amount: 1, size: 1 }, "Fußbälle"],
 ];
 
 /** Keyword-based fallback for design prompts when no AI key is configured. */
@@ -235,6 +251,14 @@ export function restyleOffline(data: CardData, instruction: string): { theme: Th
     }
   }
   if (/herz/.test(s)) (effects.confettiShape = "heart"), done.push("Herzen");
+  for (const [re, particles, label] of PARTICLE_WORDS) {
+    if (re.test(s)) {
+      effects.particles = particles;
+      done.push(label);
+      break;
+    }
+  }
+  if (/ohne (emoji|symbole|effekt-rezept)|keine (emoji|symbole)/.test(s)) (effects.particles = null), done.push("Emoji-Effekt aus");
   if (/stern/.test(s) && !/sternennacht/.test(s)) (effects.confettiShape = "star"), done.push("Sterne");
   const amount = (word: RegExp, key: "confetti" | "ribbons" | "ambient", label: string) => {
     const m = s.match(new RegExp(`(mehr|viel|weniger|kein|keine|ohne|aus)\\s*(\\w+\\s)?${word.source}`, "i"));

@@ -1,5 +1,6 @@
 "use client";
 
+import { withGenerated } from "@/lib/cardbase";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -7,6 +8,7 @@ import { download, errText } from "@/components/client";
 import { DesignPanel } from "@/components/DesignPanel";
 import { Text } from "@/components/fields";
 import { SCENE_LABELS, SceneAI, SceneFields, sceneSummary } from "@/components/SceneEditor";
+import { VoucherFields } from "@/components/VoucherFields";
 import { TopBar } from "@/components/TopBar";
 import { occasionLabel } from "@/lib/presets";
 import { renderCardHTML } from "@/lib/render";
@@ -189,7 +191,7 @@ function CardEditor() {
   }
 
   function applyGen(d: CardData, r: Generated): CardData {
-    return { ...d, scenes: r.scenes, cinema: r.cinema, topLine: r.topLine, reactions: r.reactions, meta: { variant: r.variant, provider: r.provider } };
+    return withGenerated(d, r);
   }
 
   function rate(value: 1 | -1, reasons: string[]) {
@@ -426,6 +428,7 @@ function CardEditor() {
                             <input type="text" value={s.gift} placeholder="Was schenkst du? z. B. Konzertkarten" onChange={(e) => setScene(i, { ...s, gift: e.target.value })} />
                           </label>
                         )}
+                        {s.type === "gift" && <VoucherFields value={s.voucher} onChange={(voucher) => setScene(i, { ...s, voucher })} />}
                         <SceneAI busy={busy === `scene-${i}`} disabled={!aiReady || (!!busy && busy !== `scene-${i}`)} onRun={(ins) => rewrite(i, ins)} />
                         <details className="optional">
                           <summary>✏️ Selbst ändern (optional)</summary>
@@ -525,6 +528,12 @@ function CardEditor() {
                   <button className="btn sm" onClick={shareLink} disabled={!link || card.shared === false}>{canShare ? "Teilen …" : "Link kopieren"}</button>
                   <a className="btn ghost sm" href={link} target="_blank" rel="noreferrer">Ansehen</a>
                 </div>
+                {!SERVER && link.length > 60_000 && (
+                  <p className="small install-note">
+                    ⚠️ Der Link ist sehr lang ({Math.round(link.length / 1000)}.000 Zeichen) – meist wegen des Gutschein-Fotos. WhatsApp schneidet so lange
+                    Nachrichten ab. Besser: den Gutschein als <b>Code</b> eintragen, ein kleineres Foto nehmen oder die Karte unten <b>als Datei</b> schicken.
+                  </p>
+                )}
                 {SERVER && (
                   <label className="toggle">
                     <input type="checkbox" checked={card.shared !== false} onChange={(e) => setCard({ ...card, shared: e.target.checked })} />

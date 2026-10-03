@@ -297,7 +297,7 @@ function ContactEditor() {
             <label className="field">
               <span>🎁 Schenkst du etwas dazu? (optional)</span>
               <input type="text" value={gift} placeholder="z. B. Konzertkarten, ein Wellness-Tag" onChange={(e) => setGift(e.target.value)} />
-              <small>Dann bekommt die Karte eine Seite mit einem Päckchen zum Auspacken.</small>
+              <small>Dann bekommt die Karte eine Seite mit einem Päckchen zum Auspacken. Einen Gutschein (Code, Foto oder PDF) mit Feuerwerk-Show kannst du danach im Editor auf der Geschenk-Seite anhängen.</small>
             </label>
             <label className="field">
               <span>Besonderer Wunsch an die KI (optional)</span>
