@@ -26,6 +26,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: Server-Version bauen (Prüfung)
+        run: npm run build:server
       - name: Build
         run: npm run build
         env:

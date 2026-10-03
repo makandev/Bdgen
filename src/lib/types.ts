@@ -146,6 +146,9 @@ export interface Card {
   contactId: string | null;
   title: string;
   data: CardData;
+  /** Server version only: short public link and whether it is active. */
+  slug?: string;
+  shared?: boolean;
   createdAt: string;
   updatedAt: string;
 }

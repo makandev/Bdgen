@@ -1,10 +1,10 @@
-import { defaultCardData } from "./templates";
+import { normalizeBackup, type Backup, type ContactInput } from "./records";
 import type { Card, Contact } from "./types";
-import { address, normalizeCardData, occasion, str } from "./validate";
+
+export { contactInput, type ContactInput } from "./records";
 
 const KEYS = { contacts: "bdgen:v1:contacts", cards: "bdgen:v1:cards" };
 
-export type ContactInput = Omit<Contact, "id" | "createdAt" | "updatedAt">;
 
 const now = () => new Date().toISOString();
 
@@ -23,20 +23,6 @@ function write(key: string, value: unknown) {
   } catch {
     throw new Error("Der Speicher dieses Browsers ist voll. Bitte alte Karten löschen oder eine Sicherung herunterladen.");
   }
-}
-
-export function contactInput(b: Record<string, unknown>): ContactInput | string {
-  const name = str(b.name, "", 80).trim();
-  if (!name) return "Bitte einen Namen bzw. eine Anrede angeben.";
-  return {
-    name,
-    relation: str(b.relation, "", 60).trim(),
-    address: address(b.address),
-    occasion: occasion(b.occasion),
-    date: /^\d{4}-\d{2}-\d{2}$/.test(String(b.date)) ? String(b.date) : "",
-    mood: Array.isArray(b.mood) ? b.mood.map((m) => str(m, "", 30)).filter(Boolean).slice(0, 8) : [],
-    notes: str(b.notes, "", 4000),
-  };
 }
 
 export const contacts = {
@@ -107,49 +93,17 @@ export const cards = {
   },
 };
 
-export interface Backup {
-  app: "bdgen";
-  version: 1;
-  exportedAt: string;
-  contacts: Contact[];
-  cards: Card[];
-}
-
 export function exportBackup(): Backup {
   return { app: "bdgen", version: 1, exportedAt: now(), contacts: read(KEYS.contacts), cards: read(KEYS.cards) };
 }
 
 /** Merges a backup into local data (same ids are overwritten). Returns counts. */
 export function importBackup(raw: unknown): { contacts: number; cards: number } {
-  const b = raw as Partial<Backup>;
-  if (!b || b.app !== "bdgen" || !Array.isArray(b.contacts) || !Array.isArray(b.cards)) {
-    throw new Error("Das ist keine Bdgen-Sicherung.");
-  }
-  const t = now();
-  const inContacts: Contact[] = [];
-  for (const c of b.contacts) {
-    const input = contactInput((c ?? {}) as unknown as Record<string, unknown>);
-    if (typeof input === "string" || typeof c?.id !== "string") continue;
-    inContacts.push({ ...input, id: c.id, createdAt: str(c.createdAt, t), updatedAt: str(c.updatedAt, t) });
-  }
-  const inCards: Card[] = [];
-  for (const k of b.cards) {
-    if (!k || typeof k.id !== "string" || !k.data) continue;
-    const d = k.data as Partial<Card["data"]>;
-    const fb = defaultCardData({ recipientName: str(d.recipientName, ""), address: address(d.address), occasion: occasion(d.occasion) });
-    inCards.push({
-      id: k.id,
-      contactId: typeof k.contactId === "string" ? k.contactId : null,
-      title: str(k.title, "Karte", 120),
-      data: normalizeCardData(k.data, fb),
-      createdAt: str(k.createdAt, t),
-      updatedAt: str(k.updatedAt, t),
-    });
-  }
+  const n = normalizeBackup(raw);
   const mergeById = <T extends { id: string }>(cur: T[], add: T[]) => [...cur.filter((x) => !add.some((y) => y.id === x.id)), ...add];
-  write(KEYS.contacts, mergeById(read<Contact>(KEYS.contacts), inContacts));
-  write(KEYS.cards, mergeById(read<Card>(KEYS.cards), inCards));
-  return { contacts: inContacts.length, cards: inCards.length };
+  write(KEYS.contacts, mergeById(read<Contact>(KEYS.contacts), n.contacts));
+  write(KEYS.cards, mergeById(read<Card>(KEYS.cards), n.cards));
+  return { contacts: n.contacts.length, cards: n.cards.length };
 }
 
 /** Asks the browser not to evict our data (helps on iOS). */

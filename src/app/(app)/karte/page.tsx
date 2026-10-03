@@ -8,14 +8,9 @@ import { DesignPanel } from "@/components/DesignPanel";
 import { Text } from "@/components/fields";
 import { SCENE_LABELS, SceneAI, SceneFields, sceneSummary } from "@/components/SceneEditor";
 import { TopBar } from "@/components/TopBar";
-import { briefFor } from "@/lib/actions";
-import { aiEnabled } from "@/lib/ai";
-import { BASE } from "@/lib/base";
 import { occasionLabel } from "@/lib/presets";
-import { generateCard, restyle, restyleOffline, rewriteScene } from "@/lib/prompts";
 import { renderCardHTML } from "@/lib/render";
-import { encodeCard } from "@/lib/share";
-import { cards, contacts } from "@/lib/store";
+import { repo, SERVER } from "@/lib/repo";
 import { blankScene } from "@/lib/templates";
 import type { Card, CardData, Contact, Scene, SceneType } from "@/lib/types";
 
@@ -57,40 +52,51 @@ function CardEditor() {
   const [link, setLink] = useState("");
   const [html, setHtml] = useState("");
   const loadedId = useRef("");
+  const firstSave = useRef(true);
 
   useEffect(() => {
-    const c = cards.get(id);
-    if (!c) {
-      setMsg({ kind: "err", text: "Diese Karte gibt es (auf diesem Gerät) nicht." });
-      return;
-    }
-    loadedId.current = id;
-    setCard(c);
-    setData(c.data);
-    setContact(c.contactId ? contacts.get(c.contactId) : null);
-    setHistory([]);
-    setAiReady(aiEnabled());
+    let alive = true;
+    repo.getCard(id).then((r) => {
+      if (!alive) return;
+      if (!r) {
+        setMsg({ kind: "err", text: "Diese Karte gibt es nicht (mehr)." });
+        return;
+      }
+      loadedId.current = id;
+      firstSave.current = true;
+      setCard(r.card);
+      setData(r.card.data);
+      setContact(r.contact);
+      setHistory([]);
+    });
+    repo.aiSource().then((s) => setAiReady(s !== "none")).catch(() => setAiReady(false));
     setCanShare(typeof navigator.share === "function");
     const w = sessionStorage.getItem("bdgen-warning");
     if (w) {
       sessionStorage.removeItem("bdgen-warning");
       setMsg({ kind: "err", text: w });
     }
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
-  // Autosave (local, so it is cheap) and refresh the share link.
+  // Autosave and refresh the share link.
   useEffect(() => {
     if (!data || !card || loadedId.current !== card.id) return;
+    if (firstSave.current) {
+      firstSave.current = false;
+      repo.shareLink(card, data).then(setLink);
+      return;
+    }
     setSaved(false);
     const t = setTimeout(() => {
-      try {
-        cards.update(card.id, { data, title: card.title });
-        setSaved(true);
-      } catch (e) {
-        setMsg({ kind: "err", text: errText(e) });
-      }
-      encodeCard(data).then((s) => setLink(`${window.location.origin}${BASE}/k/#${s}`));
-    }, 400);
+      repo
+        .saveCard(card.id, { data, title: card.title, shared: card.shared })
+        .then(() => setSaved(true))
+        .catch((e) => setMsg({ kind: "err", text: `Speichern fehlgeschlagen: ${errText(e)}` }));
+      repo.shareLink(card, data).then(setLink);
+    }, SERVER ? 700 : 400);
     return () => clearTimeout(t);
   }, [data, card]);
 
@@ -155,7 +161,7 @@ function CardEditor() {
     setBusy(`scene-${i}`);
     setMsg(null);
     try {
-      const r = await rewriteScene(briefFor(card), data.scenes[i], instruction);
+      const r = await repo.rewrite(card, data.scenes[i], instruction);
       remember();
       setScene(i, r.scene);
       setPreviewStart(i + 1);
@@ -173,7 +179,7 @@ function CardEditor() {
     setBusy("all");
     setMsg(null);
     try {
-      const r = await generateCard(briefFor(card), extra);
+      const r = await repo.generate(card, extra);
       remember();
       update((d) => ({ ...d, scenes: r.scenes, cinema: r.cinema, topLine: r.topLine }));
       setPreviewStart(1);
@@ -189,11 +195,11 @@ function CardEditor() {
   }
 
   async function changeStyle(instruction: string) {
-    if (!data) return;
+    if (!data || !card) return;
     setBusy("style");
     setMsg(null);
     try {
-      const r = aiEnabled() ? await restyle(data.theme, data.effects, instruction) : restyleOffline(data, instruction);
+      const r = await repo.restyle(card, data, instruction);
       remember();
       update((d) => ({ ...d, theme: r.theme, effects: r.effects }));
       setPreviewKey((k) => k + 1);
@@ -205,10 +211,15 @@ function CardEditor() {
     }
   }
 
-  function deleteCard() {
-    if (!card || !confirm("Diese Karte wirklich löschen? Bereits verschickte Links funktionieren weiter.")) return;
-    cards.remove(card.id);
-    router.push(contact ? `/kontakt/?id=${contact.id}` : "/");
+  async function deleteCard() {
+    const note = SERVER ? "Der Link funktioniert danach nicht mehr." : "Bereits verschickte Links funktionieren weiter.";
+    if (!card || !confirm(`Diese Karte wirklich löschen? ${note}`)) return;
+    try {
+      await repo.deleteCard(card.id);
+      router.push(contact ? `/kontakt/?id=${contact.id}` : "/");
+    } catch (e) {
+      setMsg({ kind: "err", text: errText(e) });
+    }
   }
 
   async function shareLink() {
@@ -275,7 +286,7 @@ function CardEditor() {
           <h1>{card.title}</h1>
         </div>
         <div className="row">
-          <button className="btn sm" onClick={shareLink} disabled={!link}>
+          <button className="btn sm" onClick={shareLink} disabled={!link || card.shared === false}>
             📨 Link teilen
           </button>
           <button className="btn ghost sm" onClick={exportFile}>
@@ -425,13 +436,21 @@ function CardEditor() {
               <div className="sub">
                 <h3>📨 Als Link verschicken</h3>
                 <p className="muted small" style={{ margin: 0 }}>
-                  Die ganze Karte steckt im Link selbst – sie wird nirgends hochgeladen. Wenn du danach noch etwas änderst, schick einfach den neuen Link.
+                  {SERVER
+                    ? "Der Link bleibt immer gleich – Änderungen sieht die Person sofort. Du kannst ihn jederzeit abschalten."
+                    : "Die ganze Karte steckt im Link selbst – sie wird nirgends hochgeladen. Wenn du danach noch etwas änderst, schick einfach den neuen Link."}
                 </p>
                 <input type="text" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
                 <div className="row">
-                  <button className="btn sm" onClick={shareLink} disabled={!link}>{canShare ? "Teilen …" : "Link kopieren"}</button>
+                  <button className="btn sm" onClick={shareLink} disabled={!link || card.shared === false}>{canShare ? "Teilen …" : "Link kopieren"}</button>
                   <a className="btn ghost sm" href={link} target="_blank" rel="noreferrer">Ansehen</a>
                 </div>
+                {SERVER && (
+                  <label className="toggle">
+                    <input type="checkbox" checked={card.shared !== false} onChange={(e) => setCard({ ...card, shared: e.target.checked })} />
+                    Link ist aktiv (aus = Link funktioniert nicht mehr)
+                  </label>
+                )}
               </div>
               <div className="sub">
                 <h3>📎 Als Datei</h3>
