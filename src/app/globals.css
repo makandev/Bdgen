@@ -237,3 +237,6 @@ details.optional > .inner { padding: 4px 12px 14px; display: grid; gap: 12px; }
 .model-row code { font-size: .82rem; overflow-wrap: anywhere; }
 code { background: rgba(184, 138, 45, .1); padding: 1px 5px; border-radius: 5px; font-size: .88em; }
 @media (max-width: 640px) { .model-row { grid-template-columns: 1fr; gap: 4px; } .model-row .tag { justify-self: start; } }
+.template-banner { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 10px; border: 1px solid #e3c47a; border-radius: 14px; background: rgba(255, 248, 225, .7); }
+.thumb.small { width: 104px; height: 203px; border-radius: 10px; }
+.thumb.small iframe { transform: scale(.267); }
