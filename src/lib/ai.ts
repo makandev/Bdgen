@@ -19,6 +19,10 @@ export function aiEnabled(): boolean {
   return availableProviders().length > 0;
 }
 
+export function aiEnabledFor(cfg: AIConfig | null): boolean {
+  return availableProviders(cfg).length > 0;
+}
+
 const TIMEOUT_MS = 90_000;
 
 async function post(url: string, headers: Record<string, string>, body: unknown): Promise<unknown> {
@@ -101,11 +105,15 @@ export function extractJSON(text: string): unknown {
 }
 
 /** Sends the prompt to the first working provider and parses the JSON answer. */
-export async function askJSON(system: string, user: string, temperature = 0.9): Promise<{ json: unknown; provider: Provider }> {
-  const cfg = getAI();
+export async function askJSON(
+  system: string,
+  user: string,
+  temperature = 0.9,
+  cfg: AIConfig | null = getAI(),
+): Promise<{ json: unknown; provider: Provider }> {
   const providers = availableProviders(cfg);
   if (!cfg || !providers.length) {
-    throw new AIError("Keine KI eingerichtet. Unter „Einstellungen“ kannst du einen Schlüssel eintragen.", 503);
+    throw new AIError("Keine KI eingerichtet. Unter „Einstellungen“ kannst du einen Schlüssel eintragen (Server-Version: GEMINI_API_KEY oder OPENROUTER_API_KEY in der .env).", 503);
   }
   const errors: string[] = [];
   for (const p of providers) {

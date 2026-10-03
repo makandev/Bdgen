@@ -5,15 +5,16 @@ import { useEffect, useRef, useState } from "react";
 import { download, errText } from "@/components/client";
 import { useApp } from "@/components/Gate";
 import { TopBar } from "@/components/TopBar";
-import { askJSON, type Provider } from "@/lib/ai";
+import type { Provider } from "@/lib/ai";
+import { repo, SERVER, type AISource } from "@/lib/repo";
 import { clearAI, getAI, setAI, type StoredAI } from "@/lib/settings";
-import { exportBackup, importBackup } from "@/lib/store";
 
 type Msg = { kind: "ok" | "err"; text: string } | null;
 
 export default function SettingsPage() {
   const { showIntro, hasVault, lock } = useApp();
   const [ai, setAiState] = useState<StoredAI | null>(null);
+  const [source, setSource] = useState<AISource | null>(null);
   const [form, setForm] = useState({ gemini: "", openrouter: "", provider: "" as Provider | "", geminiModel: "", openrouterModel: "", openrouterBaseUrl: "" });
   const [msg, setMsg] = useState<Msg>(null);
   const [busy, setBusy] = useState(false);
@@ -21,6 +22,8 @@ export default function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    repo.aiSource().then(setSource).catch(() => setSource("none"));
+    if (SERVER) return;
     const cur = getAI();
     setAiState(cur);
     if (cur?.source === "manual") {
@@ -41,12 +44,14 @@ export default function SettingsPage() {
     if (!form.gemini && !form.openrouter) {
       clearAI();
       setAiState(null);
+      setSource("none");
       setMsg({ kind: "ok", text: "KI-Schlüssel entfernt." });
       return;
     }
     const v: StoredAI = { ...form, source: "manual" };
     setAI(v);
     setAiState(v);
+    setSource("manual");
     setMsg({ kind: "ok", text: "Gespeichert ✓ – tippe auf „Testen“, um zu prüfen, ob alles klappt." });
   }
 
@@ -54,9 +59,7 @@ export default function SettingsPage() {
     setBusy(true);
     setMsg(null);
     try {
-      const r = await askJSON("Antworte nur mit JSON.", 'Gib {"ok":true,"gruss":"ein kurzer fröhlicher Gruß auf Deutsch"} zurück.', 0.5);
-      const g = (r.json as { gruss?: string })?.gruss;
-      setMsg({ kind: "ok", text: `Die KI funktioniert (${r.provider === "gemini" ? "Gemini" : "OpenRouter"})${g ? `: „${g}“` : "."}` });
+      setMsg({ kind: "ok", text: await repo.testAI() });
     } catch (e) {
       setMsg({ kind: "err", text: errText(e) });
     } finally {
@@ -64,14 +67,18 @@ export default function SettingsPage() {
     }
   }
 
-  function backup() {
-    const date = new Date().toISOString().slice(0, 10);
-    download(`bdgen-sicherung-${date}.json`, JSON.stringify(exportBackup(), null, 1), "application/json");
+  async function backup() {
+    try {
+      const date = new Date().toISOString().slice(0, 10);
+      download(`bdgen-sicherung-${date}.json`, JSON.stringify(await repo.exportBackup(), null, 1), "application/json");
+    } catch (e) {
+      setMsg({ kind: "err", text: errText(e) });
+    }
   }
 
   async function restore(file: File) {
     try {
-      const r = importBackup(JSON.parse(await file.text()));
+      const r = await repo.importBackup(JSON.parse(await file.text()));
       setMsg({ kind: "ok", text: `Wiederhergestellt: ${r.contacts} Personen und ${r.cards} Karten.` });
     } catch (e) {
       setMsg({ kind: "err", text: e instanceof SyntaxError ? "Die Datei ist keine gültige Sicherung." : errText(e) });
@@ -93,7 +100,16 @@ export default function SettingsPage() {
 
         <section className="panel stack">
           <h2>✨ KI</h2>
-          {ai?.source === "vault" ? (
+          {SERVER ? (
+            source === "server" ? (
+              <div className="notice ok">Die KI wird vom Server bereitgestellt – hier musst du nichts tun.</div>
+            ) : (
+              <div className="notice">
+                Auf dem Server ist noch keine KI eingerichtet. Trage <code>GEMINI_API_KEY</code> oder <code>OPENROUTER_API_KEY</code> in die{" "}
+                <code>.env</code> des Servers ein und starte ihn neu.
+              </div>
+            )
+          ) : ai?.source === "vault" ? (
             <div className="notice ok">Die KI ist über das Passwort freigeschaltet – hier musst du nichts tun.</div>
           ) : (
             <>
@@ -141,7 +157,7 @@ export default function SettingsPage() {
               </div>
             </>
           )}
-          {ai && (
+          {source && source !== "none" && (
             <div>
               <button className="btn ghost sm" onClick={test} disabled={busy}>
                 {busy ? <span className="spinner" /> : "KI testen"}
@@ -153,7 +169,9 @@ export default function SettingsPage() {
         <section className="panel stack">
           <h2>💾 Sicherung</h2>
           <p className="muted small" style={{ margin: 0 }}>
-            Deine Personen und Karten sind nur in diesem Browser gespeichert. Lade ab und zu eine Sicherung herunter – damit kannst du alles auch auf ein anderes Gerät übertragen.
+            {SERVER
+              ? "Deine Personen und Karten liegen auf dem Server. Eine Sicherung als Datei schadet trotzdem nie – und damit kannst du auch Daten aus der Browser-Version übernehmen."
+              : "Deine Personen und Karten sind nur in diesem Browser gespeichert. Lade ab und zu eine Sicherung herunter – damit kannst du alles auch auf ein anderes Gerät übertragen."}
           </p>
           <div className="row">
             <button className="btn" onClick={backup}>⬇ Sicherung herunterladen</button>
@@ -183,7 +201,7 @@ export default function SettingsPage() {
           <div className="row">
             <button className="btn ghost" onClick={showIntro}>Einführung nochmal ansehen</button>
             {hasVault && (
-              <button className="btn ghost" onClick={lock}>🔒 Dieses Gerät sperren</button>
+              <button className="btn ghost" onClick={lock}>{SERVER ? "🔒 Abmelden" : "🔒 Dieses Gerät sperren"}</button>
             )}
           </div>
         </section>

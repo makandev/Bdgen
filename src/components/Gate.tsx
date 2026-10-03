@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { BASE } from "@/lib/base";
+import { SERVER } from "@/lib/repo";
 import { clearAI, getAI, introSeen, markIntroSeen, setAI, UNLOCK_DAYS } from "@/lib/settings";
 import { requestPersistence } from "@/lib/store";
 import { fetchVault, openVault, type Vault } from "@/lib/vault";
@@ -25,6 +27,12 @@ export function Gate({ children }: { children: React.ReactNode }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (SERVER) {
+      // The server already checked the session cookie before serving this page.
+      setState("open");
+      if (!introSeen()) setIntro(true);
+      return;
+    }
     requestPersistence();
     fetchVault().then((v) => {
       setVault(v);
@@ -54,6 +62,10 @@ export function Gate({ children }: { children: React.ReactNode }) {
   }
 
   const lock = useCallback(() => {
+    if (SERVER) {
+      fetch(`${BASE}/api/logout/`, { method: "POST" }).finally(() => (window.location.href = `${BASE}/login/`));
+      return;
+    }
     if (getAI()?.source === "vault") clearAI();
     setPw("");
     setState(vault ? "locked" : "open");
@@ -84,7 +96,7 @@ export function Gate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <Ctx.Provider value={{ locked: false, hasVault: !!vault, lock, showIntro: () => setIntro(true) }}>
+    <Ctx.Provider value={{ locked: false, hasVault: SERVER || !!vault, lock, showIntro: () => setIntro(true) }}>
       {children}
       {intro && <Intro onClose={closeIntro} />}
     </Ctx.Provider>

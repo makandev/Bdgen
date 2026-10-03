@@ -14,10 +14,51 @@ Kleinigkeiten** ein; die KI macht daraus eine kleine Geschichte in sieben Seiten
 
 Jede Seite, Farbe und jeder Effekt lässt sich einzeln ändern – von Hand oder per Wunsch an die KI.
 
-**Die App läuft komplett im Browser** und wird über **GitHub Pages** veröffentlicht – ohne Server,
-ohne Datenbank, ohne Kosten.
+## Zwei Versionen – eine Codebasis
 
-## So funktioniert’s
+| | **Browser-Version** (GitHub Pages) | **Server-Version** (eigener Server) |
+|---|---|---|
+| Daten | im Browser des jeweiligen Geräts | zentral in SQLite – auf jedem Gerät dieselben Personen & Karten |
+| KI-Schlüssel | im verschlüsselten Zugang (Passwort) | nur auf dem Server, nie im Browser |
+| Passwort | entschlüsselt den Zugang | Login mit Session-Cookie (30 Tage), Schutz gegen Durchprobieren |
+| Link teilen | Karte steckt im Link (`/k/#…`) | kurzer Link `/k/abc123/` – abschaltbar, Änderungen sofort sichtbar |
+| Bauen | `npm run build` (automatisch per GitHub Actions) | `npm run build:server` bzw. Docker |
+
+Oberfläche, Karten, Vorlagen und KI-Prompts sind identisch. Eine Sicherung aus der Browser-Version
+lässt sich in die Server-Version einspielen (⚙ Einstellungen → Sicherung).
+
+## Server-Version starten
+
+Voraussetzung: **Node.js 22.5+** (nutzt das eingebaute SQLite) oder Docker.
+
+```bash
+cp .env.example .env        # APP_PASSWORD, AUTH_SECRET und KI-Schlüssel eintragen
+npm ci
+npm run build:server
+npm run start:server        # http://localhost:3000
+```
+
+Mit Docker:
+
+```bash
+docker build -t bdgen .
+docker run -d --name bdgen -p 3000:3000 --env-file .env -v bdgen-data:/app/data --restart unless-stopped bdgen
+```
+
+Die Datenbank liegt im Volume `bdgen-data` (bzw. unter `DATABASE_PATH`). Für den Zugriff von außen
+gehört ein Reverse-Proxy mit HTTPS davor (z. B. Caddy: `bdgen.example.de { reverse_proxy localhost:3000 }`).
+Läuft der Server ohne HTTPS (nur im Heimnetz), `COOKIE_SECURE=false` setzen.
+
+| Variable | Pflicht | Bedeutung |
+|---|---|---|
+| `APP_PASSWORD` | ja | Passwort für die App |
+| `AUTH_SECRET` | empfohlen | Zufallswert zum Signieren der Anmeldung |
+| `GEMINI_API_KEY` / `OPENROUTER_API_KEY` | mind. einer | KI-Schlüssel |
+| `GEMINI_MODEL`, `OPENROUTER_MODEL`, `AI_PROVIDER` | nein | Modellwahl / Reihenfolge |
+| `DATABASE_PATH` | nein | Standard `./data/bdgen.db` |
+| `NEXT_PUBLIC_BASE_PATH` | nein | falls unter einem Unterpfad betrieben (beim Bauen setzen) |
+
+## Browser-Version: so funktioniert’s
 
 | | |
 |---|---|
@@ -27,7 +68,7 @@ ohne Datenbank, ohne Kosten.
 | **Datenschutz** | Der Name der Person wird **nie** an die KI geschickt – sie arbeitet mit dem Platzhalter `{{name}}`. |
 | **Sicherheit** | Geteilte Karten laufen in einer abgeschotteten Umgebung (Sandbox) und können nicht auf gespeicherte Daten oder Schlüssel zugreifen. Alle Inhalte aus Links werden geprüft und bereinigt. |
 
-## Passwortsperre & KI für die ganze Familie (einmalig einrichten)
+## Browser-Version: Passwortsperre & KI für die ganze Familie (einmalig einrichten)
 
 Die KI-Schlüssel werden beim Veröffentlichen **mit deinem Passwort verschlüsselt** (AES-256, PBKDF2 mit
 600 000 Runden) und als `zugang.json` mit ausgeliefert. Wer das Passwort kennt, kann die App auf jedem
@@ -49,9 +90,9 @@ Optional als *Variables* (nicht Secrets): `GEMINI_MODEL`, `OPENROUTER_MODEL`, `A
 > Hinweis: Die Sperre schützt die KI-Schlüssel. Die Webseite selbst (HTML/JavaScript) ist wie jede
 > Webseite öffentlich abrufbar – sie enthält aber weder Schlüssel noch persönliche Daten.
 
-## Veröffentlichen
+## Browser-Version veröffentlichen
 
-Jeder Push auf `main` baut die App, führt die Tests aus und veröffentlicht sie automatisch
+Jeder Push auf `main` prüft beide Versionen, führt die Tests aus und veröffentlicht die Browser-Version automatisch
 (`.github/workflows/pages.yml`). Adresse: `https://<benutzer>.github.io/<repository>/`
 
 Voraussetzung (einmalig): **Settings → Pages → Source: „GitHub Actions“**.
@@ -60,10 +101,12 @@ Voraussetzung (einmalig): **Settings → Pages → Source: „GitHub Actions“*
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
+npm run dev          # Browser-Version, http://localhost:3000
+npm run dev:server   # Server-Version (braucht .env)
 npm test             # Unit-Tests
 npm run typecheck
-npm run build        # statische Seite nach ./out
+npm run build        # Browser-Version → ./out
+npm run build:server # Server-Version → .next
 ```
 
 ## Aufbau
@@ -80,8 +123,11 @@ src/
   lib/ai.ts            Gemini/OpenRouter-Anbindung mit Fallback
   lib/share.ts         Karte ⇄ Link (komprimiert)
   lib/vault.ts         verschlüsselter Zugang
+  lib/repo.ts          Weiche: Browser-Speicher oder Server-API (gleiche Schnittstelle)
   lib/store.ts         Speicher im Browser, Sicherung
   lib/validate.ts      prüft und begrenzt alle Daten (auch KI-Antworten und Links)
+  app/**/*.server.ts   API-Routen und Login-Schutz – nur im Server-Build enthalten
+  server/              SQLite-Datenbank, Session, Server-Hilfen
 scripts/build-vault.ts erzeugt zugang.json beim Veröffentlichen
 ```
 

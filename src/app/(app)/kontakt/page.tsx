@@ -5,10 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { errText } from "@/components/client";
 import { TopBar } from "@/components/TopBar";
-import { createCardFor } from "@/lib/actions";
-import { aiEnabled } from "@/lib/ai";
 import { MOODS, NOTE_STARTERS, OCCASIONS, PRESETS, RELATIONS } from "@/lib/presets";
-import { cards as cardStore, contactInput, contacts } from "@/lib/store";
+import { contactInput } from "@/lib/records";
+import { repo } from "@/lib/repo";
 import type { Address, Card, Contact, Occasion } from "@/lib/types";
 
 type Form = Pick<Contact, "name" | "relation" | "address" | "occasion" | "date" | "mood" | "notes">;
@@ -38,27 +37,33 @@ function ContactEditor() {
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setAi(aiEnabled());
+    repo.aiSource().then((s) => setAi(s !== "none")).catch(() => setAi(false));
     if (isNew) {
       setForm(EMPTY);
       setCards([]);
       setLoaded(true);
       return;
     }
-    const c = contacts.get(id);
-    if (!c) {
-      setMsg({ kind: "err", text: "Diese Person gibt es (auf diesem Gerät) nicht." });
-      return;
-    }
-    const { name, relation, address, occasion, date, mood, notes } = c;
-    setForm({ name, relation, address, occasion, date, mood, notes });
-    setCards(cardStore.list(id));
-    setLoaded(true);
+    let alive = true;
+    repo.getContact(id).then((r) => {
+      if (!alive) return;
+      if (!r) {
+        setMsg({ kind: "err", text: "Diese Person gibt es nicht (mehr)." });
+        return;
+      }
+      const { name, relation, address, occasion, date, mood, notes } = r.contact;
+      setForm({ name, relation, address, occasion, date, mood, notes });
+      setCards(r.cards);
+      setLoaded(true);
+    });
+    return () => {
+      alive = false;
+    };
   }, [id, isNew]);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
-  function save(): Contact | null {
+  async function save(): Promise<Contact | null> {
     setMsg(null);
     const input = contactInput(form);
     if (typeof input === "string") {
@@ -66,8 +71,7 @@ function ContactEditor() {
       return null;
     }
     try {
-      const c = isNew ? contacts.create(input) : contacts.update(id, input);
-      if (!c) throw new Error("Diese Person gibt es nicht mehr.");
+      const c = await repo.saveContact(isNew ? null : id, input);
       if (isNew) router.replace(`/kontakt/?id=${c.id}`);
       setMsg({ kind: "ok", text: "Gespeichert ✓" });
       return c;
@@ -78,12 +82,12 @@ function ContactEditor() {
   }
 
   async function createCard(mode: "ai" | "template") {
-    const contact = save();
-    if (!contact) return;
     setBusy("create");
+    const contact = await save();
+    if (!contact) return setBusy("");
     setMsg(null);
     try {
-      const d = await createCardFor(contact, { preset, mode, extra });
+      const d = await repo.createCard(contact.id, { preset, mode, extra });
       if (d.warning) sessionStorage.setItem("bdgen-warning", d.warning);
       router.push(`/karte/?id=${d.card.id}`);
     } catch (e) {
@@ -92,10 +96,14 @@ function ContactEditor() {
     }
   }
 
-  function remove() {
+  async function remove() {
     if (!confirm(`„${form.name}“ und alle Karten für diese Person wirklich löschen?`)) return;
-    contacts.remove(id);
-    router.push("/");
+    try {
+      await repo.deleteContact(id);
+      router.push("/");
+    } catch (e) {
+      setMsg({ kind: "err", text: errText(e) });
+    }
   }
 
   function addStarter(s: string) {
@@ -305,7 +313,7 @@ function ContactEditor() {
             </button>
             {ai === false && (
               <p className="muted small" style={{ margin: 0 }}>
-                Die KI ist noch nicht eingerichtet. <Link href="/einstellungen/">Jetzt einrichten →</Link>
+                Die KI ist noch nicht eingerichtet. <Link href="/einstellungen/">Mehr dazu →</Link>
               </p>
             )}
           </section>

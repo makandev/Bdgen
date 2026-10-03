@@ -5,9 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { errText } from "@/components/client";
 import { dateLabel, daysUntil } from "@/components/dates";
 import { TopBar } from "@/components/TopBar";
-import { availableProviders } from "@/lib/ai";
 import { OCCASIONS } from "@/lib/presets";
-import { contacts } from "@/lib/store";
+import { repo, SERVER } from "@/lib/repo";
 import type { Contact } from "@/lib/types";
 
 type Row = Contact & { cardCount: number };
@@ -16,15 +15,11 @@ export default function Home() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
-  const [ai, setAi] = useState<string[] | null>(null);
+  const [ai, setAi] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      setRows(contacts.list());
-    } catch (e) {
-      setError(errText(e));
-    }
-    setAi(availableProviders());
+    repo.listContacts().then(setRows).catch((e) => setError(errText(e)));
+    repo.aiSource().then(setAi).catch(() => {});
   }, []);
 
   const filtered = useMemo(() => {
@@ -52,10 +47,16 @@ export default function Home() {
           )}
         </div>
 
-        {ai && ai.length === 0 && (
+        {ai === "none" && (
           <div className="notice">
-            Die KI ist auf diesem Gerät noch nicht eingerichtet – Karten entstehen dann aus einer Vorlage.{" "}
-            <Link href="/einstellungen/">KI einrichten →</Link>
+            {SERVER ? (
+              <>Auf dem Server ist noch keine KI eingerichtet (GEMINI_API_KEY oder OPENROUTER_API_KEY in der .env) – Karten entstehen dann aus einer Vorlage.</>
+            ) : (
+              <>
+                Die KI ist auf diesem Gerät noch nicht eingerichtet – Karten entstehen dann aus einer Vorlage.{" "}
+                <Link href="/einstellungen/">KI einrichten →</Link>
+              </>
+            )}
           </div>
         )}
         {error && <div className="notice err">{error}</div>}

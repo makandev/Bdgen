@@ -1,4 +1,5 @@
 import { askJSON } from "./ai";
+import type { AIConfig } from "./settings";
 import { contrast, luminance, mix } from "./color";
 import { occasionLabel, PRESETS, presetTheme } from "./presets";
 import type { Address, CardData, Cinema, Effects, Occasion, Scene, Theme } from "./types";
@@ -56,14 +57,14 @@ const DRAMATURGY = `Dramaturgie (halte diese Reihenfolge und diese 7 Szenen ein 
 6. check: das scheinbare Ende („…protokoll erfolgreich abgeschlossen“) mit Status-Siegel.
 7. finale: die eine Sache, die noch gesagt werden soll: ein Wunsch-Zitat, 1–2 Absätze Wünsche, Signatur. Dazu die Kino-Texte (cinema) für das große Finale.`;
 
-export async function generateCard(brief: Brief, extra: string): Promise<{ scenes: Scene[]; cinema: Cinema; topLine: string; provider: string }> {
+export async function generateCard(brief: Brief, extra: string, cfg?: AIConfig | null): Promise<{ scenes: Scene[]; cinema: Cinema; topLine: string; provider: string }> {
   const user = `${briefText(brief)}
 ${extra.trim() ? `\nZusätzlicher Wunsch: ${extra.trim()}\n` : ""}
 ${DRAMATURGY}
 
 Gib genau dieses JSON-Format zurück (alle Felder ausfüllen, „…“ ersetzen):
 ${CARD_SCHEMA}`;
-  const { json, provider } = await askJSON(BASE_RULES, user, 0.95);
+  const { json, provider } = await askJSON(BASE_RULES, user, 0.95, cfg);
   const o = (json ?? {}) as Record<string, unknown>;
   const scenes = normalizeScenes(o.scenes, brief.address, []);
   if (scenes.length < 3) throw new Error("Die KI hat keine vollständige Karte geliefert. Bitte erneut versuchen.");
@@ -76,7 +77,7 @@ ${CARD_SCHEMA}`;
   };
 }
 
-export async function rewriteScene(brief: Brief, scene: Scene, instruction: string): Promise<{ scene: Scene; provider: string }> {
+export async function rewriteScene(brief: Brief, scene: Scene, instruction: string, cfg?: AIConfig | null): Promise<{ scene: Scene; provider: string }> {
   const user = `${briefText(brief)}
 
 Hier ist eine einzelne Szene der Karte (Typ "${scene.type}"):
@@ -85,7 +86,7 @@ ${JSON.stringify(scene, null, 1)}
 Änderungswunsch: ${instruction.trim() || "Formuliere die Szene neu – frischer, persönlicher, gleiche Länge."}
 
 Gib die überarbeitete Szene als JSON-Objekt mit exakt derselben Struktur und demselben "type" zurück.`;
-  const { json, provider } = await askJSON(BASE_RULES, user, 0.9);
+  const { json, provider } = await askJSON(BASE_RULES, user, 0.9, cfg);
   const o = (json && typeof json === "object" && "scene" in (json as object) ? (json as { scene: unknown }).scene : json) as unknown;
   const out = normalizeScene({ ...(o as object), type: scene.type }, brief.address, scene.type);
   if (!out) throw new Error("Die KI-Antwort passte nicht zur Szene.");
@@ -116,6 +117,7 @@ export async function restyle(
   theme: Theme,
   effects: Effects,
   instruction: string,
+  cfg?: AIConfig | null,
 ): Promise<{ theme: Theme; effects: Effects; summary: string; provider: string }> {
   const user = `Aktuelle Werte:
 ${JSON.stringify({ theme, effects })}
@@ -123,7 +125,7 @@ ${JSON.stringify({ theme, effects })}
 Verfügbare Vorlagen zur Orientierung: ${Object.entries(PRESETS).map(([k, v]) => `${k} (${v.label})`).join(", ")}
 
 Wunsch: ${instruction}`;
-  const { json, provider } = await askJSON(EFFECTS_RULES, user, 0.5);
+  const { json, provider } = await askJSON(EFFECTS_RULES, user, 0.5, cfg);
   const o = (json ?? {}) as Record<string, unknown>;
   const t = fixContrast(normalizeTheme({ ...theme, ...(o.theme as object), preset: "custom" }, theme));
   return {
@@ -188,4 +190,10 @@ export function restyleOffline(data: CardData, instruction: string): { theme: Th
     effects,
     summary: done.length ? `Ohne KI angepasst: ${done.join(", ")}.` : "Ohne KI-Schlüssel verstehe ich nur einfache Wünsche wie „bunt“, „mehr Konfetti“ oder „ruhiger“.",
   };
+}
+
+export async function testAI(cfg?: AIConfig | null): Promise<string> {
+  const r = await askJSON("Antworte nur mit JSON.", 'Gib {"ok":true,"gruss":"ein kurzer fröhlicher Gruß auf Deutsch"} zurück.', 0.5, cfg);
+  const g = (r.json as { gruss?: string })?.gruss;
+  return `Die KI funktioniert (${r.provider === "gemini" ? "Gemini" : "OpenRouter"})${g ? `: „${str(g, "", 200)}“` : "."}`;
 }
