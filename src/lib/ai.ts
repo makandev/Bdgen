@@ -1,3 +1,5 @@
+import { getAI, type AIConfig } from "./settings";
+
 export type Provider = "gemini" | "openrouter";
 
 export class AIError extends Error {
@@ -6,13 +8,10 @@ export class AIError extends Error {
   }
 }
 
-export function availableProviders(): Provider[] {
-  const keys: Record<Provider, boolean> = {
-    gemini: !!process.env.GEMINI_API_KEY,
-    openrouter: !!process.env.OPENROUTER_API_KEY,
-  };
-  const preferred = process.env.AI_PROVIDER as Provider | undefined;
-  const order: Provider[] = preferred === "openrouter" ? ["openrouter", "gemini"] : ["gemini", "openrouter"];
+export function availableProviders(cfg: AIConfig | null = getAI()): Provider[] {
+  if (!cfg) return [];
+  const keys: Record<Provider, boolean> = { gemini: !!cfg.gemini, openrouter: !!cfg.openrouter };
+  const order: Provider[] = cfg.provider === "openrouter" ? ["openrouter", "gemini"] : ["gemini", "openrouter"];
   return order.filter((p) => keys[p]);
 }
 
@@ -41,11 +40,11 @@ async function post(url: string, headers: Record<string, string>, body: unknown)
   return JSON.parse(text);
 }
 
-async function callGemini(system: string, user: string, temperature: number): Promise<string> {
-  const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
+async function callGemini(cfg: AIConfig, system: string, user: string, temperature: number): Promise<string> {
+  const model = cfg.geminiModel || "gemini-flash-latest";
   const data = (await post(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-    { "x-goog-api-key": process.env.GEMINI_API_KEY! },
+    { "x-goog-api-key": cfg.gemini! },
     {
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: "user", parts: [{ text: user }] }],
@@ -58,12 +57,12 @@ async function callGemini(system: string, user: string, temperature: number): Pr
   return text;
 }
 
-async function callOpenRouter(system: string, user: string, temperature: number): Promise<string> {
-  const model = process.env.OPENROUTER_MODEL || "openrouter/free";
+async function callOpenRouter(cfg: AIConfig, system: string, user: string, temperature: number): Promise<string> {
+  const model = cfg.openrouterModel || "openrouter/free";
   const data = (await post(
-    `${(process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1").replace(/\/$/, "")}/chat/completions`,
+    `${(cfg.openrouterBaseUrl || "https://openrouter.ai/api/v1").replace(/\/$/, "")}/chat/completions`,
     {
-      authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      authorization: `Bearer ${cfg.openrouter}`,
       "x-title": "Bdgen",
     },
     {
@@ -103,15 +102,16 @@ export function extractJSON(text: string): unknown {
 
 /** Sends the prompt to the first working provider and parses the JSON answer. */
 export async function askJSON(system: string, user: string, temperature = 0.9): Promise<{ json: unknown; provider: Provider }> {
-  const providers = availableProviders();
-  if (!providers.length) {
-    throw new AIError("Kein KI-Schlüssel hinterlegt. Bitte GEMINI_API_KEY oder OPENROUTER_API_KEY in .env eintragen.", 503);
+  const cfg = getAI();
+  const providers = availableProviders(cfg);
+  if (!cfg || !providers.length) {
+    throw new AIError("Keine KI eingerichtet. Unter „Einstellungen“ kannst du einen Schlüssel eintragen.", 503);
   }
   const errors: string[] = [];
   for (const p of providers) {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const text = p === "gemini" ? await callGemini(system, user, temperature) : await callOpenRouter(system, user, temperature);
+        const text = p === "gemini" ? await callGemini(cfg, system, user, temperature) : await callOpenRouter(cfg, system, user, temperature);
         return { json: extractJSON(text), provider: p };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -123,9 +123,14 @@ export async function askJSON(system: string, user: string, temperature = 0.9): 
     }
   }
   const limited = errors.some((e) => e.includes("429"));
+  const badKey = errors.some((e) => /HTTP (400|401|403)/.test(e) && /key|auth|permission/i.test(e));
   throw new AIError(
-    (limited ? "Das kostenlose KI-Kontingent ist gerade ausgeschöpft – bitte kurz warten und erneut versuchen. " : "KI-Anfrage fehlgeschlagen. ") +
-      errors.join(" | "),
+    (limited
+      ? "Die kostenlose KI ist gerade ausgelastet – bitte eine Minute warten und nochmal versuchen. "
+      : badKey
+        ? "Der KI-Schlüssel scheint ungültig zu sein – bitte in den Einstellungen prüfen. "
+        : "Die KI hat gerade nicht geantwortet – bitte nochmal versuchen. ") +
+      `(Details: ${errors.join(" | ")})`,
     limited ? 429 : 502,
   );
 }

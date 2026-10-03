@@ -2,16 +2,12 @@
   "name": "bdgen",
   "version": "0.1.0",
   "private": true,
-  "description": "Persönliche, KI-gestützte Überraschungskarten für Familie und Kontakte",
+  "description": "Persönliche, KI-gestützte Überraschungskarten – läuft komplett im Browser (GitHub Pages)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts"
-  },
-  "engines": {
-    "node": ">=22.5"
   },
   "dependencies": {
     "next": "^16.3.8",
@@ -25,5 +21,8 @@
     "playwright-core": "^1.63.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

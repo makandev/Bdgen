@@ -1,13 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { api } from "./client";
+import { useApp } from "./Gate";
 
 export function TopBar({ children }: { children?: React.ReactNode }) {
-  async function logout() {
-    await api("/api/logout", { method: "POST" }).catch(() => {});
-    window.location.href = "/login";
-  }
+  const { hasVault, lock, showIntro } = useApp();
   return (
     <header className="topbar">
       <Link href="/" className="brand">
@@ -15,9 +12,11 @@ export function TopBar({ children }: { children?: React.ReactNode }) {
       </Link>
       <div className="row">
         {children}
-        <button className="btn ghost sm" onClick={logout} title="Abmelden">
-          Abmelden
-        </button>
+        <button className="btn ghost sm icon" onClick={showIntro} title="Hilfe & Einführung" aria-label="Hilfe">?</button>
+        <Link href="/einstellungen/" className="btn ghost sm icon" title="Einstellungen" aria-label="Einstellungen">⚙</Link>
+        {hasVault && (
+          <button className="btn ghost sm hide-sm" onClick={lock} title="Gerät sperren">Sperren</button>
+        )}
       </div>
     </header>
   );
