@@ -7,6 +7,10 @@ export interface RenderOptions {
   startScene?: number;
   /** Adds the iPhone "save to Files" hint below the card (downloaded file). */
   exportFile?: boolean;
+  /** Server version: where the recipient's reaction is posted. Without it, the reaction is sent back via share/WhatsApp. */
+  reactUrl?: string;
+  /** Editor/gallery preview: reactions only show what the recipient would see. */
+  preview?: boolean;
 }
 
 export function esc(s: string): string {
@@ -92,7 +96,9 @@ button:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--text)}button:ac
 .personal{background:${rgba(c(1), 0.45)};border-radius:6px}
 .progress{height:10px;border:2px solid var(--text);border-radius:4px;background:#fff}.bar{background:repeating-linear-gradient(90deg,${c(0)} 0 14px,${c(1)} 14px 28px,${c(2)} 28px 42px,${c(3)} 42px 56px)}
 .seal{border:2px solid var(--text);border-radius:6px;color:var(--text)}
-.bigcheck{color:${c(2)};text-shadow:3px 3px 0 var(--text)}`;
+.bigcheck{color:${c(2)};text-shadow:3px 3px 0 var(--text)}
+.gift-name{background:none;color:var(--text);-webkit-text-fill-color:var(--text);text-shadow:3px 3px 0 ${c(1)}}
+.gift-box,.gift-lid{border:3px solid var(--text);border-radius:4px}`;
       break;
   }
   if ((d.effects.backdrop ?? "dots") === "aurora") {
@@ -173,6 +179,31 @@ button:hover{transform:translateY(-2px)}button:focus-visible{outline:3px solid v
 .cinema-close{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;opacity:0;pointer-events:none;background:rgba(255,255,255,.12);border:1px solid ${rgba(t.accentLight, 0.48)};color:#fff;box-shadow:none;backdrop-filter:blur(10px)}
 .cinema.done .cinema-close{opacity:1;pointer-events:auto;transition:opacity .8s}.cinema.done .scene4{opacity:1!important}
 ${styleCss(d)}
+.gift-wrap{position:relative;width:150px;height:150px;margin:24px auto 6px;cursor:pointer;outline:none;animation:wiggle 2.6s ease-in-out infinite}
+.gift-wrap:focus-visible{outline:3px solid var(--al);outline-offset:8px;border-radius:12px}
+.gift-box{position:absolute;left:16px;right:16px;bottom:0;height:92px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--ad));box-shadow:0 14px 30px ${rgba(t.accentDark, 0.3)}}
+.gift-box:before,.gift-lid:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:18px;margin-left:-9px;background:var(--al)}
+.gift-lid{position:absolute;left:6px;right:6px;top:30px;height:32px;border-radius:7px;z-index:2;background:linear-gradient(135deg,var(--accent),var(--ad));box-shadow:0 4px 10px ${rgba(t.accentDark, 0.25)};transition:transform .8s cubic-bezier(.2,.8,.2,1),opacity .8s}
+.gift-bow{position:absolute;left:50%;top:-24px;width:56px;height:28px;margin-left:-28px}
+.gift-bow:before,.gift-bow:after{content:"";position:absolute;top:0;width:28px;height:26px;border:7px solid var(--al);border-radius:50% 50% 50% 50%/60% 60% 40% 40%}
+.gift-bow:before{left:-4px;transform:rotate(-18deg)}.gift-bow:after{right:-4px;transform:rotate(18deg)}
+.gift-wrap.open{animation:none;cursor:default}.gift-wrap.open .gift-lid{transform:translateY(-110px) rotate(-28deg);opacity:0}
+@keyframes wiggle{0%,78%,100%{transform:rotate(0)}82%{transform:rotate(-7deg)}86%{transform:rotate(6deg)}90%{transform:rotate(-4deg)}94%{transform:rotate(2deg)}}
+.gift-reveal{animation:titleIn .7s both cubic-bezier(.2,.8,.2,1)}
+.gift-name{font:${t.headingFont === "block" ? 900 : 400} clamp(1.8rem,6vw,3rem)/1.2 var(--hf);margin:6px auto 4px;max-width:620px;background:linear-gradient(100deg,${t.dark ? "var(--al),var(--accent),var(--al)" : "var(--ad),var(--accent),var(--ad)"});-webkit-background-clip:text;background-clip:text;color:transparent}
+.reactions{margin:30px auto 0;max-width:560px;padding-top:22px;border-top:1px solid var(--line)}
+.react-q{margin:0 0 12px;font-weight:600;color:var(--text)}
+.react-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.react{display:inline-flex;align-items:center;gap:7px;margin:0;min-height:44px;padding:8px 14px;border-radius:999px;font-size:.92rem}
+.react .re{font-size:1.3rem}.react.picked{background:linear-gradient(135deg,var(--al),var(--accent));color:var(--btn);border-color:transparent}
+.react-big{font-size:3rem;margin-top:16px;animation:pop .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.react-thanks{margin:6px auto}.react-more{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.react-msg{flex:1;min-width:180px;max-width:360px;font:16px/1.4 inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:${rgba(t.card, 0.9)};color:var(--text)}
+.react-more button,.react-send{margin:0}
+.float-emoji{position:fixed;bottom:-40px;z-index:8;pointer-events:none;font-size:2rem;animation:floatUp 2.4s ease-out forwards}
+@keyframes floatUp{to{transform:translate3d(var(--fx),-110vh,0) rotate(var(--fr));opacity:0}}
+.nojs .gift-reveal{display:block!important}.nojs .gift-wrap{display:none}
 .ioshint{max-width:760px;margin:10px auto 32px;padding:0 18px;text-align:center;font:12px/1.45 system-ui,sans-serif;color:var(--muted)}
 .nojs .screen{display:flex;min-height:auto;margin-bottom:18px}.nojs .card{opacity:1;transform:none;animation:none}.nojs .revealbox div{opacity:1;transform:none}.nojs .hidden{display:none!important}.nojs [data-next],.nojs .finish,.nojs .cinema-start{display:none}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.card{opacity:1;transform:none}}
@@ -220,14 +251,29 @@ ${s.status.trim() ? `<div class="seal"><span class="dot"></span> ${f(s.status)}<
 ${s.tiny.trim() ? `<p class="tiny">${f(s.tiny)}</p>` : ""}
 <button type="button" class="finish">${f(s.button)}</button>`;
       break;
-    case "finale":
+    case "gift":
+      body = `${eyebrow(s.eyebrow)}<h2>${f(s.title)}</h2>
+<div class="gift-wrap" role="button" tabindex="0" aria-label="Geschenk auspacken"><div class="gift-lid"><span class="gift-bow"></span></div><div class="gift-box"></div></div>
+<p class="muted gift-teaser">${f(s.teaser)}</p>
+<div class="gift-reveal hidden"><div class="gift-name">${f(s.gift)}</div>${s.detail.trim() ? `<p>${f(s.detail)}</p>` : ""}</div>
+${next(s.button, 'class="hidden" data-after')}`;
+      break;
+    case "finale": {
+      const r = d.reactions;
+      const reactions = r && r.enabled && r.options.length
+        ? `<div class="reactions" data-reactions><p class="react-q">${f(r.question)}</p><div class="react-row">${r.options
+            .map((o) => `<button type="button" class="react ghost" data-emoji="${esc(o.emoji)}" data-label="${esc(o.label)}"><span class="re">${esc(o.emoji)}</span><span class="rl">${esc(o.label)}</span></button>`)
+            .join("")}</div><div class="react-done hidden"><div class="react-big"></div><p class="react-thanks"></p><div class="react-more hidden"><input class="react-msg" maxlength="200" placeholder="Noch ein paar Worte? (optional)"><button type="button" class="react-msg-send">Senden</button></div><button type="button" class="react-send hidden">📨 Antwort zurückschicken</button></div></div>`
+        : "";
       body = `${eyebrow(s.eyebrow)}<h2>${f(s.title)}</h2>${s.quote.trim() ? `<div class="quote">„${f(s.quote)}“</div>` : ""}${paras(s.paragraphs)}
 ${s.signature.trim() ? `<div class="signature">${f(s.signature)}</div>` : ""}
 ${s.status.trim() ? `<div class="seal"><span class="dot"></span> ${f(s.status)}</div>` : ""}
 ${s.tiny.trim() ? `<p class="tiny">${f(s.tiny)}</p>` : ""}
 ${d.effects.cinema ? `<button type="button" class="cinema-start" style="margin-top:22px">${f(s.cinemaButton)}</button>` : ""}
+${reactions}
 ${step < d.scenes.length ? next("Weiter →") : ""}`;
       break;
+    }
   }
   return `<section class="screen${step === 1 ? " active" : ""}" data-step="${step}" data-type="${s.type}" id="seite${step}"><div class="card">${body}</div></section>`;
 }
@@ -319,6 +365,24 @@ if(cinema){var cv=document.getElementById('cinemaCanvas'),cctx=cv.getContext('2d
  document.querySelectorAll('.cinema-start').forEach(function(b){b.addEventListener('click',startCinema)});
  document.getElementById('cinemaClose').addEventListener('click',closeCinema);
  addEventListener('resize',function(){if(!cinema.classList.contains('hidden')){cinemaSize();cinemaStars()}},{passive:true})}
+function openGift(w){if(w.classList.contains('open'))return;var sc=w.closest('.screen');w.classList.add('open');var tz=sc.querySelector('.gift-teaser');if(tz)tz.classList.add('hidden');
+ setTimeout(function(){sc.querySelector('.gift-reveal').classList.remove('hidden');var a=sc.querySelector('[data-after]');if(a)a.classList.remove('hidden');burst()},reduced?0:650)}
+document.querySelectorAll('.gift-wrap').forEach(function(w){w.addEventListener('click',function(){openGift(w)});w.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openGift(w)}})});
+function floatEmoji(em){if(reduced)return;for(var i=0;i<14;i++)(function(i){setTimeout(function(){var s=document.createElement('span');s.className='float-emoji';s.textContent=em;s.style.left=(10+Math.random()*80)+'vw';s.style.fontSize=(1.4+Math.random()*1.8)+'rem';s.style.setProperty('--fx',((Math.random()-.5)*120)+'px');s.style.setProperty('--fr',((Math.random()-.5)*80)+'deg');document.body.appendChild(s);setTimeout(function(){s.remove()},2600)},i*90)})(i)}
+document.querySelectorAll('[data-reactions]').forEach(function(box){var sent=null;
+ box.querySelectorAll('.react').forEach(function(b){b.addEventListener('click',function(){
+  var em=b.getAttribute('data-emoji'),lb=b.getAttribute('data-label');
+  box.querySelectorAll('.react').forEach(function(x){x.classList.toggle('picked',x===b)});
+  var done=box.querySelector('.react-done'),th=box.querySelector('.react-thanks'),more=box.querySelector('.react-more'),send=box.querySelector('.react-send');
+  done.classList.remove('hidden');box.querySelector('.react-big').textContent=em;floatEmoji(em);
+  if(CFG.preview){th.textContent='Vorschau: So reagiert die Person – du bekommst die Reaktion dann.';return}
+  if(CFG.reactUrl){th.textContent='Wird gesendet …';
+   fetch(CFG.reactUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({emoji:em,label:lb,id:sent})}).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(j){sent=j.id;th.textContent='Deine Reaktion ist angekommen 💌';more.classList.remove('hidden')}).catch(function(){th.textContent='Hat gerade nicht geklappt – bitte nochmal tippen.'});return}
+  th.textContent='Schick deine Reaktion zurück:';send.classList.remove('hidden');
+  send.onclick=function(){var text=em+' '+lb+'! – Danke für die Überraschung 💌';
+   if(navigator.share){navigator.share({text:text}).catch(function(){})}else{window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank')}}})});
+ var ms=box.querySelector('.react-msg-send');if(ms)ms.addEventListener('click',function(){var inp=box.querySelector('.react-msg'),th=box.querySelector('.react-thanks');if(!sent||!inp.value.trim())return;
+  fetch(CFG.reactUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:sent,message:inp.value.trim()})}).then(function(r){if(!r.ok)throw 0;th.textContent='Danke für deine Worte! 💌';box.querySelector('.react-more').classList.add('hidden')}).catch(function(){th.textContent='Nachricht konnte nicht gesendet werden.'})})});
 if(CFG.start>1){go(CFG.start,true)}else if(!reduced){setTimeout(function(){miniBurst();ribbonRain(22,2200)},450)}
 })();`;
 
@@ -327,6 +391,8 @@ export function renderCardHTML(d: CardData, opts: RenderOptions = {}): string {
   const greeting = d.scenes.find((s) => s.type === "greeting");
   const t = d.theme;
   const cfg = {
+    reactUrl: opts.reactUrl ?? null,
+    preview: !!opts.preview,
     effects: d.effects,
     palette: t.confetti.length ? t.confetti : [t.accent],
     particle: t.accent,

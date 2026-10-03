@@ -2,8 +2,9 @@ import { askJSON } from "./ai";
 import type { AIConfig } from "./settings";
 import { contrast, luminance, mix } from "./color";
 import { occasionLabel, PRESETS, presetTheme } from "./presets";
-import type { Address, CardData, Cinema, Effects, Occasion, Scene, Theme } from "./types";
-import { normalizeCinema, normalizeEffects, normalizeScene, normalizeScenes, normalizeTheme, str } from "./validate";
+import { defaultReactions, giftScene, withGift } from "./templates";
+import type { Address, CardData, Cinema, Effects, Occasion, Reactions, Scene, Theme } from "./types";
+import { normalizeCinema, normalizeEffects, normalizeReactions, normalizeScene, normalizeScenes, normalizeTheme, str } from "./validate";
 
 export interface Brief {
   relation: string;
@@ -11,6 +12,22 @@ export interface Brief {
   occasion: Occasion;
   mood: string[];
   notes: string;
+  /** What the sender gives as a present (optional) – revealed on its own page. */
+  gift?: string;
+}
+
+/** Two writing styles; the learning keeps whichever gets rated better. */
+export const VARIANTS: Record<string, string> = {
+  A: "Schreibstil: erzählerisch und warm – konkrete kleine Momente und Bilder, ruhiger Rhythmus, ehrliche Gefühle.",
+  B: "Schreibstil: kurz und pointiert – knappe Sätze, mehr Augenzwinkern und Wortwitz, wenig Pathos.",
+};
+
+export interface GenOptions {
+  variant?: string;
+  /** Excerpts of texts that were rated well before – style orientation only. */
+  samples?: string[];
+  /** Why the previous version was rejected; the AI gets another try. */
+  feedback?: { reasons: string[]; text: string; previous: string };
 }
 
 const BASE_RULES = `Du bist ein einfühlsamer, humorvoller Texter für persönliche digitale Überraschungskarten auf Deutsch.
@@ -57,22 +74,56 @@ const DRAMATURGY = `Dramaturgie (halte diese Reihenfolge und diese 7 Szenen ein 
 6. check: das scheinbare Ende („…protokoll erfolgreich abgeschlossen“) mit Status-Siegel.
 7. finale: die eine Sache, die noch gesagt werden soll: ein Wunsch-Zitat, 1–2 Absätze Wünsche, Signatur. Dazu die Kino-Texte (cinema) für das große Finale.`;
 
-export async function generateCard(brief: Brief, extra: string, cfg?: AIConfig | null): Promise<{ scenes: Scene[]; cinema: Cinema; topLine: string; provider: string }> {
-  const user = `${briefText(brief)}
-${extra.trim() ? `\nZusätzlicher Wunsch: ${extra.trim()}\n` : ""}
-${DRAMATURGY}
+const GIFT_SCHEMA = `{"type":"gift","eyebrow":"…","title":"…","teaser":"Aufforderung, das Päckchen anzutippen","gift":"das Geschenk, kurz","detail":"1 Satz dazu","button":"Weiter →"}`;
+const REACTIONS_SCHEMA = `"reactions": {"question":"Wie gefällt dir die Überraschung?","options":[{"emoji":"❤️","label":"…"},{"emoji":"…","label":"…"},{"emoji":"…","label":"…"}]}`;
 
-Gib genau dieses JSON-Format zurück (alle Felder ausfüllen, „…“ ersetzen):
-${CARD_SCHEMA}`;
-  const { json, provider } = await askJSON(BASE_RULES, user, 0.95, cfg);
+export interface Generated {
+  scenes: Scene[];
+  cinema: Cinema;
+  topLine: string;
+  reactions: Reactions;
+  variant: string;
+  provider: string;
+}
+
+export async function generateCard(brief: Brief, extra: string, cfg?: AIConfig | null, opts: GenOptions = {}): Promise<Generated> {
+  const variant = opts.variant && VARIANTS[opts.variant] ? opts.variant : "A";
+  const gift = brief.gift?.trim();
+  const schema = CARD_SCHEMA.replace(
+    '\n  ],\n  "cinema"',
+    `${gift ? `,\n    ${GIFT_SCHEMA}` : ""}\n  ],\n  ${REACTIONS_SCHEMA},\n  "cinema"`,
+  );
+  const parts = [
+    briefText(brief),
+    gift ? `Geschenk, das überreicht wird: ${gift}` : "",
+    extra.trim() ? `Zusätzlicher Wunsch: ${extra.trim()}` : "",
+    VARIANTS[variant],
+    opts.samples?.length
+      ? `Formulierungen, die früher sehr gut ankamen (nur als Stil-Orientierung – KEINE Inhalte übernehmen):\n${opts.samples.map((x) => `- ${x}`).join("\n")}`
+      : "",
+    opts.feedback
+      ? `WICHTIG – die letzte Fassung kam NICHT gut an. Gründe: ${opts.feedback.reasons.join(", ") || "keine Angabe"}.${opts.feedback.text ? ` Anmerkung: ${opts.feedback.text}.` : ""} Schreibe eine deutlich andere, bessere Fassung, die genau diese Punkte behebt, und wiederhole keine Formulierungen aus der alten Fassung: ${opts.feedback.previous}`
+      : "",
+    DRAMATURGY +
+      (gift ? `\nZusätzlich direkt VOR dem Finale: gift – die Geschenk-Enthüllung. Spannend ankündigen; "gift" ist das Geschenk in wenigen Worten, "detail" ein persönlicher Satz dazu.` : ""),
+    `Reaktionen: 3–4 Knöpfe, mit denen die beschenkte Person antworten kann – passend zu Anlass und Stimmung, abwechslungsreich (nicht nur Herzen), aus ihrer Sicht formuliert, je höchstens 4 Wörter.`,
+    `Gib genau dieses JSON-Format zurück (alle Felder ausfüllen, „…“ ersetzen):\n${schema}`,
+  ];
+  const { json, provider } = await askJSON(BASE_RULES, parts.filter(Boolean).join("\n\n"), opts.feedback ? 1 : 0.95, cfg);
   const o = (json ?? {}) as Record<string, unknown>;
-  const scenes = normalizeScenes(o.scenes, brief.address, []);
+  let scenes = normalizeScenes(o.scenes, brief.address, []);
   if (scenes.length < 3) throw new Error("Die KI hat keine vollständige Karte geliefert. Bitte erneut versuchen.");
+  if (gift) {
+    const fromAI = scenes.find((x) => x.type === "gift");
+    scenes = withGift(scenes, { ...(fromAI && fromAI.type === "gift" ? fromAI : giftScene(brief.address)), gift });
+  }
   const fbCinema: Cinema = { kicker: "Ein kleiner Nachtrag", forLabel: "Für", title: occasionLabel(brief.occasion), final: "", emoji: "✨" };
   return {
     scenes,
     cinema: normalizeCinema(o.cinema, fbCinema),
     topLine: str(o.topLine, "Eine kleine Überraschung", 120),
+    reactions: normalizeReactions(o.reactions, defaultReactions(brief.occasion, brief.address, brief.mood)),
+    variant,
     provider,
   };
 }

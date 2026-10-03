@@ -46,7 +46,19 @@ export default function InfoPage() {
         </nav>
 
         <section className="panel stack" id="neu">
-          <h2>🆕 Neu in Version 0.3 <span className="muted small">(Oktober 2026)</span></h2>
+          <h2>🆕 Neu in Version 0.4</h2>
+          <ul className="info-list">
+            <li><b>⚡ Schnell-Karte:</b> Name, Beziehung, ein bis zwei Fragen – den Rest macht die KI.</li>
+            <li><b>👍 / 👎 bewerten:</b> Bei 👎 sagst du, was nicht passt, und die KI bekommt bis zu zwei Versuche, dich zu überzeugen.</li>
+            <li><b>🧠 Funkelpost lernt:</b> Gut bewertete Designs werden zuerst vorgeschlagen, der besser bewertete Schreibstil setzt sich durch, gelungene Formulierungen dienen als Vorbild.</li>
+            <li><b>🎁 Geschenk-Seite:</b> Ein Päckchen zum Auspacken – mit Konfetti und deinem Geschenk.</li>
+            <li><b>💌 Reaktionen:</b> Am Ende der Karte antwortet die Person mit passenden Knöpfen (❤️, 😂, 🥂, 💪 …) – in der Server-Version kommt die Reaktion direkt bei dir an, sonst per WhatsApp oder Nachricht.</li>
+            <li><b>Vorlagen aus der Galerie</b> werden komplett übernommen – Design, Effekte und Texte.</li>
+          </ul>
+        </section>
+
+        <section className="panel stack">
+          <h2>Version 0.3 <span className="muted small">(Oktober 2026)</span></h2>
           <ul className="info-list">
             <li><b>Neuer Name:</b> aus „Bdgen“ wird <b>Funkelpost</b>.</li>
             <li><b>6 neue Designs:</b> Schwarz & Gold, Rosé-Gold, Holo-Glanz, Matrix (mit Zeichenregen), Block-Welt (Roblox-Stil) und Neon-Party.</li>
@@ -65,9 +77,10 @@ export default function InfoPage() {
             <li>📷 <b>Eigene Fotos</b> in die Karte einfügen (z. B. ein Kinderfoto im Finale)</li>
             <li>🎨 <b>KI-Bilder</b> passend zur Karte – optional, da die Bildmodelle Geld kosten</li>
             <li>🎵 <b>Musik oder Sprachnachricht</b>, die beim Öffnen abgespielt wird</li>
-            <li>🔔 <b>Erinnerung</b> ein paar Tage vor Geburtstagen (Server-Version)</li>
+            <li>🔔 <b>Erinnerung</b> ein paar Tage vor Geburtstagen – und eine Benachrichtigung, wenn eine Reaktion kommt (Server-Version)</li>
             <li>👨‍👩‍👧 <b>Mehrere Benutzer</b> mit eigenem Login (Server-Version)</li>
-            <li>🧩 <b>Neue Seitentypen:</b> Gutschein, Rätsel, Zeitstrahl mit gemeinsamen Erinnerungen</li>
+            <li>🧩 <b>Neue Seitentypen:</b> Rätsel, Zeitstrahl mit gemeinsamen Erinnerungen</li>
+            <li>📊 <b>Gemeinsames Lernen:</b> Bewertungen der ganzen Familie zusammenführen (Server-Version)</li>
             <li>🌍 Karten auch auf <b>Englisch, Türkisch & Co.</b></li>
             <li>🖨️ <b>Druckversion</b> als PDF</li>
           </ul>

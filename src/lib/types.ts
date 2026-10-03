@@ -86,7 +86,18 @@ export interface FinaleScene {
   cinemaButton: string;
 }
 
-export type Scene = GreetingScene | TextScene | QuizScene | ListScene | CheckScene | FinaleScene;
+/** Gift reveal: a wrapped box that opens on tap. */
+export interface GiftScene {
+  type: "gift";
+  eyebrow: string;
+  title: string;
+  teaser: string;
+  gift: string;
+  detail: string;
+  button: string;
+}
+
+export type Scene = GreetingScene | TextScene | QuizScene | ListScene | CheckScene | GiftScene | FinaleScene;
 export type SceneType = Scene["type"];
 
 export interface Cinema {
@@ -140,6 +151,24 @@ export interface Effects {
   confettiShape: ConfettiShape;
 }
 
+export interface ReactionOption {
+  emoji: string;
+  label: string;
+}
+
+/** Reaction buttons the recipient sees at the end of the card. */
+export interface Reactions {
+  enabled: boolean;
+  question: string;
+  options: ReactionOption[];
+}
+
+/** How the texts were produced – used to learn which prompt works best. */
+export interface GenMeta {
+  variant?: string;
+  provider?: string;
+}
+
 export interface CardData {
   recipientName: string;
   address: Address;
@@ -150,6 +179,36 @@ export interface CardData {
   scenes: Scene[];
   cinema: Cinema;
   iosHint: boolean;
+  reactions: Reactions;
+  meta?: GenMeta;
+}
+
+export interface Reaction {
+  id: string;
+  cardId: string;
+  emoji: string;
+  label: string;
+  message: string;
+  createdAt: string;
+}
+
+/** The sender's rating of a card – feeds the learning. Never contains names or notes. */
+export interface Rating {
+  id: string;
+  cardId: string;
+  value: 1 | -1;
+  reasons: string[];
+  attempt: number;
+  variant: string;
+  provider: string;
+  preset: string;
+  occasion: Occasion;
+  address: Address;
+  relationGroup: string;
+  mood: string[];
+  /** Short excerpt of liked texts (with {{name}} placeholder) – only kept for 👍 and if allowed. */
+  sample?: string;
+  createdAt: string;
 }
 
 export interface Card {

@@ -1,9 +1,9 @@
 import { normalizeBackup, type Backup, type ContactInput } from "./records";
-import type { Card, Contact } from "./types";
+import type { Card, Contact, Rating } from "./types";
 
 export { contactInput, type ContactInput } from "./records";
 
-const KEYS = { contacts: "bdgen:v1:contacts", cards: "bdgen:v1:cards" };
+const KEYS = { contacts: "bdgen:v1:contacts", cards: "bdgen:v1:cards", ratings: "bdgen:v1:ratings" };
 
 
 const now = () => new Date().toISOString();
@@ -84,7 +84,8 @@ export const cards = {
     const list = read<Card>(KEYS.cards);
     const cur = list.find((k) => k.id === id);
     if (!cur) return null;
-    const next: Card = { ...cur, ...patch, updatedAt: now() };
+    const defined = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined));
+    const next: Card = { ...cur, ...defined, updatedAt: now() };
     write(KEYS.cards, list.map((k) => (k.id === id ? next : k)));
     return next;
   },
@@ -105,6 +106,19 @@ export function importBackup(raw: unknown): { contacts: number; cards: number } 
   write(KEYS.cards, mergeById(read<Card>(KEYS.cards), n.cards));
   return { contacts: n.contacts.length, cards: n.cards.length };
 }
+
+export const ratings = {
+  list(): Rating[] {
+    return read<Rating>(KEYS.ratings);
+  },
+  add(r: Rating): void {
+    // Keep the newest 500 – plenty for learning, small in storage.
+    write(KEYS.ratings, [...read<Rating>(KEYS.ratings), r].slice(-500));
+  },
+  clear(): void {
+    write(KEYS.ratings, []);
+  },
+};
 
 /** Asks the browser not to evict our data (helps on iOS). */
 export function requestPersistence() {

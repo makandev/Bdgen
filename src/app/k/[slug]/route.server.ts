@@ -17,5 +17,6 @@ export async function GET(_req: Request, ctx: Ctx) {
     "referrer-policy": "no-referrer",
   };
   if (!card || !card.shared) return new Response(NOT_FOUND, { status: 404, headers });
-  return new Response(renderCardHTML(card.data), { headers });
+  const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  return new Response(renderCardHTML(card.data, { reactUrl: `${base}/api/react/${card.slug}/` }), { headers });
 }

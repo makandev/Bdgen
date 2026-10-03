@@ -7,6 +7,7 @@ import { dateLabel, daysUntil } from "@/components/dates";
 import { TopBar } from "@/components/TopBar";
 import { OCCASIONS, relationEmoji } from "@/lib/presets";
 import { repo, SERVER } from "@/lib/repo";
+import type { Reaction } from "@/lib/types";
 import type { Contact } from "@/lib/types";
 
 type Row = Contact & { cardCount: number };
@@ -16,10 +17,12 @@ export default function Home() {
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [ai, setAi] = useState<string | null>(null);
+  const [reacts, setReacts] = useState<(Reaction & { cardTitle: string; contactId: string | null; contactName: string })[]>([]);
 
   useEffect(() => {
     repo.listContacts().then(setRows).catch((e) => setError(errText(e)));
     repo.aiSource().then(setAi).catch(() => {});
+    if (SERVER) repo.recentReactions().then(setReacts).catch(() => {});
   }, []);
 
   const filtered = useMemo(() => {
@@ -37,6 +40,31 @@ export default function Home() {
       </TopBar>
 
       <div className="stack">
+        <Link href="/schnell/" className="quick-cta">
+          <span className="qi" aria-hidden="true">⚡</span>
+          <span>
+            <strong>Schnell-Karte in 1 Minute</strong>
+            <span className="muted small"> – sag, für wen, beantworte ein, zwei Fragen, den Rest zaubert die KI.</span>
+          </span>
+          <span className="btn sm">Los →</span>
+        </Link>
+        {reacts.length > 0 && (
+          <div className="panel stack" style={{ gap: 8 }}>
+            <h3>💌 Neue Reaktionen</h3>
+            <div className="reaction-list">
+              {reacts.slice(0, 4).map((r) => (
+                <Link key={r.id} href={`/karte/?id=${r.cardId}`} className="reaction-item" style={{ textDecoration: "none", color: "inherit" }}>
+                  <span className="em">{r.emoji}</span>
+                  <div>
+                    <strong>{r.contactName || r.cardTitle}</strong>: {r.label}
+                    {r.message && <div className="small">„{r.message}“</div>}
+                    <div className="muted small">{new Date(r.createdAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="spread">
           <div>
             <div className="eyebrow">Deine Menschen</div>

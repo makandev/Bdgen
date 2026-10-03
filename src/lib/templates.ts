@@ -1,5 +1,5 @@
 import { presetEffects, presetTheme } from "./presets";
-import type { Address, CardData, Cinema, Occasion, Scene, SceneType } from "./types";
+import type { Address, CardData, Cinema, GiftScene, Occasion, ReactionOption, Reactions, Scene, SceneType } from "./types";
 
 /** Picks the form from `[[Sie-Form|du-Form]]` markers. */
 export function addr(text: string, address: Address): string {
@@ -194,7 +194,77 @@ export function defaultCinema(occasion: Occasion, address: Address): Cinema {
   );
 }
 
+export function giftScene(address: Address, gift = ""): GiftScene {
+  return deep(
+    {
+      type: "gift" as const,
+      eyebrow: "Psst … da ist noch was",
+      title: "Ganz ohne Geschenk geht es natürlich nicht.",
+      teaser: "Tipp auf das Päckchen, um es auszupacken.",
+      gift: gift.trim() || "Eine kleine Überraschung",
+      detail: "[[Ich hoffe, Sie freuen sich|Ich hoffe, du freust dich]] – ausgesucht mit viel Liebe. 🎁",
+      button: "Weiter →",
+    },
+    address,
+  );
+}
+
+/** Puts a gift scene right before the finale (or replaces an existing one). */
+export function withGift(scenes: Scene[], gift: GiftScene): Scene[] {
+  const rest = scenes.filter((s) => s.type !== "gift");
+  const at = rest.findIndex((s) => s.type === "finale");
+  return at < 0 ? [...rest, gift] : [...rest.slice(0, at), gift, ...rest.slice(at)];
+}
+
+const REACTIONS: Record<Occasion, ReactionOption[]> = {
+  geburtstag: [
+    { emoji: "❤️", label: "Hab mich riesig gefreut" },
+    { emoji: "🥹", label: "Bin ganz gerührt" },
+    { emoji: "😂", label: "Musste so lachen" },
+    { emoji: "🎉", label: "Lass uns feiern!" },
+  ],
+  danke: [
+    { emoji: "❤️", label: "Von Herzen gern" },
+    { emoji: "🥹", label: "Das rührt mich" },
+    { emoji: "🙏", label: "Danke zurück" },
+    { emoji: "😊", label: "Hat meinen Tag gemacht" },
+  ],
+  besserung: [
+    { emoji: "❤️", label: "Danke, das tut gut" },
+    { emoji: "💪", label: "Es geht bergauf" },
+    { emoji: "🥹", label: "Bin gerührt" },
+    { emoji: "🫶", label: "Fühl dich gedrückt" },
+  ],
+  jubilaeum: [
+    { emoji: "❤️", label: "Wunderschön" },
+    { emoji: "🥂", label: "Darauf stoßen wir an" },
+    { emoji: "🥹", label: "Ganz gerührt" },
+    { emoji: "😂", label: "Hab gelacht" },
+  ],
+  einfach: [
+    { emoji: "❤️", label: "Hab mich so gefreut" },
+    { emoji: "☀️", label: "Hat meinen Tag gerettet" },
+    { emoji: "🥹", label: "Bin gerührt" },
+    { emoji: "😂", label: "Musste lachen" },
+  ],
+};
+
+/** Reaction buttons that fit the situation; a funny mood puts the laughing one first. */
+export function defaultReactions(occasion: Occasion, address: Address, mood: string[] = []): Reactions {
+  let options = [...(REACTIONS[occasion] ?? REACTIONS.geburtstag)];
+  if (mood.some((m) => /witzig|frech|verspielt|cool/.test(m))) {
+    const fun = options.find((o) => o.emoji === "😂");
+    if (fun) options = [fun, ...options.filter((o) => o !== fun)];
+  }
+  return {
+    enabled: true,
+    question: address === "sie" ? "Wie gefällt Ihnen die Überraschung?" : "Wie gefällt dir die Überraschung?",
+    options,
+  };
+}
+
 export function blankScene(type: SceneType, address: Address): Scene {
+  if (type === "gift") return giftScene(address);
   const base = defaultScenes("geburtstag", address);
   const found = base.find((s) => s.type === type);
   if (found) return structuredClone(found);
@@ -218,5 +288,6 @@ export function defaultCardData(opts: {
     scenes: defaultScenes(opts.occasion, opts.address),
     cinema: defaultCinema(opts.occasion, opts.address),
     iosHint: true,
+    reactions: defaultReactions(opts.occasion, opts.address),
   };
 }

@@ -48,3 +48,10 @@ test("store: renaming a contact renames its cards, deleting removes them", async
   assert.equal(cards.get(k.id)!.data.recipientName, "Lenchen");
   assert.throws(() => importBackup({ foo: 1 }), /keine Funkelpost-Sicherung/);
 });
+
+test("store: saving only the data keeps the title", async () => {
+  const { cards } = await import("../src/lib/store");
+  const k = cards.create({ contactId: null, title: "Mein Titel", data: defaultCardData({ recipientName: "A", address: "du", occasion: "danke" }) });
+  cards.update(k.id, { title: undefined, data: k.data });
+  assert.equal(cards.get(k.id)!.title, "Mein Titel");
+});

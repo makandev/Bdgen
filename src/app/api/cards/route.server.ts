@@ -3,7 +3,7 @@ import { startData } from "@/lib/cardbase";
 import { generateCard } from "@/lib/prompts";
 import { str } from "@/lib/validate";
 import { cards, contacts } from "@/server/db";
-import { body, briefFor, fail, handle, json, serverAI } from "@/server/http";
+import { body, briefFor, fail, handle, json, serverAI, serverGenOptions } from "@/server/http";
 
 export function POST(req: Request) {
   return handle(async () => {
@@ -15,6 +15,7 @@ export function POST(req: Request) {
       mode: b.mode === "ai" ? "ai" : "template",
       extra: str(b.extra, "", 1000),
       example: typeof b.example === "string" ? b.example : undefined,
+      gift: str(b.gift, "", 160),
     });
     let card = cards.create({ contactId: contact.id, title, data });
     let warning: string | undefined;
@@ -24,8 +25,10 @@ export function POST(req: Request) {
         warning = "Auf dem Server ist keine KI eingerichtet – die Karte wurde aus der Vorlage erstellt.";
       } else {
         try {
-          const gen = await generateCard(briefFor(card), aiExtra, cfg);
-          card = cards.update(card.id, { data: { ...data, scenes: gen.scenes, cinema: gen.cinema, topLine: gen.topLine } })!;
+          const gen = await generateCard(briefFor(card), aiExtra, cfg, serverGenOptions(card));
+          card = cards.update(card.id, {
+            data: { ...data, scenes: gen.scenes, cinema: gen.cinema, topLine: gen.topLine, reactions: gen.reactions, meta: { variant: gen.variant, provider: gen.provider } },
+          })!;
         } catch (e) {
           warning = `Die KI war nicht erreichbar, deshalb wurde die Karte aus der Vorlage erstellt. ${e instanceof Error ? e.message : ""}`;
         }
