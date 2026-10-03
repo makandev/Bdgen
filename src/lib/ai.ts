@@ -67,7 +67,7 @@ async function callOpenRouter(cfg: AIConfig, system: string, user: string, tempe
     `${(cfg.openrouterBaseUrl || "https://openrouter.ai/api/v1").replace(/\/$/, "")}/chat/completions`,
     {
       authorization: `Bearer ${cfg.openrouter}`,
-      "x-title": "Bdgen",
+      "x-title": "Funkelpost",
     },
     {
       model,

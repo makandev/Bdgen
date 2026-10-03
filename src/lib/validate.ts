@@ -1,8 +1,18 @@
 import { DEFAULT_EFFECTS, OCCASIONS, PRESETS } from "./presets";
 import { blankScene } from "./templates";
 import type {
-  Address, CardData, Cinema, DayText, Effects, HeadingFont, Occasion, QuizOption, Scene, SceneType, Theme,
+  Address, Backdrop, CardData, CardStyle, Cinema, ConfettiShape, DayText, Effects, HeadingFont, Occasion, QuizOption, Scene,
+  SceneType, Theme,
 } from "./types";
+
+function oneOf<T extends string>(v: unknown, allowed: readonly T[], fallback: T): T {
+  return allowed.includes(v as T) ? (v as T) : fallback;
+}
+
+const FONTS: HeadingFont[] = ["serif", "sans", "script", "mono", "block"];
+const STYLES: CardStyle[] = ["glass", "luxe", "holo", "terminal", "pixel"];
+const BACKDROPS: Backdrop[] = ["dots", "sparkle", "matrix", "blocks", "aurora"];
+const SHAPES: ConfettiShape[] = ["strip", "square", "heart", "star", "glyph"];
 
 type Obj = Record<string, unknown>;
 
@@ -152,7 +162,6 @@ export function normalizeScenes(raw: unknown, addr: Address, fallback: Scene[]):
 
 export function normalizeTheme(raw: unknown, fb: Theme): Theme {
   const o = isObj(raw) ? raw : {};
-  const fonts: HeadingFont[] = ["serif", "sans", "script"];
   const confetti = Array.isArray(o.confetti)
     ? o.confetti.map((c) => color(c, "")).filter(Boolean).slice(0, 8)
     : fb.confetti;
@@ -169,7 +178,8 @@ export function normalizeTheme(raw: unknown, fb: Theme): Theme {
     accentDark: color(o.accentDark, fb.accentDark),
     cinemaBg: color(o.cinemaBg, fb.cinemaBg),
     confetti: confetti.length ? confetti : fb.confetti,
-    headingFont: fonts.includes(o.headingFont as HeadingFont) ? (o.headingFont as HeadingFont) : fb.headingFont,
+    headingFont: oneOf(o.headingFont, FONTS, oneOf(fb.headingFont, FONTS, "serif")),
+    style: oneOf(o.style, STYLES, oneOf(fb.style, STYLES, "glass")),
     dark: bool(o.dark, fb.dark),
   };
 }
@@ -187,6 +197,8 @@ export function normalizeEffects(raw: unknown, fb: Effects = DEFAULT_EFFECTS): E
     progress: bool(o.progress, fb.progress),
     clock: bool(o.clock, fb.clock),
     speed: num(o.speed, fb.speed, 0.5, 1.6),
+    backdrop: oneOf(o.backdrop, BACKDROPS, oneOf(fb.backdrop, BACKDROPS, "dots")),
+    confettiShape: oneOf(o.confettiShape, SHAPES, oneOf(fb.confettiShape, SHAPES, "strip")),
   };
 }
 

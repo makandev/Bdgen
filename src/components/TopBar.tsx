@@ -9,10 +9,12 @@ export function TopBar({ children }: { children?: React.ReactNode }) {
   return (
     <header className="topbar">
       <Link href="/" className="brand">
-        <span className="brand-mark">✦</span> Bdgen
+        <span className="brand-mark">✦</span> Funkelpost
       </Link>
       <div className="row">
         {children}
+        <Link href="/beispiele/" className="btn ghost sm icon" title="Beispiele" aria-label="Beispiele">👀</Link>
+        <Link href="/infos/" className="btn ghost sm icon" title="Infos & KI-Leitfaden" aria-label="Infos">ℹ️</Link>
         <button className="btn ghost sm icon" onClick={showIntro} title="Hilfe & Einführung" aria-label="Hilfe">?</button>
         <Link href="/einstellungen/" className="btn ghost sm icon" title="Einstellungen" aria-label="Einstellungen">⚙</Link>
         {hasVault && (

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { errText } from "@/components/client";
 import { dateLabel, daysUntil } from "@/components/dates";
 import { TopBar } from "@/components/TopBar";
-import { OCCASIONS } from "@/lib/presets";
+import { OCCASIONS, relationEmoji } from "@/lib/presets";
 import { repo, SERVER } from "@/lib/repo";
 import type { Contact } from "@/lib/types";
 
@@ -81,7 +81,8 @@ export default function Home() {
               Leg die erste Person an – mit ein paar Stichworten, Erinnerungen oder Gefühlen. Den Rest schreibt die KI.
             </p>
             <div>
-              <Link href="/kontakt/?id=neu" className="btn">Erste Person anlegen →</Link>
+              <Link href="/kontakt/?id=neu" className="btn">Erste Person anlegen →</Link>{" "}
+              <Link href="/beispiele/" className="btn ghost">👀 Beispiele ansehen</Link>
             </div>
           </div>
         )}
@@ -92,7 +93,7 @@ export default function Home() {
             return (
               <Link key={r.id} href={`/kontakt/?id=${r.id}`} className="panel contact-card">
                 <div className="row" style={{ flexWrap: "nowrap" }}>
-                  <div className="avatar">{r.name.replace(/^(frau|herr)\s+/i, "").charAt(0).toUpperCase()}</div>
+                  <div className="avatar emoji" aria-hidden="true">{relationEmoji(r.relation)}</div>
                   <div style={{ minWidth: 0 }}>
                     <h3 style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</h3>
                     <div className="muted small">

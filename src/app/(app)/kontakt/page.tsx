@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { errText } from "@/components/client";
 import { TopBar } from "@/components/TopBar";
-import { MOODS, NOTE_STARTERS, OCCASIONS, PRESETS, RELATIONS } from "@/lib/presets";
+import { MOODS, NOTE_STARTERS, OCCASIONS, PRESETS } from "@/lib/presets";
+import { RelationPicker } from "@/components/RelationPicker";
+import { PresetGrid } from "@/components/Swatch";
 import { contactInput } from "@/lib/records";
 import { repo } from "@/lib/repo";
 import type { Address, Card, Contact, Occasion } from "@/lib/types";
@@ -31,7 +33,11 @@ function ContactEditor() {
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<"" | "create">("");
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
-  const [preset, setPreset] = useState("gold");
+  const params = useSearchParams();
+  const [preset, setPreset] = useState(() => {
+    const d = params.get("design");
+    return d && PRESETS[d] ? d : "gold";
+  });
   const [extra, setExtra] = useState("");
   const [ai, setAi] = useState<boolean | null>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
@@ -134,7 +140,7 @@ function ContactEditor() {
         <Link href="/" className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
 
-      <div className="editor" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,380px)" }}>
+      <div className="editor contact-layout">
         <div className="stack">
           <div>
             <div className="eyebrow">{isNew ? "Neue Person" : "Person"}</div>
@@ -153,22 +159,9 @@ function ContactEditor() {
               <small>So wird die Person in der Karte angesprochen. Der Name wird nie an die KI geschickt.</small>
             </label>
 
+            <RelationPicker value={form.relation} onChange={(v) => set("relation", v)} />
+
             <div className="row" style={{ alignItems: "flex-end" }}>
-              <label className="field grow" style={{ minWidth: 180 }}>
-                <span>Beziehung</span>
-                <input
-                  type="text"
-                  list="relations"
-                  value={form.relation}
-                  placeholder="z. B. Schwester, Kollegin"
-                  onChange={(e) => set("relation", e.target.value)}
-                />
-                <datalist id="relations">
-                  {RELATIONS.map((r) => (
-                    <option key={r} value={r} />
-                  ))}
-                </datalist>
-              </label>
               <div className="field">
                 <span style={{ fontWeight: 600, color: "var(--text2)", fontSize: ".85rem" }}>Anrede</span>
                 <div className="seg">
@@ -201,9 +194,9 @@ function ContactEditor() {
 
           <section className="panel stack">
             <div>
-              <h2>Was soll rüberkommen?</h2>
+              <h2>✨ Erzähl der KI von der Person</h2>
               <p className="muted small" style={{ margin: "4px 0 0" }}>
-                Keine fertigen Texte nötig – schreib Situationen, Gefühle oder Kleinigkeiten. Die KI macht daraus die Karte.
+                Du schreibst keine Karte – nur ein paar Stichworte: Situationen, Gefühle, Kleinigkeiten. Die KI macht daraus die ganze Karte.
               </p>
             </div>
             <div className="tip">
@@ -229,7 +222,7 @@ function ContactEditor() {
               </div>
             </div>
             <label className="field">
-              <span>Stichpunkte</span>
+              <span>Stichworte</span>
               <textarea
                 ref={notesRef}
                 rows={8}
@@ -269,27 +262,8 @@ function ContactEditor() {
               <div className="eyebrow">Neue Karte</div>
               <h2>Design wählen</h2>
             </div>
-            <div className="swatches">
-              {Object.entries(PRESETS).map(([key, p]) => (
-                <button key={key} type="button" className={`swatch${preset === key ? " on" : ""}`} onClick={() => setPreset(key)}>
-                  <div
-                    className="sw"
-                    style={{
-                      background: `linear-gradient(135deg, ${p.theme.bg}, ${p.theme.bg2})`,
-                      boxShadow: `inset 0 0 0 1px ${p.theme.accent}33`,
-                    }}
-                  >
-                    <span
-                      style={{
-                        position: "absolute", right: 8, bottom: 8, width: 22, height: 22, borderRadius: "50%",
-                        background: `linear-gradient(135deg, ${p.theme.accentLight}, ${p.theme.accent}, ${p.theme.accentDark})`,
-                      }}
-                    />
-                  </div>
-                  {p.label}
-                </button>
-              ))}
-            </div>
+            <PresetGrid value={preset} onPick={setPreset} />
+            <Link href="/beispiele/" className="small">👀 Alle Designs als fertige Beispiele ansehen →</Link>
             <label className="field">
               <span>Besonderer Wunsch an die KI (optional)</span>
               <input
@@ -308,8 +282,13 @@ function ContactEditor() {
                 "✨ Karte mit KI erstellen"
               )}
             </button>
-            <button className="btn ghost" onClick={() => createCard("template")} disabled={!!busy || !form.name.trim()}>
-              Aus Vorlage erstellen
+            <button
+              type="button"
+              className="linklike small"
+              onClick={() => createCard("template")}
+              disabled={!!busy || !form.name.trim()}
+            >
+              oder ohne KI mit einer Vorlage starten
             </button>
             {ai === false && (
               <p className="muted small" style={{ margin: 0 }}>

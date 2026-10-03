@@ -1,0 +1,39 @@
+# Funkelpost – Server-Version
+# Start:   ./install.sh   (oder: docker compose up -d --build)
+# HTTPS:   in .env DOMAIN=deine-domain.de und COMPOSE_PROFILES=https setzen (macht install.sh automatisch)
+
+services:
+  funkelpost:
+    build: .
+    image: funkelpost:latest
+    container_name: funkelpost
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_PATH: /app/data/funkelpost.db
+    volumes:
+      - funkelpost-data:/app/data
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:${PORT:-3000}:3000"
+
+  # Automatisches HTTPS (Let's Encrypt). Nur aktiv mit COMPOSE_PROFILES=https.
+  caddy:
+    image: caddy:2-alpine
+    container_name: funkelpost-caddy
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on: [funkelpost]
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  funkelpost-data:
+  caddy-data:
+  caddy-config:

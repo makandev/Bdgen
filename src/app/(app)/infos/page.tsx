@@ -1,0 +1,171 @@
+"use client";
+
+import Link from "next/link";
+import { TopBar } from "@/components/TopBar";
+import { SERVER } from "@/lib/repo";
+
+const GEMINI: [string, string, string][] = [
+  ["gemini-flash-latest", "Standard in Funkelpost", "Zeigt automatisch auf das neueste Flash-Modell – du musst nie etwas umstellen."],
+  ["gemini-3.8-flash", "⭐ Beste Texte (kostenlos)", "Aktuell das stärkste kostenlose Modell. Sehr gutes Deutsch, versteht Stimmungen gut."],
+  ["gemini-3.5-flash-lite", "⚡ Am schnellsten", "Antwortet am schnellsten und hat die großzügigsten Gratis-Limits, die Texte sind etwas einfacher."],
+  ["gemini-2.5-pro", "Nur für Alt-Projekte", "Für neue Schlüssel nicht mehr freigeschaltet."],
+];
+
+const GEMINI_PAID: [string, string][] = [
+  ["gemini-3.1-flash-image („Nano Banana 2“)", "Bilder erzeugen & bearbeiten"],
+  ["gemini-3-pro-image („Nano Banana Pro“)", "Beste Bildqualität"],
+  ["veo-3.1-generate-preview", "Kurze Videos"],
+  ["lyria-3.5", "Musik"],
+];
+
+const OPENROUTER: [string, string, string][] = [
+  ["openrouter/free", "Standard in Funkelpost", "Wählt automatisch ein gerade verfügbares Gratis-Modell. Am bequemsten."],
+  ["google/gemma-4-31b-it:free", "⭐ Empfehlung für Deutsch", "Googles offenes Modell – schreibt natürliches Deutsch."],
+  ["qwen/qwen3.8-27b:free", "Gute Alternative", "Stark und mehrsprachig."],
+  ["nvidia/nemotron-3-super-120b-a12b:free", "Für längere Texte", "Großes Modell, gründlich, manchmal etwas langsamer."],
+];
+
+export default function InfoPage() {
+  return (
+    <div className="shell" style={{ maxWidth: 860 }}>
+      <TopBar>
+        <Link href="/" className="btn ghost sm hide-sm">← Übersicht</Link>
+      </TopBar>
+      <div className="stack">
+        <div>
+          <div className="eyebrow">Infos</div>
+          <h1>Neuigkeiten, Pläne & KI-Leitfaden</h1>
+        </div>
+
+        <nav className="chips">
+          <a className="chip" href="#neu">🆕 Neu</a>
+          <a className="chip" href="#geplant">🗺️ Geplant</a>
+          <a className="chip" href="#ki">🤖 KI-Leitfaden</a>
+          <a className="chip" href="#bilder">🎨 Bilder oder Code?</a>
+          <a className="chip" href="#server">🖥️ Server-Version</a>
+        </nav>
+
+        <section className="panel stack" id="neu">
+          <h2>🆕 Neu in Version 0.3 <span className="muted small">(Oktober 2026)</span></h2>
+          <ul className="info-list">
+            <li><b>Neuer Name:</b> aus „Bdgen“ wird <b>Funkelpost</b>.</li>
+            <li><b>6 neue Designs:</b> Schwarz & Gold, Rosé-Gold, Holo-Glanz, Matrix (mit Zeichenregen), Block-Welt (Roblox-Stil) und Neon-Party.</li>
+            <li><b>Neue Effekte:</b> Funkelsterne, Polarlicht, schwebende Blöcke – und Konfetti als Herzen, Sterne, Quadrate oder Zeichen.</li>
+            <li><b>Beispiel-Galerie:</b> <Link href="/beispiele/">zwölf fertige Karten</Link> zum Anschauen.</li>
+            <li><b>Über 70 Personen</b> zur Auswahl – von Tochter und Enkel bis Erzieherin und Haustier, jeweils mit Emoji.</li>
+            <li><b>KI zuerst:</b> Texte schreibt die KI, selbst ändern geht weiterhin, ist aber eingeklappt.</li>
+            <li><b>Server-Version</b> mit Installationsskript für den eigenen Server.</li>
+          </ul>
+        </section>
+
+        <section className="panel stack" id="geplant">
+          <h2>🗺️ Geplant & noch offen</h2>
+          <p className="muted small" style={{ margin: 0 }}>Ideen für die nächsten Versionen – noch nicht umgesetzt.</p>
+          <ul className="info-list">
+            <li>📷 <b>Eigene Fotos</b> in die Karte einfügen (z. B. ein Kinderfoto im Finale)</li>
+            <li>🎨 <b>KI-Bilder</b> passend zur Karte – optional, da die Bildmodelle Geld kosten</li>
+            <li>🎵 <b>Musik oder Sprachnachricht</b>, die beim Öffnen abgespielt wird</li>
+            <li>🔔 <b>Erinnerung</b> ein paar Tage vor Geburtstagen (Server-Version)</li>
+            <li>👨‍👩‍👧 <b>Mehrere Benutzer</b> mit eigenem Login (Server-Version)</li>
+            <li>🧩 <b>Neue Seitentypen:</b> Gutschein, Rätsel, Zeitstrahl mit gemeinsamen Erinnerungen</li>
+            <li>🌍 Karten auch auf <b>Englisch, Türkisch & Co.</b></li>
+            <li>🖨️ <b>Druckversion</b> als PDF</li>
+          </ul>
+        </section>
+
+        <section className="panel stack" id="ki">
+          <h2>🤖 KI-Leitfaden <span className="muted small">(Stand: Oktober 2026)</span></h2>
+          <p style={{ margin: 0 }}>
+            Funkelpost nutzt die KI für zwei Dinge: <b>Texte schreiben</b> aus deinen Stichworten und <b>Design & Effekte einstellen</b> nach deinem Wunsch.
+            Dafür reicht ein kostenloser Schlüssel von Google Gemini oder OpenRouter.
+          </p>
+
+          <h3>Google Gemini – kostenlos über Google AI Studio</h3>
+          <div className="model-table">
+            {GEMINI.map(([id, tag, text]) => (
+              <div key={id} className="model-row">
+                <code>{id}</code>
+                <span className="tag">{tag}</span>
+                <span className="small muted">{text}</span>
+              </div>
+            ))}
+          </div>
+          <div className="tip">
+            <span aria-hidden="true">💶</span>
+            <span>
+              <b>Bilder, Videos und Musik sind bei Gemini kostenpflichtig</b> – im Gratis-Kontingent gibt es dafür keine Freimenge:{" "}
+              {GEMINI_PAID.map(([m, what], i) => (
+                <span key={m}>{i > 0 && " · "}<code>{m}</code> ({what})</span>
+              ))}
+            </span>
+          </div>
+
+          <h3>OpenRouter – kostenlose Modelle (alle nur Text)</h3>
+          <div className="model-table">
+            {OPENROUTER.map(([id, tag, text]) => (
+              <div key={id} className="model-row">
+                <code>{id}</code>
+                <span className="tag">{tag}</span>
+                <span className="small muted">{text}</span>
+              </div>
+            ))}
+          </div>
+          <p className="small muted" style={{ margin: 0 }}>
+            Weniger geeignet: reine Code-Modelle (z. B. <code>cohere/north-mini-code:free</code>), Filter-Modelle (<code>…content-safety</code>) und sehr kleine
+            Modelle (z. B. <code>liquid/lfm-2.5-2.6b:free</code>) – die schreiben deutlich schwächeres Deutsch. Bei OpenRouter gibt es derzeit
+            <b> kein kostenloses Modell, das Bilder erzeugen kann</b>.
+          </p>
+
+          <div className="tip">
+            <span aria-hidden="true">💡</span>
+            <span>
+              <b>So stellst du das Modell um:</b>{" "}
+              {SERVER ? (
+                <>in der <code>.env</code> des Servers mit <code>GEMINI_MODEL=…</code> bzw. <code>OPENROUTER_MODEL=…</code>, danach neu starten.</>
+              ) : (
+                <>unter <Link href="/einstellungen/">⚙ Einstellungen → Erweitert</Link>. Mit „KI testen“ siehst du sofort, ob es klappt.</>
+              )}
+            </span>
+          </div>
+          <p className="small muted" style={{ margin: 0 }}>
+            Gut zu wissen: Gratis-Modelle wechseln häufig und haben Tageslimits. Bei kostenlosen Angeboten können Anbieter die Eingaben zur
+            Verbesserung ihrer Modelle nutzen – Funkelpost schickt deshalb <b>nie den Namen</b> der Person mit, nur deine Stichworte. Die Empfehlungen
+            beruhen auf den Angaben der Anbieter; probier ruhig aus, welches Modell dir am besten gefällt.
+          </p>
+        </section>
+
+        <section className="panel stack" id="bilder">
+          <h2>🎨 Bilder oder Code?</h2>
+          <p style={{ margin: 0 }}>
+            Richtig erkannt: Fast jedes KI-Modell kann programmieren. Und tatsächlich besteht <b>jede Funkelpost-Karte nur aus Code</b> – Konfetti, Glitzer,
+            Matrix-Regen, Uhr und Kino-Finale werden live im Browser gezeichnet. <b>Bilder braucht es dafür nicht.</b> Deshalb sind die Karten so klein,
+            dass sie sogar in einen Link passen, und laufen auf jedem Handy.
+          </p>
+          <p style={{ margin: 0 }}>
+            Die KI schreibt den Animations-Code aber bewusst <b>nicht selbst</b>, sondern steuert die fertig eingebauten Effekte über Einstellungen:
+          </p>
+          <ul className="info-list">
+            <li><b>Zuverlässig:</b> Gratis-Modelle machen bei längerem Code oft Fehler – die Karte wäre dann kaputt.</li>
+            <li><b>Sicher:</b> Fremder Code in einer Karte, die du an andere verschickst, wäre ein Risiko. Die eingebauten Effekte sind geprüft.</li>
+            <li><b>Schnell & kostenlos:</b> Texte und ein paar Einstellungen brauchen viel weniger KI-Leistung als ganzer Code.</li>
+          </ul>
+          <p style={{ margin: 0 }}>
+            <b>Bilder lohnen sich nur, wenn du etwas Eigenes zeigen willst</b> – ein Foto oder eine gemalte Figur. Das steht auf der Liste unter „Geplant“.
+          </p>
+        </section>
+
+        <section className="panel stack" id="server">
+          <h2>🖥️ Server-Version</h2>
+          <p style={{ margin: 0 }}>
+            Funkelpost gibt es in zwei Varianten: als <b>Browser-App</b> (Daten bleiben auf dem Gerät) und als <b>Server-Version</b> für den eigenen Server
+            – dann sehen alle Geräte dieselben Personen und Karten, die KI-Schlüssel bleiben auf dem Server, und Links sind kurz und abschaltbar.
+          </p>
+          <p style={{ margin: 0 }}>
+            Installation in wenigen Minuten mit Docker: siehe{" "}
+            <a href="https://github.com/makandev/Bdgen/blob/main/docs/SERVER.md" target="_blank" rel="noreferrer">Anleitung „Server-Installation“</a>.
+          </p>
+        </section>
+      </div>
+    </div>
+  );
+}

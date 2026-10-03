@@ -70,7 +70,7 @@ export default function SettingsPage() {
   async function backup() {
     try {
       const date = new Date().toISOString().slice(0, 10);
-      download(`bdgen-sicherung-${date}.json`, JSON.stringify(await repo.exportBackup(), null, 1), "application/json");
+      download(`funkelpost-sicherung-${date}.json`, JSON.stringify(await repo.exportBackup(), null, 1), "application/json");
     } catch (e) {
       setMsg({ kind: "err", text: errText(e) });
     }
@@ -140,11 +140,23 @@ export default function SettingsPage() {
                   </label>
                   <label className="field">
                     <span>Gemini-Modell</span>
-                    <input type="text" value={form.geminiModel} placeholder="gemini-flash-latest" onChange={(e) => set("geminiModel", e.target.value)} />
+                    <input type="text" list="gemini-models" value={form.geminiModel} placeholder="gemini-flash-latest" onChange={(e) => set("geminiModel", e.target.value)} />
+                    <datalist id="gemini-models">
+                      <option value="gemini-flash-latest" />
+                      <option value="gemini-3.8-flash" />
+                      <option value="gemini-3.5-flash-lite" />
+                    </datalist>
                   </label>
                   <label className="field">
                     <span>OpenRouter-Modell</span>
-                    <input type="text" value={form.openrouterModel} placeholder="openrouter/free" onChange={(e) => set("openrouterModel", e.target.value)} />
+                    <input type="text" list="openrouter-models" value={form.openrouterModel} placeholder="openrouter/free" onChange={(e) => set("openrouterModel", e.target.value)} />
+                    <datalist id="openrouter-models">
+                      <option value="openrouter/free" />
+                      <option value="google/gemma-4-31b-it:free" />
+                      <option value="qwen/qwen3.8-27b:free" />
+                      <option value="nvidia/nemotron-3-super-120b-a12b:free" />
+                    </datalist>
+                    <small><Link href="/infos/#ki">Welches Modell ist gut? → KI-Leitfaden</Link></small>
                   </label>
                   <label className="field">
                     <span>OpenRouter-Adresse (für kompatible Dienste)</span>

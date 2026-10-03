@@ -102,7 +102,8 @@ theme (Farben immer als #rrggbb):
 - accent: Hauptakzent (Buttons, Uhr, Funken); accentLight: helle Glanzfarbe; accentDark: dunkle Akzentfarbe
 - cinemaBg: Grundton des dunklen Kino-Finales
 - confetti: Liste aus 3–6 Farben für Konfetti und Bänder
-- headingFont: "serif" | "sans" | "script"
+- headingFont: "serif" (klassisch) | "sans" (modern) | "script" (Handschrift) | "mono" (Computer) | "block" (kräftig, Videospiel)
+- style (Kartenstil): "glass" (weiches Glas) | "luxe" (Goldrahmen, glänzende Überschrift) | "holo" (schillernder Regenbogenrand) | "terminal" (Hacker/Matrix) | "pixel" (dicke Ränder, Blöcke, Videospiel)
 - dark: true, wenn der Hintergrund dunkel ist (dann text/text2/muted hell wählen!)
 Achte auf gut lesbaren Kontrast zwischen Text und Hintergrund.
 
@@ -111,7 +112,10 @@ effects:
 - confetti (0–2): Konfetti-Menge, 0 = aus
 - ribbons (0–2): fallende Bänder, 0 = aus
 - sparks, orbit, shine, cinema, progress, clock: true/false (Funken, Glitzer in der Karte, Glanzstreifen, Kino-Finale, Fortschrittsbalken, Uhr)
-- speed (0.5–1.6): Tempo der Animationen, 1 = normal`;
+- speed (0.5–1.6): Tempo der Animationen, 1 = normal
+- backdrop: "dots" (Lichtpunkte) | "sparkle" (Funkelsterne) | "matrix" (grüner Zeichenregen) | "blocks" (schwebende bunte Blöcke) | "aurora" (Polarlicht)
+- confettiShape: "strip" | "square" | "heart" | "star" | "glyph" (Computerzeichen)
+Am besten wirken Stil, Hintergrund, Konfetti und Schrift, wenn sie zusammenpassen (z. B. Matrix: terminal + matrix + glyph + mono).`;
 
 export async function restyle(
   theme: Theme,
@@ -151,6 +155,12 @@ export function fixContrast(t: Theme): Theme {
 }
 
 const COLOR_WORDS: [RegExp, string][] = [
+  [/matrix|hacker|computer|code/i, "matrix"],
+  [/roblox|minecraft|block|pixel|videospiel|gaming|spiel/i, "blocks"],
+  [/schwarz.?gold|luxus|luxuriös|vip/i, "schwarzgold"],
+  [/ros[eé].?gold/i, "rosegold"],
+  [/holo|regenbogen|schiller|seifenblase/i, "holo"],
+  [/neon|club|disco/i, "neon"],
   [/nacht|dunkel|sterne|blau/i, "nacht"],
   [/rosa|rosé|rose|pastell|pink|romant/i, "rose"],
   [/bunt|party|fröhlich|knallig/i, "party"],
@@ -167,11 +177,14 @@ export function restyleOffline(data: CardData, instruction: string): { theme: Th
   const done: string[] = [];
   for (const [re, preset] of COLOR_WORDS) {
     if (re.test(s)) {
-      theme = { preset, ...structuredClone(PRESETS[preset].theme) };
+      theme = presetTheme(preset);
+      Object.assign(effects, PRESETS[preset].effects);
       done.push(`Design „${PRESETS[preset].label}“`);
       break;
     }
   }
+  if (/herz/.test(s)) (effects.confettiShape = "heart"), done.push("Herzen");
+  if (/stern/.test(s) && !/sternennacht/.test(s)) (effects.confettiShape = "star"), done.push("Sterne");
   const amount = (word: RegExp, key: "confetti" | "ribbons" | "ambient", label: string) => {
     const m = s.match(new RegExp(`(mehr|viel|weniger|kein|keine|ohne|aus)\\s*(\\w+\\s)?${word.source}`, "i"));
     if (!m) return;

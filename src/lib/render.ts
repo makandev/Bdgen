@@ -30,20 +30,92 @@ const FONTS = {
   serif: 'Georgia,"Times New Roman",serif',
   sans: 'ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif',
   script: '"Snell Roundhand","Apple Chancery","Segoe Script","Brush Script MT",Georgia,cursive',
+  mono: 'ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","Courier New",monospace',
+  block: '"Arial Black","Segoe UI Black","Helvetica Neue",Impact,system-ui,sans-serif',
 };
+
+/** Extra CSS per card style. Old cards without a style fall back to "glass". */
+function styleCss(d: CardData): string {
+  const t = d.theme;
+  const pal = t.confetti.length ? t.confetti : [t.accent];
+  const c = (i: number) => pal[i % pal.length];
+  const titleAnim = "titleIn .72s .08s both cubic-bezier(.2,.8,.2,1)";
+  let out = "";
+  switch (t.style ?? "glass") {
+    case "luxe": {
+      const g = t.dark
+        ? `${t.accent} 0%,${t.accentLight} 30%,#fffaf0 48%,${t.accentLight} 66%,${t.accent} 100%`
+        : `${t.text} 0%,${t.accentDark} 28%,${t.accent} 50%,${t.accentDark} 72%,${t.text} 100%`;
+      out = `
+.card{border:1px solid ${rgba(t.accent, 0.62)};box-shadow:inset 0 0 0 1px ${rgba(t.accentLight, 0.2)},0 0 0 6px ${rgba(t.accent, 0.07)},0 26px 74px ${rgba(t.accentDark, t.dark ? 0.55 : 0.2)},0 0 70px ${rgba(t.accent, t.dark ? 0.2 : 0.14)}}
+.card:before{content:"";position:absolute;inset:11px;border:1px solid ${rgba(t.accent, 0.38)};border-radius:17px;pointer-events:none}
+.screen.active .card h1,.screen.active .card h2{background:linear-gradient(100deg,${g});background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:${titleAnim},flow 7s linear infinite}
+@keyframes flow{to{background-position:-220% 0}}`;
+      break;
+    }
+    case "holo": {
+      const g = t.dark ? pal.concat(pal[0]).join(",") : "#c2185b,#6a1b9a,#1565c0,#00897b,#c2185b";
+      out = `
+.card{border-color:transparent}
+.card:before{content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;background:linear-gradient(120deg,${pal.concat(pal[0]).join(",")});background-size:300% 300%;animation:holo 6s linear infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+@keyframes holo{to{background-position:300% 0}}
+.screen.active .card h1,.screen.active .card h2{background:linear-gradient(90deg,${g});background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:${titleAnim},holo 9s linear infinite}
+button:not(.ghost){background:linear-gradient(120deg,${pal.concat(pal[0]).join(",")});background-size:300% 300%;animation:holo 6s linear infinite}`;
+      break;
+    }
+    case "terminal":
+      out = `
+body,p,.top,.tiny,.seal,.revealbox,.signature,.quote{font-family:${FONTS.mono}}
+.card{border-radius:8px;border:1px solid ${rgba(t.accent, 0.55)};background:${rgba(t.card, 0.9)};box-shadow:0 0 0 1px ${rgba(t.accent, 0.12)},0 0 34px ${rgba(t.accent, 0.25)},inset 0 0 44px ${rgba(t.accent, 0.07)}}
+.card:before{content:"";position:absolute;inset:0;border-radius:inherit;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);pointer-events:none;z-index:2}
+h1,h2{text-shadow:0 0 14px ${rgba(t.accent, 0.55)};letter-spacing:-.01em}
+.screen.active .card h1:after{content:"_";color:var(--accent);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.eyebrow:before{content:"> "}
+button{background:${rgba(t.accent, 0.08)};color:var(--accent);border:1px solid var(--accent);box-shadow:0 0 16px ${rgba(t.accent, 0.3)},inset 0 0 12px ${rgba(t.accent, 0.12)};border-radius:6px;font-family:${FONTS.mono}}
+button:hover{background:${rgba(t.accent, 0.18)}}.ghost{color:var(--text2);border-color:${rgba(t.accent, 0.4)};box-shadow:none}
+.clock{font-family:${FONTS.mono};font-weight:400;letter-spacing:-.04em}
+.revealbox,.personal{border-radius:4px}.seal{border-radius:4px}`;
+      break;
+    case "pixel":
+      out = `
+.card{border-radius:8px;border:4px solid var(--text);background:var(--card);box-shadow:10px 10px 0 ${rgba(t.text, 0.9)};backdrop-filter:none;-webkit-backdrop-filter:none}
+h1,h2{letter-spacing:-.01em}
+.ornament{color:${c(0)}}
+.eyebrow{display:inline-block;background:var(--accent);color:${t.text};padding:5px 11px;border:2px solid var(--text);border-radius:5px;letter-spacing:.12em;font-weight:800;animation:none}
+.clock{background:none;color:var(--text);-webkit-text-fill-color:var(--text);text-shadow:5px 5px 0 ${c(3)};font-family:${FONTS.block};font-weight:900;letter-spacing:-.03em;animation:none}
+button{border-radius:8px;border:3px solid var(--text);background:var(--accent);color:${t.text};box-shadow:0 6px 0 var(--text);font-family:${FONTS.block};font-weight:900;text-transform:uppercase;letter-spacing:.03em;transition:transform .1s,box-shadow .1s}
+button:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--text)}button:active{transform:translateY(4px);box-shadow:0 2px 0 var(--text)}
+.ghost{background:#fff;color:var(--text)}
+.choice button:not(.ghost){background:${c(2)}}
+.revealbox{border:3px solid var(--text);border-radius:8px;box-shadow:6px 6px 0 ${rgba(t.text, 0.85)};background:#fff}
+.personal{background:${rgba(c(1), 0.45)};border-radius:6px}
+.progress{height:10px;border:2px solid var(--text);border-radius:4px;background:#fff}.bar{background:repeating-linear-gradient(90deg,${c(0)} 0 14px,${c(1)} 14px 28px,${c(2)} 28px 42px,${c(3)} 42px 56px)}
+.seal{border:2px solid var(--text);border-radius:6px;color:var(--text)}
+.bigcheck{color:${c(2)};text-shadow:3px 3px 0 var(--text)}`;
+      break;
+  }
+  if ((d.effects.backdrop ?? "dots") === "aurora") {
+    out += `
+body:before{content:"";position:fixed;inset:-25%;pointer-events:none;z-index:0;background:radial-gradient(34% 30% at 25% 30%,${rgba(c(0), 0.55)},transparent 70%),radial-gradient(30% 34% at 76% 26%,${rgba(c(1), 0.5)},transparent 70%),radial-gradient(40% 30% at 55% 80%,${rgba(c(2), 0.45)},transparent 70%);filter:blur(40px);animation:aurora 16s ease-in-out infinite alternate}
+@keyframes aurora{0%{transform:translate3d(-4%,-2%,0) rotate(0) scale(1)}100%{transform:translate3d(4%,3%,0) rotate(8deg) scale(1.12)}}`;
+  }
+  return out;
+}
 
 function css(d: CardData): string {
   const t = d.theme;
   const darkText = mix(t.accentDark, "#000000", 0.55);
   const btnText = contrast(darkText, t.accent) >= contrast("#ffffff", t.accent) ? darkText : "#ffffff";
   const glow = t.dark ? rgba(t.accentLight, 0.12) : "rgba(255,255,255,.95)";
-  const headingWeight = t.headingFont === "sans" ? 650 : 400;
-  const headingScale = t.headingFont === "script" ? 1.18 : 1;
+  const font = FONTS[t.headingFont] ? t.headingFont : "serif";
+  const headingWeight = { serif: 400, sans: 650, script: 400, mono: 600, block: 900 }[font];
+  const headingScale = { serif: 1, sans: 1, script: 1.18, mono: 0.86, block: 0.9 }[font];
   const cinDark = mix(t.cinemaBg, "#000000", 0.55);
   const cinDarker = mix(t.cinemaBg, "#000000", 0.85);
 
   return `
-:root{--bg:${t.bg};--bg2:${t.bg2};--text:${t.text};--text2:${t.text2};--muted:${t.muted};--line:${rgba(t.accentDark, 0.22)};--accent:${t.accent};--al:${t.accentLight};--ad:${t.accentDark};--card:${t.card};--btn:${btnText};--hf:${FONTS[t.headingFont]}}
+:root{--bg:${t.bg};--bg2:${t.bg2};--text:${t.text};--text2:${t.text2};--muted:${t.muted};--line:${rgba(t.accentDark, 0.22)};--accent:${t.accent};--al:${t.accentLight};--ad:${t.accentDark};--card:${t.card};--btn:${btnText};--hf:${FONTS[font]}}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 15% 8%,${glow},transparent 30rem),radial-gradient(circle at 88% 22%,${rgba(t.accent, 0.2)},transparent 28rem),radial-gradient(circle at 25% 85%,${rgba(t.accentLight, 0.3)},transparent 28rem),linear-gradient(145deg,var(--bg),var(--bg2));background-attachment:fixed;color:var(--text);font-family:${FONTS.sans};overflow-x:hidden}
 canvas.fx{position:fixed;inset:0;pointer-events:none}.app{position:relative;z-index:1;width:min(840px,calc(100% - 24px));margin:auto;padding:22px 0 54px}
 .top{display:flex;justify-content:space-between;gap:12px;align-items:center;color:var(--muted);font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;padding:5px 3px 18px}
@@ -100,6 +172,7 @@ button:hover{transform:translateY(-2px)}button:focus-visible{outline:3px solid v
 @keyframes cin4{0%,76%{opacity:0;transform:translateY(12px)}84%,100%{opacity:1;transform:none}}
 .cinema-close{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;opacity:0;pointer-events:none;background:rgba(255,255,255,.12);border:1px solid ${rgba(t.accentLight, 0.48)};color:#fff;box-shadow:none;backdrop-filter:blur(10px)}
 .cinema.done .cinema-close{opacity:1;pointer-events:auto;transition:opacity .8s}.cinema.done .scene4{opacity:1!important}
+${styleCss(d)}
 .ioshint{max-width:760px;margin:10px auto 32px;padding:0 18px;text-align:center;font:12px/1.45 system-ui,sans-serif;color:var(--muted)}
 .nojs .screen{display:flex;min-height:auto;margin-bottom:18px}.nojs .card{opacity:1;transform:none;animation:none}.nojs .revealbox div{opacity:1;transform:none}.nojs .hidden{display:none!important}.nojs [data-next],.nojs .finish,.nojs .cinema-start{display:none}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.card{opacity:1;transform:none}}
@@ -201,10 +274,25 @@ time();setInterval(time,15000);updateProgress();
 if(FX.orbit)document.querySelectorAll('.card').forEach(function(card){var o=document.createElement('div');o.className='orbit';
  for(var j=0;j<10;j++){var q=document.createElement('i');q.style.left=(5+Math.random()*90)+'%';q.style.top=(8+Math.random()*84)+'%';q.style.setProperty('--dur',(2.4+Math.random()*4)/SPD+'s');q.style.setProperty('--dx',((Math.random()-.5)*50)+'px');q.style.setProperty('--dy',((Math.random()-.5)*50)+'px');q.style.animationDelay=(-Math.random()*4)+'s';o.appendChild(q)}
  card.prepend(o)});
-var c=document.getElementById('ambient'),ctx=c.getContext('2d'),pts=[],DPR=window.devicePixelRatio||1;
+var c=document.getElementById('ambient'),ctx=c.getContext('2d'),pts=[],DPR=window.devicePixelRatio||1,frame=0;
+var BD=FX.backdrop||'dots',SH=FX.confettiShape||'strip',GLYPHS='01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789';
+function glyph(){return GLYPHS.charAt(Math.floor(Math.random()*GLYPHS.length))}
 function size(){c.width=innerWidth*DPR;c.height=innerHeight*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
-function init(){pts=[];var n=Math.round(Math.min(80,Math.floor(innerWidth/9))*FX.ambient);for(var i=0;i<n;i++)pts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,s:.4+Math.random()*1.25,v:(.04+Math.random()*.14)*SPD,a:.1+Math.random()*.3})}
-function ambient(){ctx.clearRect(0,0,innerWidth,innerHeight);for(var i=0;i<pts.length;i++){var p=pts[i];p.y-=p.v;if(p.y<-2)p.y=innerHeight+2;ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,7);ctx.globalAlpha=p.a;ctx.fillStyle=CFG.particle;ctx.fill()}ctx.globalAlpha=1;requestAnimationFrame(ambient)}
+function init(){pts=[];
+ if(BD==='matrix'){var cols=Math.ceil(innerWidth/16);for(var k=0;k<cols;k++)if(Math.random()<Math.min(1,.45*FX.ambient+.25))pts.push({x:k*16,y:-Math.random()*innerHeight*1.5,v:16*(.5+Math.random()*.7)});return}
+ var n=Math.round(Math.min(BD==='blocks'?26:80,Math.floor(innerWidth/(BD==='blocks'?30:9)))*FX.ambient);
+ for(var i=0;i<n;i++)pts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,s:.4+Math.random()*1.25,v:(.04+Math.random()*.14)*SPD,a:.1+Math.random()*.3,t:Math.random()*6.28,r:Math.random()*6.28,vr:(Math.random()-.5)*.01,z:8+Math.random()*18,c:rnd(PAL)})}
+function star(x,y,r){ctx.beginPath();ctx.moveTo(x,y-r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.quadraticCurveTo(x,y,x,y+r);ctx.quadraticCurveTo(x,y,x-r,y);ctx.quadraticCurveTo(x,y,x,y-r);ctx.fill()}
+function ambient(){frame++;
+ if(BD==='matrix'){if(frame%Math.max(1,Math.round(3/SPD))===0){ctx.globalAlpha=1;ctx.fillStyle=CFG.trail;ctx.fillRect(0,0,innerWidth,innerHeight);ctx.font='15px ui-monospace,Menlo,Consolas,monospace';
+  for(var m=0;m<pts.length;m++){var q=pts[m];ctx.fillStyle=Math.random()<.04?'#ffffff':CFG.particle;ctx.globalAlpha=.9;ctx.fillText(glyph(),q.x,q.y);q.y+=q.v;if(q.y>innerHeight+20&&Math.random()>.97)q.y=-20}}
+  ctx.globalAlpha=1;requestAnimationFrame(ambient);return}
+ ctx.clearRect(0,0,innerWidth,innerHeight);
+ for(var i=0;i<pts.length;i++){var p=pts[i];p.y-=p.v*(BD==='blocks'?4:1);p.t+=.03*SPD;if(p.y<-30)p.y=innerHeight+30;
+  if(BD==='blocks'){p.r+=p.vr*SPD;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.globalAlpha=.32;ctx.fillStyle=p.c;ctx.fillRect(-p.z/2,-p.z/2,p.z,p.z);ctx.globalAlpha=.25;ctx.strokeStyle='#17171c';ctx.lineWidth=2;ctx.strokeRect(-p.z/2,-p.z/2,p.z,p.z);ctx.restore();continue}
+  if(BD==='sparkle'){ctx.globalAlpha=Math.max(0,p.a*1.8*(.35+.65*Math.sin(p.t)));ctx.fillStyle=CFG.light;star(p.x,p.y,p.s*3.2);continue}
+  ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,7);ctx.globalAlpha=p.a;ctx.fillStyle=CFG.particle;ctx.fill()}
+ ctx.globalAlpha=1;requestAnimationFrame(ambient)}
 size();init();if(!reduced&&FX.ambient>0)ambient();addEventListener('resize',function(){size();init()},{passive:true});
 var cc=document.getElementById('confetti'),cx=cc.getContext('2d'),bits=[],cr;
 function cs(){cc.width=innerWidth*DPR;cc.height=innerHeight*DPR;cx.setTransform(DPR,0,0,DPR,0,0)}cs();addEventListener('resize',cs,{passive:true});
@@ -212,16 +300,19 @@ function sparkBurst(){if(reduced||!FX.sparks)return;var x0=innerWidth/2,y0=Math.
  for(var i=0;i<28;i++){var s=document.createElement('i');s.className='spark';s.style.left=x0+'px';s.style.top=y0+'px';var a=Math.random()*Math.PI*2,d=55+Math.random()*150;s.style.setProperty('--sx',Math.cos(a)*d+'px');s.style.setProperty('--sy',Math.sin(a)*d+'px');s.style.background=rnd(PAL);s.style.animationDelay=(Math.random()*.15)+'s';document.body.appendChild(s);(function(el){setTimeout(function(){el.remove()},1200)})(s)}}
 function ribbonRain(amount,duration){amount=Math.round(amount*FX.ribbons);if(reduced||amount<1)return;
  for(var i=0;i<amount;i++)setTimeout(function(){var r=document.createElement('i');r.className='ribbon';r.style.left=(Math.random()*100)+'vw';r.style.background='linear-gradient(180deg,'+CFG.light+','+rnd(PAL)+','+CFG.light+')';r.style.animationDuration=(2.8+Math.random()*2.4)/SPD+'s';r.style.setProperty('--drift',((Math.random()-.5)*180)+'px');r.style.setProperty('--rot',(500+Math.random()*900)+'deg');r.style.width=(4+Math.random()*6)+'px';r.style.height=(20+Math.random()*32)+'px';document.body.appendChild(r);setTimeout(function(){r.remove()},6000)},Math.random()*duration)}
-function makeBits(n,y,spread,power){var out=[];n=Math.round(n*FX.confetti);for(var i=0;i<n;i++)out.push({x:innerWidth/2+(Math.random()-.5)*spread,y:innerHeight*y,vx:(Math.random()-.5)*power,vy:-1-Math.random()*power*.8,g:.10+Math.random()*.07,s:2+Math.random()*5,a:1,c:rnd(PAL)});return out}
+function makeBits(n,y,spread,power){var out=[];n=Math.round(n*FX.confetti);for(var i=0;i<n;i++)out.push({x:innerWidth/2+(Math.random()-.5)*spread,y:innerHeight*y,vx:(Math.random()-.5)*power,vy:-1-Math.random()*power*.8,g:.10+Math.random()*.07,s:2+Math.random()*5,a:1,c:rnd(PAL),r:Math.random()*6.28,vr:(Math.random()-.5)*.3,ch:glyph()});return out}
 function miniBurst(){if(reduced||FX.confetti<=0)return;bits=makeBits(48,.18,100,5);cancelAnimationFrame(cr);conf()}
 function burst(){if(reduced)return;ribbonRain(58,3600);sparkBurst();if(FX.confetti<=0)return;bits=makeBits(180,.34,140,7);cancelAnimationFrame(cr);conf()}
-function conf(){cx.clearRect(0,0,innerWidth,innerHeight);bits=bits.filter(function(b){return b.a>.02&&b.y<innerHeight+30});bits.forEach(function(b){b.x+=b.vx;b.y+=b.vy;b.vy+=b.g;b.a*=.988;cx.globalAlpha=b.a;cx.fillStyle=b.c;cx.fillRect(b.x,b.y,b.s,b.s*1.8)});cx.globalAlpha=1;if(bits.length)cr=requestAnimationFrame(conf)}
+function conf(){cx.clearRect(0,0,innerWidth,innerHeight);bits=bits.filter(function(b){return b.a>.02&&b.y<innerHeight+30});bits.forEach(function(b){b.x+=b.vx;b.y+=b.vy;b.vy+=b.g;b.a*=.988;b.r+=b.vr;cx.globalAlpha=b.a;cx.fillStyle=b.c;
+ if(SH==='strip')cx.fillRect(b.x,b.y,b.s,b.s*1.8);
+ else if(SH==='square'){cx.save();cx.translate(b.x,b.y);cx.rotate(b.r);cx.fillRect(-b.s*.7,-b.s*.7,b.s*1.4,b.s*1.4);cx.restore()}
+ else{cx.font=Math.round(b.s*3.4)+'px '+(SH==='glyph'?'ui-monospace,Menlo,monospace':'sans-serif');cx.fillText(SH==='heart'?'♥':SH==='star'?'★':b.ch,b.x,b.y)}});cx.globalAlpha=1;if(bits.length)cr=requestAnimationFrame(conf)}
 var cinema=document.getElementById('cinema');
 if(cinema){var cv=document.getElementById('cinemaCanvas'),cctx=cv.getContext('2d'),stars=[],craf=null,ctimer=null,CIN=13500/SPD;
  cinema.style.setProperty('--cin',CIN+'ms');
  function cinemaSize(){cv.width=innerWidth*DPR;cv.height=innerHeight*DPR;cctx.setTransform(DPR,0,0,DPR,0,0)}
  function cinemaStars(){stars=[];for(var i=0;i<110;i++)stars.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:.5+Math.random()*2,a:.15+Math.random()*.75,v:(.08+Math.random()*.35)*SPD,t:Math.random()*6.28})}
- function cinemaDraw(){cctx.clearRect(0,0,innerWidth,innerHeight);stars.forEach(function(s){s.t+=.025;s.y-=s.v;if(s.y<-5)s.y=innerHeight+5;cctx.beginPath();cctx.arc(s.x,s.y,s.r,0,7);cctx.globalAlpha=Math.max(.05,s.a*(.55+.45*Math.sin(s.t)));cctx.fillStyle=CFG.star;cctx.fill()});cctx.globalAlpha=1;craf=requestAnimationFrame(cinemaDraw)}
+ function cinemaDraw(){cctx.clearRect(0,0,innerWidth,innerHeight);stars.forEach(function(s){s.t+=.025;s.y-=s.v;if(s.y<-5)s.y=innerHeight+5;cctx.globalAlpha=Math.max(.05,s.a*(.55+.45*Math.sin(s.t)));cctx.fillStyle=CFG.star;if(BD==='matrix'){cctx.font=Math.round(8+s.r*5)+'px ui-monospace,monospace';cctx.fillText(glyph(),s.x,s.y)}else{cctx.beginPath();cctx.arc(s.x,s.y,s.r,0,7);cctx.fill()}});cctx.globalAlpha=1;craf=requestAnimationFrame(cinemaDraw)}
  function startCinema(){cinema.classList.remove('hidden','done','play');cinema.setAttribute('aria-hidden','false');cinemaSize();cinemaStars();
   if(!reduced){cancelAnimationFrame(craf);cinemaDraw();requestAnimationFrame(function(){cinema.classList.add('play')});setTimeout(function(){ribbonRain(85,5200);sparkBurst()},CIN*.55);ctimer=setTimeout(function(){cinema.classList.add('done')},CIN)}else cinema.classList.add('done')}
  function closeCinema(){clearTimeout(ctimer);cancelAnimationFrame(craf);cinema.classList.add('hidden');cinema.classList.remove('play','done');cinema.setAttribute('aria-hidden','true')}
@@ -240,6 +331,7 @@ export function renderCardHTML(d: CardData, opts: RenderOptions = {}): string {
     palette: t.confetti.length ? t.confetti : [t.accent],
     particle: t.accent,
     light: t.accentLight,
+    trail: rgba(t.bg, 0.14),
     star: mix(t.accentLight, "#ffffff", 0.2),
     start: Math.max(1, Math.min(d.scenes.length, opts.startScene ?? 1)),
     greet: greeting && greeting.type === "greeting"
@@ -253,7 +345,9 @@ export function renderCardHTML(d: CardData, opts: RenderOptions = {}): string {
   const json = JSON.stringify(cfg).replace(/</g, "\\u003c").replace(/[\u2028\u2029]/g, (ch) => (ch === "\u2028" ? "\\u2028" : "\\u2029"));
   const title = `${occasionLabel(d.occasion)}${n.trim() ? ` · ${plain(n, n)}` : ""}`;
   const c = d.cinema;
-  const classes = [d.effects.shine ? "shine" : ""].filter(Boolean).join(" ");
+  const classes = [d.effects.shine && (t.style ?? "glass") !== "pixel" ? "shine" : "", `st-${t.style ?? "glass"}`, `bd-${d.effects.backdrop ?? "dots"}`]
+    .filter(Boolean)
+    .join(" ");
 
   return `<!doctype html>
 <html lang="de" class="nojs">

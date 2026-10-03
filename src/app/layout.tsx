@@ -3,12 +3,12 @@ import { BASE } from "@/lib/base";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Bdgen – persönliche Überraschungen",
+  title: "Funkelpost – persönliche Überraschungen",
   description: "Persönliche, KI-gestützte Überraschungskarten für Familie und Freunde",
   robots: { index: false, follow: false },
   manifest: `${BASE}/manifest.webmanifest`,
   icons: { apple: `${BASE}/apple-touch-icon.png` },
-  appleWebApp: { capable: true, title: "Bdgen", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Funkelpost", statusBarStyle: "default" },
   referrer: "no-referrer",
 };
 

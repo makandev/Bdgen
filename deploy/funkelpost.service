@@ -1,0 +1,25 @@
+# systemd-Dienst für Funkelpost ohne Docker.
+# Installation:
+#   sudo cp deploy/funkelpost.service /etc/systemd/system/
+#   (Pfad unter WorkingDirectory und User anpassen)
+#   sudo systemctl daemon-reload && sudo systemctl enable --now funkelpost
+[Unit]
+Description=Funkelpost (Server-Version)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=funkelpost
+WorkingDirectory=/opt/funkelpost
+EnvironmentFile=/opt/funkelpost/.env
+Environment=NODE_ENV=production NEXT_PUBLIC_MODE=server PORT=3000 NODE_NO_WARNINGS=1
+ExecStart=/usr/bin/npx next start
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
