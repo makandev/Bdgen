@@ -76,6 +76,7 @@ export function suggestPreset(relation: string, occasion: Occasion, ratings: Rat
   const ranked = rankPresets(ratings, occasion, relationGroup(relation));
   if (ranked.length) return ranked[0];
   if (occasion === "besserung") return "salbei";
+  if (occasion === "neujahr") return "silvester";
   const r = relation.toLowerCase();
   for (const [re, preset] of BY_RELATION) if (re.test(r)) return preset;
   return occasion === "jubilaeum" ? "schwarzgold" : "gold";

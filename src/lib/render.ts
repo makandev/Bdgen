@@ -1,6 +1,6 @@
 import { contrast, mix, rgba } from "./color";
 import { occasionLabel } from "./presets";
-import type { CardData, Scene } from "./types";
+import type { CardData, GiftScene, Scene } from "./types";
 
 export interface RenderOptions {
   /** 1-based scene to open first (editor preview). */
@@ -109,7 +109,20 @@ body:before{content:"";position:fixed;inset:-25%;pointer-events:none;z-index:0;b
   return out;
 }
 
+/** `inset` needs iOS 14.5 – older iPhones still open cards, so spell it out. */
+export function legacyInset(css: string): string {
+  return css.replace(/(^|[;{\s])inset:([^;}]+)/g, (_, pre: string, v: string) => {
+    const p = v.trim().split(/\s+/);
+    const [t, r = t, b = t, l = r] = p;
+    return `${pre}top:${t};right:${r};bottom:${b};left:${l}`;
+  });
+}
+
 function css(d: CardData): string {
+  return legacyInset(baseCss(d));
+}
+
+function baseCss(d: CardData): string {
   const t = d.theme;
   const darkText = mix(t.accentDark, "#000000", 0.55);
   const btnText = contrast(darkText, t.accent) >= contrast("#ffffff", t.accent) ? darkText : "#ffffff";
@@ -193,9 +206,9 @@ ${styleCss(d)}
 .gift-name{font:${t.headingFont === "block" ? 900 : 400} clamp(1.8rem,6vw,3rem)/1.2 var(--hf);margin:6px auto 4px;max-width:620px;background:linear-gradient(100deg,${t.dark ? "var(--al),var(--accent),var(--al)" : "var(--ad),var(--accent),var(--ad)"});-webkit-background-clip:text;background-clip:text;color:transparent}
 .reactions{margin:30px auto 0;max-width:560px;padding-top:22px;border-top:1px solid var(--line)}
 .react-q{margin:0 0 12px;font-weight:600;color:var(--text)}
-.react-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.react{display:inline-flex;align-items:center;gap:7px;margin:0;min-height:44px;padding:8px 14px;border-radius:999px;font-size:.92rem}
-.react .re{font-size:1.3rem}.react.picked{background:linear-gradient(135deg,var(--al),var(--accent));color:var(--btn);border-color:transparent}
+.react-row{display:flex;flex-wrap:wrap;justify-content:center;margin:-4px}
+.react{display:inline-flex;align-items:center;margin:4px;min-height:44px;padding:8px 14px;border-radius:999px;font-size:.92rem}
+.react .re{font-size:1.3rem;margin-right:7px}.react.picked{background:linear-gradient(135deg,var(--al),var(--accent));color:var(--btn);border-color:transparent}
 .react-big{font-size:3rem;margin-top:16px;animation:pop .6s cubic-bezier(.2,.8,.2,1)}
 @keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
 .react-thanks{margin:6px auto}.react-more{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px}
@@ -203,11 +216,63 @@ ${styleCss(d)}
 .react-more button,.react-send{margin:0}
 .float-emoji{position:fixed;bottom:-40px;z-index:8;pointer-events:none;font-size:2rem;animation:floatUp 2.4s ease-out forwards}
 @keyframes floatUp{to{transform:translate3d(var(--fx),-110vh,0) rotate(var(--fr));opacity:0}}
+canvas#pfx{z-index:3}
+.voucher{position:relative;margin:20px auto 6px;max-width:440px;border-radius:18px;padding:20px 22px 18px;background:linear-gradient(135deg,var(--al),var(--accent) 55%,var(--ad));color:var(--btn);box-shadow:0 18px 40px ${rgba(t.accentDark, 0.32)};text-align:center}
+.voucher:before,.voucher:after{content:"";position:absolute;top:50%;width:26px;height:26px;margin-top:-13px;border-radius:50%;background:var(--card)}
+.voucher:before{left:-13px}.voucher:after{right:-13px}
+.v-kicker{font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;opacity:.85}
+.v-label{font:${t.headingFont === "block" ? 900 : 700} clamp(1.45rem,6vw,2.2rem)/1.15 var(--hf);margin:8px 0 14px}
+.v-sep{border-top:2px dashed currentColor;opacity:.35;margin:0 -6px 14px}
+.v-code{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;background:rgba(255,255,255,.9);color:#1b1b1f;border-radius:12px;padding:8px 10px}
+.v-codetext{font:700 1.2rem/1.3 ${FONTS.mono};letter-spacing:.08em;padding:6px 8px;-webkit-user-select:all;user-select:all;word-break:break-all}
+.v-copy{margin:4px;min-height:40px;padding:8px 14px;font-size:.9rem}
+.v-img{display:block;width:100%;max-height:52vh;object-fit:contain;border-radius:10px;background:#fff}
+.voucher p.v-note{font-size:.86rem;line-height:1.5;color:inherit;opacity:.92;margin:12px auto 0}
+.v-pdf{margin:12px 0 0;min-height:42px;padding:9px 16px;font-size:.9rem}
+.vshow{position:fixed;inset:0;z-index:55;background:radial-gradient(circle at 50% 38%,#221653 0,#0b0824 48%,#020108 100%);overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;color:#fff;display:flex;flex-direction:column;align-items:center;padding:24px 16px;text-align:center}
+.vshow canvas{position:fixed;inset:0;width:100%;height:100%}
+.vs-flash{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.75),rgba(255,230,160,.25) 35%,transparent 70%)}
+.vshow.flash .vs-flash{animation:flash 1.1s ease-out}
+@keyframes flash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+.vs-count{position:fixed;left:0;right:0;top:50%;margin-top:-1.1em;padding:.5em 0;font:700 clamp(7rem,32vw,15rem)/1.2 var(--hf);color:#fff;text-shadow:0 0 40px ${rgba(t.accentLight, 0.8)},0 0 90px ${rgba(t.accent, 0.6)};opacity:0;pointer-events:none}
+.vs-count.tick{animation:tick .9s ease-out both}
+@keyframes tick{0%{opacity:0;transform:scale(2.2)}25%{opacity:1;transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:scale(.7)}}
+.vs-kicker{position:relative;margin-top:auto;font-size:clamp(.8rem,2.4vw,1rem);letter-spacing:.34em;text-transform:uppercase;color:#fff3cf;opacity:0;margin-bottom:6px}
+.vs-slot{position:relative;width:100%;max-width:460px;padding:30px 24px}
+.vs-slot .v-img{max-height:46vh}
+.vshow.reveal .vs-kicker{animation:titleIn .7s both}
+.vs-slot .voucher{animation:ticketIn 1.05s cubic-bezier(.2,.9,.25,1.15) both;box-shadow:0 0 0 1px rgba(255,255,255,.25),0 0 26px ${rgba(t.accentLight, 0.4)},0 12px 24px rgba(0,0,0,.45)}
+.vs-slot .voucher:before,.vs-slot .voucher:after{background:#0b0824}
+@keyframes ticketIn{0%{opacity:0;transform:translateY(70px) scale(.55) rotate(-9deg)}100%{opacity:1;transform:none}}
+.vs-close{position:relative;margin:16px 0 auto;opacity:0;pointer-events:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);color:#fff;box-shadow:none}
+.vshow.done .vs-close{opacity:1;pointer-events:auto;transition:opacity .7s}
+.vs-skip{position:fixed;right:14px;top:14px;margin:0;min-height:38px;padding:6px 14px;font-size:.85rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff;box-shadow:none}
+.vshow.done .vs-skip{display:none}
 .nojs .gift-reveal{display:block!important}.nojs .gift-wrap{display:none}
 .ioshint{max-width:760px;margin:10px auto 32px;padding:0 18px;text-align:center;font:12px/1.45 system-ui,sans-serif;color:var(--muted)}
 .nojs .screen{display:flex;min-height:auto;margin-bottom:18px}.nojs .card{opacity:1;transform:none;animation:none}.nojs .revealbox div{opacity:1;transform:none}.nojs .hidden{display:none!important}.nojs [data-next],.nojs .finish,.nojs .cinema-start{display:none}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.card{opacity:1;transform:none}}
 `;
+}
+
+/** A voucher only counts once it has a code or a picture. */
+export function hasVoucher(s: Scene): boolean {
+  const v = s.type === "gift" ? s.voucher : null;
+  return !!v && (v.kind === "code" ? !!v.code.trim() : !!v.image);
+}
+
+function voucherHtml(s: GiftScene, n: string): string {
+  const v = s.voucher;
+  if (!v || !hasVoucher(s)) return "";
+  const label = v.label.trim() || s.gift;
+  const body = v.kind === "image"
+    ? `<img class="v-img" src="${esc(v.image)}" alt="Gutschein">`
+    : `<div class="v-code"><span class="v-codetext">${esc(v.code)}</span><button type="button" class="v-copy" data-code="${esc(v.code)}">Kopieren</button></div>`;
+  return `<div class="voucher" data-show="${v.show ? "1" : "0"}"><div class="v-kicker">🎟️ Gutschein</div><div class="v-label">${fmt(label, n)}</div><div class="v-sep"></div>${body}${
+    v.note.trim() ? `<p class="v-note">${fmt(v.note, n)}</p>` : ""
+  }${v.kind === "image" ? `<p class="v-note">${v.pdf ? "" : "Tipp: Bild lange drücken, um es zu speichern."}</p>` : ""}${
+    v.pdf ? `<button type="button" class="v-pdf ghost" data-pdf="${esc(v.pdf)}">📄 Gutschein als PDF speichern</button>` : ""
+  }</div>`;
 }
 
 function renderScene(s: Scene, i: number, d: CardData): string {
@@ -255,7 +320,7 @@ ${s.tiny.trim() ? `<p class="tiny">${f(s.tiny)}</p>` : ""}
       body = `${eyebrow(s.eyebrow)}<h2>${f(s.title)}</h2>
 <div class="gift-wrap" role="button" tabindex="0" aria-label="Geschenk auspacken"><div class="gift-lid"><span class="gift-bow"></span></div><div class="gift-box"></div></div>
 <p class="muted gift-teaser">${f(s.teaser)}</p>
-<div class="gift-reveal hidden"><div class="gift-name">${f(s.gift)}</div>${s.detail.trim() ? `<p>${f(s.detail)}</p>` : ""}</div>
+<div class="gift-reveal hidden"><div class="gift-name">${f(s.gift)}</div>${s.detail.trim() ? `<p>${f(s.detail)}</p>` : ""}${hasVoucher(s) ? `<div class="v-home">${voucherHtml(s, n)}</div>` : ""}</div>
 ${next(s.button, 'class="hidden" data-after')}`;
       break;
     case "finale": {
@@ -320,7 +385,19 @@ time();setInterval(time,15000);updateProgress();
 if(FX.orbit)document.querySelectorAll('.card').forEach(function(card){var o=document.createElement('div');o.className='orbit';
  for(var j=0;j<10;j++){var q=document.createElement('i');q.style.left=(5+Math.random()*90)+'%';q.style.top=(8+Math.random()*84)+'%';q.style.setProperty('--dur',(2.4+Math.random()*4)/SPD+'s');q.style.setProperty('--dx',((Math.random()-.5)*50)+'px');q.style.setProperty('--dy',((Math.random()-.5)*50)+'px');q.style.animationDelay=(-Math.random()*4)+'s';o.appendChild(q)}
  card.prepend(o)});
-var c=document.getElementById('ambient'),ctx=c.getContext('2d'),pts=[],DPR=window.devicePixelRatio||1,frame=0;
+var DPR=Math.min(window.devicePixelRatio||1,2);
+function makeFW(ctx,power){var rk=[],sp=[];
+ function launch(){var h=innerHeight;rk.push({x:innerWidth*(.12+Math.random()*.76),y:h+8,vx:(Math.random()-.5)*1.1,vy:-Math.sqrt(.1*h*(.5+Math.random()*.35)),c:rnd(PAL)})}
+ function explode(x,y,c,big){var n=Math.round((big?110:55+Math.random()*45)*power),ring=Math.random()<.3,v0=(big?3.6:2.5)*Math.min(1.2,Math.max(.7,innerWidth/700));
+  for(var i=0;i<n;i++){var a=Math.PI*2*i/n+Math.random()*.2,v=ring?v0:v0*(.25+Math.random()*.8);if(sp.length<1100)sp.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,a:1,c:Math.random()<.75?c:rnd(PAL),d:.009+Math.random()*.012,gl:Math.random()<.25})}}
+ function step(rate){ctx.globalCompositeOperation='destination-out';ctx.fillStyle='rgba(0,0,0,.22)';ctx.fillRect(0,0,innerWidth,innerHeight);ctx.globalCompositeOperation='lighter';
+  if(Math.random()<rate)launch();
+  for(var i=rk.length-1;i>=0;i--){var r=rk[i];r.x+=r.vx;r.y+=r.vy;r.vy+=.05;ctx.globalAlpha=1;ctx.strokeStyle=r.c;ctx.lineWidth=2.2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(r.x-r.vx*2.5,r.y-r.vy*2.5);ctx.lineTo(r.x,r.y);ctx.stroke();if(r.vy>-.6){rk.splice(i,1);explode(r.x,r.y,r.c)}}
+  for(var j=sp.length-1;j>=0;j--){var p=sp[j];p.vx*=.982;p.vy=p.vy*.982+.035;p.x+=p.vx;p.y+=p.vy;p.a-=p.d;if(p.a<=0){sp.splice(j,1);continue}
+   ctx.globalAlpha=p.gl?p.a*(Math.random()<.5?1:.25):p.a;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,1.8,0,7);ctx.fill()}
+  ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over'}
+ return {step:step,explode:explode,clear:function(){rk=[];sp=[];ctx.clearRect(0,0,innerWidth,innerHeight)}}}
+var c=document.getElementById('ambient'),ctx=c.getContext('2d'),pts=[],frame=0,fw=null;
 var BD=FX.backdrop||'dots',SH=FX.confettiShape||'strip',GLYPHS='01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789';
 function glyph(){return GLYPHS.charAt(Math.floor(Math.random()*GLYPHS.length))}
 function size(){c.width=innerWidth*DPR;c.height=innerHeight*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
@@ -330,6 +407,7 @@ function init(){pts=[];
  for(var i=0;i<n;i++)pts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,s:.4+Math.random()*1.25,v:(.04+Math.random()*.14)*SPD,a:.1+Math.random()*.3,t:Math.random()*6.28,r:Math.random()*6.28,vr:(Math.random()-.5)*.01,z:8+Math.random()*18,c:rnd(PAL)})}
 function star(x,y,r){ctx.beginPath();ctx.moveTo(x,y-r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.quadraticCurveTo(x,y,x,y+r);ctx.quadraticCurveTo(x,y,x-r,y);ctx.quadraticCurveTo(x,y,x,y-r);ctx.fill()}
 function ambient(){frame++;
+ if(BD==='fireworks'){if(!fw)fw=makeFW(ctx,1);fw.step(.024*FX.ambient*SPD);requestAnimationFrame(ambient);return}
  if(BD==='matrix'){if(frame%Math.max(1,Math.round(3/SPD))===0){ctx.globalAlpha=1;ctx.fillStyle=CFG.trail;ctx.fillRect(0,0,innerWidth,innerHeight);ctx.font='15px ui-monospace,Menlo,Consolas,monospace';
   for(var m=0;m<pts.length;m++){var q=pts[m];ctx.fillStyle=Math.random()<.04?'#ffffff':CFG.particle;ctx.globalAlpha=.9;ctx.fillText(glyph(),q.x,q.y);q.y+=q.v;if(q.y>innerHeight+20&&Math.random()>.97)q.y=-20}}
   ctx.globalAlpha=1;requestAnimationFrame(ambient);return}
@@ -340,6 +418,24 @@ function ambient(){frame++;
   ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,7);ctx.globalAlpha=p.a;ctx.fillStyle=CFG.particle;ctx.fill()}
  ctx.globalAlpha=1;requestAnimationFrame(ambient)}
 size();init();if(!reduced&&FX.ambient>0)ambient();addEventListener('resize',function(){size();init()},{passive:true});
+var PF=FX.particles,pc=document.getElementById('pfx');
+if(PF&&pc&&!reduced){var px=pc.getContext('2d'),sprites=[],parts=[];
+ PF.emoji.forEach(function(e){var s=document.createElement('canvas');s.width=s.height=72;var g=s.getContext('2d');g.font='56px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillStyle=CFG.light;g.fillText(e,36,40);sprites.push(s)});
+ function psize(){pc.width=innerWidth*DPR;pc.height=innerHeight*DPR;px.setTransform(DPR,0,0,DPR,0,0)}
+ function spawn(p,first){var W=innerWidth,H=innerHeight,m=PF.motion;p.img=rnd(sprites);p.z=(18+Math.random()*18)*PF.size;p.t=Math.random()*6.28;p.a=.85;p.life=0;
+  p.x=Math.random()*W;p.y=m==='rise'?(first?Math.random()*H:H+p.z):m==='fall'?(first?Math.random()*H:-p.z):Math.random()*H;
+  p.v=(.35+Math.random()*.6)*SPD;p.cx=W/2;p.cy=H/2;p.rad=40+Math.random()*Math.min(W,H)*.45;p.ang=Math.random()*6.28;return p}
+ function pinit(){parts=[];var n=Math.round(Math.min(40,18*PF.amount*Math.max(.8,innerWidth/900)));for(var i=0;i<n;i++)parts.push(spawn({},true))}
+ function ploop(){var W=innerWidth,H=innerHeight,m=PF.motion;px.clearRect(0,0,W,H);
+  for(var i=0;i<parts.length;i++){var p=parts[i];p.t+=.02*SPD;var dx=p.x,dy=p.y,sc=1,al=p.a;
+   if(m==='rise'){p.y-=p.v*1.2;dx=p.x+Math.sin(p.t)*14;if(p.y<-p.z)spawn(p)}
+   else if(m==='fall'){p.y+=p.v;dx=p.x+Math.sin(p.t)*22;if(p.y>H+p.z)spawn(p)}
+   else if(m==='swirl'){p.ang+=.004*SPD*(1+p.v);dx=p.cx+Math.cos(p.ang)*p.rad*1.3;dy=p.cy+Math.sin(p.ang)*p.rad*.8}
+   else if(m==='pop'){p.life+=.008*SPD*(.6+p.v);sc=Math.min(1,p.life*3);al=p.life<.75?p.a:p.a*Math.max(0,(1-p.life)*4);if(p.life>=1)spawn(p)}
+   else{dx=p.x+Math.sin(p.t)*30;dy=p.y+Math.cos(p.t*.8)*24}
+   var z=p.z*sc;px.globalAlpha=al*.85;px.drawImage(p.img,dx-z/2,dy-z/2,z,z)}
+  px.globalAlpha=1;requestAnimationFrame(ploop)}
+ psize();pinit();ploop();addEventListener('resize',function(){psize();pinit()},{passive:true})}
 var cc=document.getElementById('confetti'),cx=cc.getContext('2d'),bits=[],cr;
 function cs(){cc.width=innerWidth*DPR;cc.height=innerHeight*DPR;cx.setTransform(DPR,0,0,DPR,0,0)}cs();addEventListener('resize',cs,{passive:true});
 function sparkBurst(){if(reduced||!FX.sparks)return;var x0=innerWidth/2,y0=Math.min(innerHeight*.42,340);
@@ -365,8 +461,31 @@ if(cinema){var cv=document.getElementById('cinemaCanvas'),cctx=cv.getContext('2d
  document.querySelectorAll('.cinema-start').forEach(function(b){b.addEventListener('click',startCinema)});
  document.getElementById('cinemaClose').addEventListener('click',closeCinema);
  addEventListener('resize',function(){if(!cinema.classList.contains('hidden')){cinemaSize();cinemaStars()}},{passive:true})}
+var vs=document.getElementById('vshow'),startShow=null;
+if(vs){var vcv=document.getElementById('vshowCanvas'),vctx=vcv.getContext('2d'),vfw=makeFW(vctx,1.25),vraf=null,vrate=0,vtimers=[],vticket=null,vhome=null,vcount=vs.querySelector('.vs-count');
+ var vsize=function(){vcv.width=innerWidth*DPR;vcv.height=innerHeight*DPR;vctx.setTransform(DPR,0,0,DPR,0,0)};
+ var vloop=function(){vfw.step(vrate);vraf=requestAnimationFrame(vloop)};
+ var later=function(f,ms){vtimers.push(setTimeout(f,ms/SPD))};
+ var showTicket=function(){vcount.textContent='';vs.querySelector('.vs-slot').appendChild(vticket);vs.classList.add('reveal')};
+ startShow=function(t){vticket=t;vhome=t.parentNode;vs.classList.remove('hidden','reveal','done','flash');vs.setAttribute('aria-hidden','false');vsize();vfw.clear();vrate=.07;cancelAnimationFrame(vraf);vloop();
+  [3,2,1].forEach(function(n,i){later(function(){vcount.textContent=n;vcount.classList.remove('tick');void vcount.offsetWidth;vcount.classList.add('tick')},250+i*900)});
+  later(function(){vcount.textContent='';vs.classList.add('flash');for(var k=0;k<5;k++)vfw.explode(innerWidth*(.14+.18*k),innerHeight*(.22+Math.random()*.22),rnd(PAL),true);vrate=.1},2950);
+  later(showTicket,3350);later(function(){vs.classList.add('done');vrate=.04},5000)};
+ var closeShow=function(){vtimers.forEach(clearTimeout);vtimers=[];cancelAnimationFrame(vraf);if(vticket&&vhome)vhome.appendChild(vticket);vs.classList.add('hidden');vs.classList.remove('reveal','done','flash');vs.setAttribute('aria-hidden','true');burst()};
+ document.getElementById('vshowClose').addEventListener('click',closeShow);
+ document.getElementById('vshowSkip').addEventListener('click',function(){vtimers.forEach(clearTimeout);vtimers=[];if(vticket&&vticket.parentNode===vhome)showTicket();vs.classList.add('done');vrate=.04});
+ addEventListener('resize',function(){if(!vs.classList.contains('hidden'))vsize()},{passive:true})}
 function openGift(w){if(w.classList.contains('open'))return;var sc=w.closest('.screen');w.classList.add('open');var tz=sc.querySelector('.gift-teaser');if(tz)tz.classList.add('hidden');
- setTimeout(function(){sc.querySelector('.gift-reveal').classList.remove('hidden');var a=sc.querySelector('[data-after]');if(a)a.classList.remove('hidden');burst()},reduced?0:650)}
+ setTimeout(function(){sc.querySelector('.gift-reveal').classList.remove('hidden');var a=sc.querySelector('[data-after]');if(a)a.classList.remove('hidden');
+  var t=sc.querySelector('.voucher[data-show="1"]');if(t&&startShow&&!reduced)startShow(t);else burst()},reduced?0:650)}
+function copyText(text,btn){var ok=function(){btn.textContent='✓ Kopiert'};
+ var fallback=function(){var i=document.createElement('textarea');i.value=text;i.setAttribute('readonly','');i.style.position='fixed';i.style.top='0';i.style.opacity='0';document.body.appendChild(i);i.select();try{i.setSelectionRange(0,text.length)}catch(e){}
+  var r=false;try{r=document.execCommand('copy')}catch(e){}document.body.removeChild(i);if(r)ok();else btn.textContent='Code antippen & kopieren'};
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(ok,fallback);else fallback()}
+function savePdf(data){try{var b=atob(data.split(',')[1]),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
+ var url=URL.createObjectURL(new Blob([u],{type:'application/pdf'})),a=document.createElement('a');a.href=url;a.download='Gutschein.pdf';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},60000)}catch(e){}}
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest?e.target.closest('.v-copy,.v-pdf'):null;if(!b)return;
+ if(b.classList.contains('v-copy'))copyText(b.getAttribute('data-code'),b);else savePdf(b.getAttribute('data-pdf'))});
 document.querySelectorAll('.gift-wrap').forEach(function(w){w.addEventListener('click',function(){openGift(w)});w.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openGift(w)}})});
 function floatEmoji(em){if(reduced)return;for(var i=0;i<14;i++)(function(i){setTimeout(function(){var s=document.createElement('span');s.className='float-emoji';s.textContent=em;s.style.left=(10+Math.random()*80)+'vw';s.style.fontSize=(1.4+Math.random()*1.8)+'rem';s.style.setProperty('--fx',((Math.random()-.5)*120)+'px');s.style.setProperty('--fr',((Math.random()-.5)*80)+'deg');document.body.appendChild(s);setTimeout(function(){s.remove()},2600)},i*90)})(i)}
 document.querySelectorAll('[data-reactions]').forEach(function(box){var sent=null;
@@ -425,7 +544,7 @@ export function renderCardHTML(d: CardData, opts: RenderOptions = {}): string {
 <style>${css(d)}</style>
 </head>
 <body class="${classes}">
-<canvas class="fx" id="ambient" aria-hidden="true"></canvas><canvas class="fx" id="confetti" aria-hidden="true"></canvas>
+<canvas class="fx" id="ambient" aria-hidden="true"></canvas><canvas class="fx" id="confetti" aria-hidden="true"></canvas>${d.effects.particles ? '<canvas class="fx" id="pfx" aria-hidden="true"></canvas>' : ""}
 <main class="app">
 ${d.effects.progress ? `<div class="top"><span>${fmt(d.topLine, n)}</span><span id="stepLabel"></span></div>
 <div class="progress"><div class="bar" id="bar"></div></div>` : `<div class="top"><span>${fmt(d.topLine, n)}</span><span></span></div>`}
@@ -438,6 +557,11 @@ ${d.effects.cinema ? `<div id="cinema" class="cinema hidden" aria-hidden="true">
  <div class="cinema-scene scene3"><div class="cinema-title">${fmt(c.title, n)}</div></div>
  <div class="cinema-scene scene4"><div class="cinema-final">${fmt(c.final, n)}</div><div class="cinema-emoji">${esc(c.emoji)}</div></div>
  <button id="cinemaClose" class="cinema-close" type="button">Zurück zur Nachricht</button>
+</div>` : ""}
+${d.scenes.some((s) => s.type === "gift" && hasVoucher(s) && s.voucher?.show) ? `<div id="vshow" class="vshow hidden" aria-hidden="true">
+ <canvas id="vshowCanvas" aria-hidden="true"></canvas><div class="vs-flash"></div><div class="vs-count" aria-hidden="true"></div>
+ <div class="vs-kicker">✨ Für ${n.trim() ? esc(plain(n, n)) : "dich"} ✨</div><div class="vs-slot"></div>
+ <button id="vshowClose" class="vs-close" type="button">Zurück zur Karte</button><button id="vshowSkip" class="vs-skip" type="button">Überspringen</button>
 </div>` : ""}
 ${opts.exportFile && d.iosHint ? `<div class="ioshint">iPhone: Falls die Mail-Vorschau Animationen blockiert, die Datei über „Teilen“ → „In Dateien sichern“ und von dort im Browser öffnen.</div>` : ""}
 <script type="application/json" id="cfg">${json}</script>

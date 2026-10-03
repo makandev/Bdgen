@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { download, errText } from "@/components/client";
 import { useApp } from "@/components/Gate";
+import { InstallSection } from "@/components/Install";
 import { TopBar } from "@/components/TopBar";
 import type { Provider } from "@/lib/ai";
 import { repo, SERVER, type AISource } from "@/lib/repo";
@@ -206,13 +207,9 @@ export default function SettingsPage() {
               }}
             />
           </div>
-          <div className="tip">
-            <span aria-hidden="true">📱</span>
-            <span>
-              <b>Tipp fürs iPhone:</b> Öffne die App in Safari, tippe auf „Teilen“ → „Zum Home-Bildschirm“. Dann startet sie wie eine echte App – und iOS löscht deine Daten nicht nach längerer Pause.
-            </span>
-          </div>
         </section>
+
+        <InstallSection />
 
         <section className="panel stack">
           <h2>🧠 Lernen aus Bewertungen</h2>

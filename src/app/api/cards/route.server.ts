@@ -1,5 +1,5 @@
 import { aiEnabledFor } from "@/lib/ai";
-import { startData } from "@/lib/cardbase";
+import { startData, withGenerated } from "@/lib/cardbase";
 import { generateCard } from "@/lib/prompts";
 import { str } from "@/lib/validate";
 import { cards, contacts } from "@/server/db";
@@ -27,7 +27,7 @@ export function POST(req: Request) {
         try {
           const gen = await generateCard(briefFor(card), aiExtra, cfg, serverGenOptions(card));
           card = cards.update(card.id, {
-            data: { ...data, scenes: gen.scenes, cinema: gen.cinema, topLine: gen.topLine, reactions: gen.reactions, meta: { variant: gen.variant, provider: gen.provider } },
+            data: withGenerated(data, gen),
           })!;
         } catch (e) {
           warning = `Die KI war nicht erreichbar, deshalb wurde die Karte aus der Vorlage erstellt. ${e instanceof Error ? e.message : ""}`;

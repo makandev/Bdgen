@@ -72,6 +72,7 @@ export function questionsFor(relation: string, occasion: Occasion): [Question, Q
   }
   if (occasion === "danke") return [{ q: "Wofür möchtest du {name} danke sagen?", hints: ["für die Hilfe", "fürs Zuhören", "für die schöne Zeit", "einfach für alles"] }, q1];
   if (occasion === "jubilaeum") return [{ q: "Worauf blickst du gern zurück?", hints: ["die ersten Jahre", "gemeinsame Reisen", "was wir geschafft haben", "das viele Lachen"] }, q2];
+  if (occasion === "neujahr") return [{ q: "Was wünschst du {name} fürs neue Jahr?", hints: ["mehr Zeit für sich", "Gesundheit", "ein großes Abenteuer", "dass Träume wahr werden"] }, q2];
   return [q1, q2];
 }
 

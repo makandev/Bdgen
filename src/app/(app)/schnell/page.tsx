@@ -1,5 +1,6 @@
 "use client";
 
+import { withGenerated } from "@/lib/cardbase";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { errText } from "@/components/client";
@@ -95,7 +96,7 @@ export default function QuickCard() {
     setError("");
     try {
       const g = await repo.generate(result.card, "", { reasons, text, previous: result.data });
-      const data: CardData = { ...result.data, scenes: g.scenes, cinema: g.cinema, topLine: g.topLine, reactions: g.reactions, meta: { variant: g.variant, provider: g.provider } };
+      const data: CardData = withGenerated(result.data, g);
       const card = await repo.saveCard(result.card.id, { data });
       setResult({ ...result, card, data });
       setAttempt((a) => a + 1);

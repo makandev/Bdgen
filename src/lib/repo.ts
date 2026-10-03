@@ -1,6 +1,6 @@
 import { aiEnabled } from "./ai";
 import { BASE } from "./base";
-import { briefFromCard, startData, type CreateOpts } from "./cardbase";
+import { briefFromCard, startData, withGenerated, type CreateOpts } from "./cardbase";
 import { chooseVariant, excerpt, pickSamples, relationGroup } from "./learning";
 import { generateCard, restyle, restyleOffline, rewriteScene, testAI, type Brief, type Generated, type GenOptions } from "./prompts";
 import type { Backup, ContactInput } from "./records";
@@ -82,7 +82,7 @@ function localGenOptions(card: Card, feedback?: Feedback): GenOptions {
 }
 
 function applyGenerated(data: CardData, gen: Generated): CardData {
-  return { ...data, scenes: gen.scenes, cinema: gen.cinema, topLine: gen.topLine, reactions: gen.reactions, meta: { variant: gen.variant, provider: gen.provider } };
+  return withGenerated(data, gen);
 }
 
 const browserRepo: Repo = {

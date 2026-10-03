@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { BACKDROP_LABELS, CONFETTI_LABELS, FONT_LABELS, presetEffects, presetTheme, STYLE_LABELS } from "@/lib/presets";
-import type { Backdrop, CardStyle, ConfettiShape, Effects, HeadingFont, Theme } from "@/lib/types";
+import type { Backdrop, CardStyle, ConfettiShape, Effects, HeadingFont, ParticleMotion, Particles, Theme } from "@/lib/types";
 import { PresetGrid } from "./Swatch";
 
 const COLORS: [keyof Theme, string][] = [
@@ -35,6 +35,9 @@ const SLIDERS: [keyof Effects, string, number, number][] = [
 ];
 
 const STYLE_IDEAS = [
+  "Silvester mit buntem Feuerwerk",
+  "Ballons, die aufsteigen",
+  "leiser Schneefall",
   "mehr Konfetti, festlicher",
   "ruhiger und edler",
   "wie im Film Matrix",
@@ -43,6 +46,40 @@ const STYLE_IDEAS = [
   "wie ein Sonnenuntergang",
   "verspielt für Kinder",
 ];
+
+const MOTION_LABELS: Record<ParticleMotion, string> = { rise: "steigt auf", fall: "fällt", float: "schwebt", swirl: "wirbelt", pop: "ploppt" };
+
+const RECIPES: [string, Particles][] = [
+  ["🎈 Ballons", { emoji: ["🎈", "🎈", "🎉"], motion: "rise", amount: 1.2, size: 1.2 }],
+  ["❄️ Schnee", { emoji: ["❄️", "❅", "✦"], motion: "fall", amount: 1.5, size: 0.9 }],
+  ["🌸 Blüten", { emoji: ["🌸", "🌷", "💮"], motion: "swirl", amount: 1.2, size: 1 }],
+  ["💖 Herzen", { emoji: ["💖", "💗"], motion: "pop", amount: 1.3, size: 1.1 }],
+  ["🦋 Schmetterlinge", { emoji: ["🦋"], motion: "float", amount: 1, size: 1 }],
+];
+
+/** The AI's "effect recipe": emoji that move in one of five ways. Quick picks + what the AI invented. */
+function ParticleChoice({ value, onChange }: { value: Particles | null | undefined; onChange: (p: Particles | null) => void }) {
+  const same = (p: Particles) => !!value && value.motion === p.motion && value.emoji.join() === p.emoji.join();
+  return (
+    <div className="field">
+      <span style={{ fontWeight: 600, color: "var(--text2)", fontSize: ".85rem" }}>Emoji-Effekt (die KI kann eigene erfinden)</span>
+      <div className="chips">
+        <button type="button" className={`chip${!value ? " on" : ""}`} onClick={() => onChange(null)}>aus</button>
+        {RECIPES.map(([label, p]) => (
+          <button key={label} type="button" className={`chip${same(p) ? " on" : ""}`} onClick={() => onChange(p)}>{label}</button>
+        ))}
+        {value && !RECIPES.some(([, p]) => same(p)) && <span className="chip on">✨ {value.emoji.join(" ")}</span>}
+      </div>
+      {value && (
+        <div className="chips">
+          {(Object.keys(MOTION_LABELS) as ParticleMotion[]).map((m) => (
+            <button key={m} type="button" className={`chip${value.motion === m ? " on" : ""}`} onClick={() => onChange({ ...value, motion: m })}>{MOTION_LABELS[m]}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Choice<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: Record<T, string>; onChange: (v: T) => void }) {
   return (
@@ -120,6 +157,7 @@ export function DesignPanel({
           <Choice<CardStyle> label="Kartenstil" value={theme.style ?? "glass"} options={STYLE_LABELS} onChange={(v) => setTheme({ style: v })} />
           <Choice<Backdrop> label="Hintergrund-Effekt" value={effects.backdrop ?? "dots"} options={BACKDROP_LABELS} onChange={(v) => setFx({ backdrop: v })} />
           <Choice<ConfettiShape> label="Konfetti-Form" value={effects.confettiShape ?? "strip"} options={CONFETTI_LABELS} onChange={(v) => setFx({ confettiShape: v })} />
+          <ParticleChoice value={effects.particles} onChange={(p) => setFx({ particles: p })} />
           <Choice<HeadingFont> label="Schrift" value={theme.headingFont} options={FONT_LABELS} onChange={(v) => setTheme({ headingFont: v })} />
 
           <div className="stack" style={{ gap: 10 }}>

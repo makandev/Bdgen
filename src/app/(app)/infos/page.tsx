@@ -46,7 +46,18 @@ export default function InfoPage() {
         </nav>
 
         <section className="panel stack" id="neu">
-          <h2>🆕 Neu in Version 0.4</h2>
+          <h2>🆕 Neu in Version 0.5</h2>
+          <ul className="info-list">
+            <li><b>🎟️ Gutschein mit Feuerwerk:</b> Auf der Geschenk-Seite kannst du einen Gutschein anhängen – als <b>Code</b> (mit Kopieren-Knopf), <b>Foto</b> oder <b>PDF</b>. Beim Auspacken startet ein Countdown 3-2-1, buntes Feuerwerk – und dann fliegt der Gutschein herein.</li>
+            <li><b>🎆 Silvester & Neujahr:</b> neuer Anlass, neues Design „Silvester“ und der Hintergrund-Effekt <b>Feuerwerk</b>.</li>
+            <li><b>✨ KI-Effekt-Rezepte:</b> Die KI kann jetzt eigene Effekte erfinden – z. B. „Ballons, die aufsteigen“, „leiser Schneefall“ oder „Fußbälle“. Einfach im Design-Tab beschreiben.</li>
+            <li><b>📲 Als App installieren:</b> unten rechts – mit passender Anleitung für iPhone, Android, iPad und Computer.</li>
+            <li><b>📱 Ältere iPhones:</b> Verschickte Karten öffnen sich jetzt auch auf älteren Geräten (ab iOS 11).</li>
+          </ul>
+        </section>
+
+        <section className="panel stack">
+          <h2>Version 0.4</h2>
           <ul className="info-list">
             <li><b>⚡ Schnell-Karte:</b> Name, Beziehung, ein bis zwei Fragen – den Rest macht die KI.</li>
             <li><b>👍 / 👎 bewerten:</b> Bei 👎 sagst du, was nicht passt, und die KI bekommt bis zu zwei Versuche, dich zu überzeugen.</li>
@@ -74,7 +85,7 @@ export default function InfoPage() {
           <h2>🗺️ Geplant & noch offen</h2>
           <p className="muted small" style={{ margin: 0 }}>Ideen für die nächsten Versionen – noch nicht umgesetzt.</p>
           <ul className="info-list">
-            <li>📷 <b>Eigene Fotos</b> in die Karte einfügen (z. B. ein Kinderfoto im Finale)</li>
+            <li>📷 <b>Eigene Fotos</b> auch auf anderen Seiten der Karte (z. B. ein Kinderfoto im Finale) – für Gutscheine geht das schon</li>
             <li>🎨 <b>KI-Bilder</b> passend zur Karte – optional, da die Bildmodelle Geld kosten</li>
             <li>🎵 <b>Musik oder Sprachnachricht</b>, die beim Öffnen abgespielt wird</li>
             <li>🔔 <b>Erinnerung</b> ein paar Tage vor Geburtstagen – und eine Benachrichtigung, wenn eine Reaktion kommt (Server-Version)</li>
@@ -140,6 +151,14 @@ export default function InfoPage() {
               )}
             </span>
           </div>
+          <div className="tip">
+            <span aria-hidden="true">🔞</span>
+            <span>
+              <b>Ab 18:</b> Google verlangt für die Gemini-API, dass du volljährig bist, und erlaubt sie nicht für Apps, die sich an Kinder richten.
+              Funkelpost ist deshalb eine App für Erwachsene: Du richtest sie ein und hast den Schlüssel – Kinder gestalten am besten gemeinsam mit dir.
+              Wer eine Karte bekommt, nutzt dabei keine KI.
+            </span>
+          </div>
           <p className="small muted" style={{ margin: 0 }}>
             Gut zu wissen: Gratis-Modelle wechseln häufig und haben Tageslimits. Bei kostenlosen Angeboten können Anbieter die Eingaben zur
             Verbesserung ihrer Modelle nutzen – Funkelpost schickt deshalb <b>nie den Namen</b> der Person mit, nur deine Stichworte. Die Empfehlungen
@@ -155,7 +174,10 @@ export default function InfoPage() {
             dass sie sogar in einen Link passen, und laufen auf jedem Handy.
           </p>
           <p style={{ margin: 0 }}>
-            Die KI schreibt den Animations-Code aber bewusst <b>nicht selbst</b>, sondern steuert die fertig eingebauten Effekte über Einstellungen:
+            Die KI schreibt den Animations-Code aber bewusst <b>nicht selbst</b>, sondern steuert die fertig eingebauten Effekte über Einstellungen –
+            und kann mit <b>Effekt-Rezepten</b> trotzdem Neues erfinden: Sie wählt Emoji oder Symbole und eine Bewegung (aufsteigen, fallen, schweben,
+            wirbeln, ploppen). Funkelpost prüft das Rezept und zeichnet es mit eigenem, geprüftem Code. So entstehen z. B. Ballons, Schneefall oder
+            Schmetterlinge, ohne dass fremder Code in die Karte kommt.
           </p>
           <ul className="info-list">
             <li><b>Zuverlässig:</b> Gratis-Modelle machen bei längerem Code oft Fehler – die Karte wäre dann kaputt.</li>
@@ -163,7 +185,8 @@ export default function InfoPage() {
             <li><b>Schnell & kostenlos:</b> Texte und ein paar Einstellungen brauchen viel weniger KI-Leistung als ganzer Code.</li>
           </ul>
           <p style={{ margin: 0 }}>
-            <b>Bilder lohnen sich nur, wenn du etwas Eigenes zeigen willst</b> – ein Foto oder eine gemalte Figur. Das steht auf der Liste unter „Geplant“.
+            <b>Bilder lohnen sich nur, wenn du etwas Eigenes zeigen willst</b> – zum Beispiel einen Gutschein als Foto oder PDF (geht schon) oder ein
+            eigenes Foto in der Karte (steht unter „Geplant“).
           </p>
         </section>
 

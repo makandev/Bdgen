@@ -1,6 +1,6 @@
 export type Address = "du" | "sie";
 
-export type Occasion = "geburtstag" | "danke" | "besserung" | "jubilaeum" | "einfach";
+export type Occasion = "geburtstag" | "danke" | "besserung" | "jubilaeum" | "neujahr" | "einfach";
 
 export interface Contact {
   id: string;
@@ -95,6 +95,24 @@ export interface GiftScene {
   gift: string;
   detail: string;
   button: string;
+  /** Optional voucher (code, photo or a PDF turned into a picture) revealed after a fireworks show. */
+  voucher?: Voucher | null;
+}
+
+export interface Voucher {
+  kind: "code" | "image";
+  /** Big line on the ticket, e.g. "50 € Wellness". */
+  label: string;
+  /** Redeem code (kind "code"). */
+  code: string;
+  /** data:image/jpeg|png|webp (kind "image"; a PDF's first page becomes this picture). */
+  image: string;
+  /** Original PDF as data URL – server version only, offered as download. */
+  pdf: string;
+  /** Small print, e.g. "einlösbar bis 31.12." */
+  note: string;
+  /** Fullscreen fireworks with countdown before the voucher appears. */
+  show: boolean;
 }
 
 export type Scene = GreetingScene | TextScene | QuizScene | ListScene | CheckScene | GiftScene | FinaleScene;
@@ -114,9 +132,19 @@ export type HeadingFont = "serif" | "sans" | "script" | "mono" | "block";
 export type CardStyle = "glass" | "luxe" | "holo" | "terminal" | "pixel";
 
 /** Animated background layer. */
-export type Backdrop = "dots" | "sparkle" | "matrix" | "blocks" | "aurora";
+export type Backdrop = "dots" | "sparkle" | "matrix" | "blocks" | "aurora" | "fireworks";
 
 export type ConfettiShape = "strip" | "square" | "heart" | "star" | "glyph";
+
+export type ParticleMotion = "rise" | "fall" | "float" | "swirl" | "pop";
+
+/** A small effect recipe the AI may invent within safe bounds: which emoji/symbols move how. */
+export interface Particles {
+  emoji: string[];
+  motion: ParticleMotion;
+  amount: number;
+  size: number;
+}
 
 export interface Theme {
   preset: string;
@@ -149,6 +177,8 @@ export interface Effects {
   speed: number;
   backdrop: Backdrop;
   confettiShape: ConfettiShape;
+  /** Extra emoji effect layer (AI "effect recipe"); null = off. */
+  particles?: Particles | null;
 }
 
 export interface ReactionOption {
