@@ -51,11 +51,16 @@ export function cardCSP(reactions: boolean): string {
   ].join("; ");
 }
 
+/** A JS string literal that is also safe inside an HTML <script> (no `<`, no line separators). */
+function jsString(s: string): string {
+  return JSON.stringify(s).replace(/[<>\u2028\u2029]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
+}
+
 /**
  * Tiny inline script for the static app: adds the policy as <meta> before Next.js starts,
  * including a custom AI address the person entered on this device.
  */
 export function cspBootScript(): string {
-  const base = JSON.stringify(appCSP(AI_ORIGINS));
-  return `(function(){var x="";try{x=localStorage.getItem(${JSON.stringify(CSP_EXTRA_KEY)})||""}catch(e){}if(!/^https:\\/\\/[a-z0-9.-]+(:\\d+)?$/i.test(x))x="";var m=document.createElement("meta");m.httpEquiv="Content-Security-Policy";m.content=${base}.replace("connect-src 'self'","connect-src 'self'"+(x?" "+x:""));document.head.appendChild(m)})();`;
+  const base = jsString(appCSP(AI_ORIGINS));
+  return `(function(){var x="";try{x=localStorage.getItem(${jsString(CSP_EXTRA_KEY)})||""}catch(e){}if(!/^https:\\/\\/[a-z0-9.-]+(:\\d+)?$/i.test(x))x="";var m=document.createElement("meta");m.httpEquiv="Content-Security-Policy";m.content=${base}.replace("connect-src 'self'","connect-src 'self'"+(x?" "+x:""));document.head.appendChild(m)})();`;
 }
