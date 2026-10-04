@@ -81,3 +81,27 @@ jemand, der Checklisten abhakt:
 - Unabhängige Prüfung (Prüf-Agent + `security-review`), Funde beheben.
 - Handbuch Kapitel 6 als vollständiges Bedrohungsmodell; Bericht an den Auftraggeber auf Deutsch, in
   einfacher Sprache: was geschützt ist, was getestet wurde, was offen bleibt.
+
+## Danach: gewünschte neue Funktionen
+
+Erst wenn die Sicherheitsschritte erledigt sind (oder der Auftraggeber es ausdrücklich vorzieht).
+Gleiche Arbeitsweise wie oben: zuerst planen und kurz vorstellen, dann bauen, testen, dokumentieren.
+
+### [ ] A · 🎵 Hintergrundmusik in der Karte
+- Kleine Melodie passend zum Anlass (Spieluhr zum Geburtstag, festlich zu Silvester, ruhig bei Gute
+  Besserung), **im Browser erzeugt** mit der Web-Audio-API – keine Audiodateien, keine Lizenzfragen,
+  Karten-Links bleiben kurz.
+- Startet erst nach dem ersten Antippen (Browser-Regel, besonders iOS); Knopf 🔇/🔊 in der Ecke;
+  `prefers-reduced-motion` → standardmäßig aus. Im Stumm-Modus des iPhones bleibt Web-Audio still – so
+  akzeptieren.
+- Einstellung in `effects` (z. B. `music: "aus" | "spieluhr" | "festlich" | "ruhig"`), in `validate.ts`
+  prüfen, im Design-Tab wählbar, die KI darf passend vorschlagen.
+- Code gehört ins Kartenskript (`CLIENT_JS`, ES5-Stil, läuft ab iOS 11; `webkitAudioContext` beachten).
+
+### [ ] B · ✍️ Handschrift-Unterschrift
+- Im Editor (Finale-Seite) mit Finger/Maus unterschreiben (Canvas, Zeiger-Ereignisse).
+- Gespeichert als **Strichpunkte** (kompakte Zahlenliste, gerundet und vereinfacht), nicht als Bild –
+  damit der Link kurz bleibt; harte Obergrenze für Punkte, Prüfung in `validate.ts` (nur Zahlen!).
+- In der Karte wird die Unterschrift im Finale „wie mit Tinte“ nachgezeichnet (Strich für Strich animiert,
+  SVG-Pfad oder Canvas), Farbe aus dem Theme.
+- Löschen/Neu-Unterschreiben; ohne Unterschrift bleibt alles wie bisher.

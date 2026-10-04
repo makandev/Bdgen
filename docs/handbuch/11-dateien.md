@@ -10,7 +10,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/app/globals.css` | gesamtes CSS der App (nicht der Karten) |
 | `src/app/icon.svg` | Favicon |
 | `src/app/(app)/layout.tsx` | legt `<Gate>` um alle App-Seiten |
-| `src/app/(app)/page.tsx` | Übersicht/Startseite: Schnell-Karte, Personen, Beispiel-Vorschauen, Funkeln |
+| `src/app/(app)/page.tsx` | Übersicht/Startseite: Erinnerungen an nahe Termine, Schnell-Karte, Personen, Beispiel-Vorschauen, Funkeln |
 | `src/app/(app)/kontakt/page.tsx` | Person anlegen/bearbeiten, Beziehung, Stichworte, Design, Karte erstellen |
 | `src/app/(app)/karte/page.tsx` | Karten-Editor: Texte, Design, Teilen, Bewerten, Autosave, Rückgängig |
 | `src/app/(app)/schnell/page.tsx` | Schnell-Karte mit zwei Fragen |

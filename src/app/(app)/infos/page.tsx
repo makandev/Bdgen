@@ -49,6 +49,7 @@ export default function InfoPage() {
         <section className="panel stack" id="neu">
           <h2>🆕 Neu in Version 0.6</h2>
           <ul className="info-list">
+            <li><b>🔔 Erinnerung:</b> Steht in den nächsten 7 Tagen ein Geburtstag oder Anlass an, zeigt die Startseite ein Kärtchen mit „Karte erstellen“.</li>
             <li><b>🖼️ Bild + Link teilen:</b> Im Teilen-Tab entsteht ein Vorschaubild in den Farben der Karte – zusammen mit dem Link verschickt, ohne Warnungen wie bei HTML-Dateien.</li>
             <li><b>✨ Neue Startseite:</b> sanft funkelnd, mit Vorschauen fertiger Karten.</li>
             <li><b>🔒 KI-Schlüssel nur auf deinem Gerät:</b> Nichts mehr über GitHub. Auf Wunsch schützt ein Geräte-Passwort die Schlüssel (verschlüsselt gespeichert).</li>
