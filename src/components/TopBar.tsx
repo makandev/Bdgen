@@ -8,7 +8,7 @@ export function TopBar({ children }: { children?: React.ReactNode }) {
   const { hasVault, lock, showIntro } = useApp();
   return (
     <header className="topbar">
-      <Link href="/" className="brand">
+      <Link href="/start/" className="brand">
         <span className="brand-mark">✦</span> Funkelpost
       </Link>
       <div className="row">

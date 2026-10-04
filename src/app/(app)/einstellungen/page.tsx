@@ -95,7 +95,7 @@ export default function SettingsPage() {
   return (
     <div className="shell" style={{ maxWidth: 760 }}>
       <TopBar>
-        <Link href="/" className="btn ghost sm hide-sm">← Übersicht</Link>
+        <Link href="/start/" className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
       <div className="stack">
         <div>

@@ -127,7 +127,7 @@ export default function QuickCard() {
   return (
     <div className="shell">
       <TopBar>
-        <Link href="/" className="btn ghost sm hide-sm">← Übersicht</Link>
+        <Link href="/start/" className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
       <div className="quick stack">
         <div className="quick-steps" aria-hidden="true">

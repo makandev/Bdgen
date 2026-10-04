@@ -11,6 +11,8 @@ export interface RenderOptions {
   reactUrl?: string;
   /** Editor/gallery preview: reactions only show what the recipient would see. */
   preview?: boolean;
+  /** Showcase on the start page: reactions just say thanks, nothing is sent. */
+  showcase?: boolean;
 }
 
 export function esc(s: string): string {
@@ -494,6 +496,7 @@ document.querySelectorAll('[data-reactions]').forEach(function(box){var sent=nul
   box.querySelectorAll('.react').forEach(function(x){x.classList.toggle('picked',x===b)});
   var done=box.querySelector('.react-done'),th=box.querySelector('.react-thanks'),more=box.querySelector('.react-more'),send=box.querySelector('.react-send');
   done.classList.remove('hidden');box.querySelector('.react-big').textContent=em;floatEmoji(em);
+  if(CFG.showcase){th.textContent='Danke! 💌';return}
   if(CFG.preview){th.textContent='Vorschau: So reagiert die Person – du bekommst die Reaktion dann.';return}
   if(CFG.reactUrl){th.textContent='Wird gesendet …';
    fetch(CFG.reactUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({emoji:em,label:lb,id:sent})}).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(j){sent=j.id;th.textContent='Deine Reaktion ist angekommen 💌';more.classList.remove('hidden')}).catch(function(){th.textContent='Hat gerade nicht geklappt – bitte nochmal tippen.'});return}
@@ -512,6 +515,7 @@ export function renderCardHTML(d: CardData, opts: RenderOptions = {}): string {
   const cfg = {
     reactUrl: opts.reactUrl ?? null,
     preview: !!opts.preview,
+    showcase: !!opts.showcase,
     effects: d.effects,
     palette: t.confetti.length ? t.confetti : [t.accent],
     particle: t.accent,

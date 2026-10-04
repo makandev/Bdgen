@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!SERVER) window.location.replace(`${BASE}/`);
+    if (!SERVER) window.location.replace(`${BASE}/start/`);
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -28,7 +28,7 @@ export default function LoginPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((data as { error?: string }).error || `Fehler ${res.status}`);
       const next = new URLSearchParams(window.location.search).get("next");
-      window.location.href = BASE + (next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
+      window.location.href = BASE + (next && next.startsWith("/") && !next.startsWith("//") ? next : "/start/");
     } catch (err) {
       setError(errText(err));
       setBusy(false);

@@ -111,7 +111,7 @@ function ContactEditor() {
     if (!confirm(`„${form.name}“ und alle Karten für diese Person wirklich löschen?`)) return;
     try {
       await repo.deleteContact(id);
-      router.push("/");
+      router.push("/start/");
     } catch (e) {
       setMsg({ kind: "err", text: errText(e) });
     }
@@ -142,7 +142,7 @@ function ContactEditor() {
   return (
     <div className="shell">
       <TopBar>
-        <Link href="/" className="btn ghost sm hide-sm">← Übersicht</Link>
+        <Link href="/start/" className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
 
       <div className="editor contact-layout">

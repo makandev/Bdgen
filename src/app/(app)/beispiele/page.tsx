@@ -21,7 +21,7 @@ export default function ExamplesPage() {
   return (
     <div className="shell">
       <TopBar>
-        <Link href="/" className="btn ghost sm hide-sm">← Übersicht</Link>
+        <Link href="/start/" className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
       <div className="stack">
         <div>

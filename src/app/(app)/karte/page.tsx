@@ -316,7 +316,7 @@ function CardEditor() {
         {msg ? (
           <div className="stack">
             <div className="notice err">{msg.text}</div>
-            <div><Link href="/" className="btn ghost">← Zur Übersicht</Link></div>
+            <div><Link href="/start/" className="btn ghost">← Zur Übersicht</Link></div>
           </div>
         ) : (
           <p className="muted">Lädt …</p>
