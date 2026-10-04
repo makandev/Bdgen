@@ -89,5 +89,5 @@ Routen. Nach Änderungen am Proxy immer testen: `curl …/api/contacts/` ohne Co
 `dataBlock()` hat `<<<`/`>>>` zuerst einfach gelöscht. Aus `DATEN>><<<>` wurde dadurch `DATEN>>>` –
 ein echter Schluss-Marker, hinter dem eingeschleuste „Regeln“ standen (gefunden in der unabhängigen
 Prüfung). Darum ersetzen (`‹›`), damit sich die Reste links und rechts nie zu etwas Neuem verbinden.
-Dasselbe bei Tags: `scrubText()` machte aus `<<b>script>` ein `<script>` (CodeQL-Fund) und
-wiederholt das Entfernen deshalb, bis sich nichts mehr ändert.
+Dasselbe bei Tags: `scrubText()` machte aus `<<b>script>` ein `<script>` (CodeQL-Fund). Jetzt wird
+jedes übrige `<`, das noch einen Tag beginnen könnte, zu `‹` (`<3` bleibt).

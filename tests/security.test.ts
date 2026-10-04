@@ -74,6 +74,25 @@ function mutate(v: unknown, r: () => number, depth = 0): unknown {
 }
 
 /** The card page may only contain its own two scripts and no way to run or load anything else. */
+/** The HTML without the contents of its own <script>/<style> blocks (cut by position, not by regex). */
+function withoutBlocks(html: string): string {
+  const lower = html.toLowerCase();
+  let out = "";
+  let at = 0;
+  for (;;) {
+    const s = lower.indexOf("<script", at);
+    const t = lower.indexOf("<style", at);
+    const start = s < 0 ? t : t < 0 ? s : Math.min(s, t);
+    if (start < 0) return out + html.slice(at);
+    const close = start === s ? "</script" : "</style";
+    const end = lower.indexOf(close, start);
+    const stop = end < 0 ? -1 : lower.indexOf(">", end);
+    if (stop < 0) return out + html.slice(at); // unclosed block: keep it, so the checks below see it
+    out += html.slice(at, start);
+    at = stop + 1;
+  }
+}
+
 function assertInert(html: string, label: string) {
   const scripts = html.match(/<script\b/gi) ?? [];
   assert.equal(scripts.length, 2, `${label}: only the two own <script> tags`);
@@ -83,11 +102,7 @@ function assertInert(html: string, label: string) {
   const styles = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n");
   assert.doesNotMatch(styles, /url\(\s*['"]?\s*(https?:|\/\/|javascript:)|@import|expression\(|<\//i, `${label}: CSS loads nothing`);
   // Every tag outside the own scripts: allowed name, no event handlers, no script or outside URLs.
-  let markup = html;
-  for (let prev = ""; prev !== markup; ) {
-    prev = markup;
-    markup = markup.replace(/<script\b[\s\S]*?<\/script\s*>/gi, "").replace(/<style\b[\s\S]*?<\/style\s*>/gi, "");
-  }
+  const markup = withoutBlocks(html);
   for (const tag of markup.match(/<[a-zA-Z][^>]*>/g) ?? []) {
     const name = /^<([a-zA-Z0-9]+)/.exec(tag)![1].toLowerCase();
     assert.ok(!["script", "iframe", "object", "embed", "base", "link", "form", "frame", "svg", "math"].includes(name), `${label}: <${name}>`);
