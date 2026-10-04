@@ -15,7 +15,8 @@
     "predev:server": "node scripts/prepare-public.mjs",
     "prebuild": "node scripts/prepare-public.mjs",
     "prebuild:server": "node scripts/prepare-public.mjs",
-    "postbuild": "node scripts/check-compat.mjs"
+    "postbuild": "node scripts/check-compat.mjs",
+    "lizenzen": "node scripts/lizenzen.mjs"
   },
   "dependencies": {
     "fflate": "^0.8.3",

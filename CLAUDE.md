@@ -5,7 +5,9 @@ einer Codebasis: statische Browser-Version (GitHub Pages) und Server-Version (SQ
 
 **Zuerst lesen:** [`docs/handbuch/README.md`](docs/handbuch/README.md) – vollständiges Entwickler-Handbuch.
 
-**Offener Auftrag:** [`docs/AUFTRAG-SICHERHEIT.md`](docs/AUFTRAG-SICHERHEIT.md) – Sicherheits-Härtung,
+**Was als Nächstes kommt:** [`docs/FAHRPLAN.md`](docs/FAHRPLAN.md) – Fahrplan, Verkaufs-Voraussetzungen, was bewusst nicht gebaut wird.
+
+**Abgeschlossener Auftrag (zum Nachlesen):** [`docs/AUFTRAG-SICHERHEIT.md`](docs/AUFTRAG-SICHERHEIT.md) – Sicherheits-Härtung,
 Schritt für Schritt abzuarbeiten (mit Anweisungen, wie du dabei vorgehst).
 
 ## Pflichten bei jeder Änderung
@@ -13,7 +15,7 @@ Schritt für Schritt abzuarbeiten (mit Anweisungen, wie du dabei vorgehst).
 1. **Handbuch aktuell halten** (`docs/handbuch/`): Neue/umbenannte/gelöschte Dateien in
    `11-dateien.md`, geänderte Abläufe im passenden Kapitel, Fehler aus denen man lernen kann in
    `10-stolperfallen.md`. `tests/docs.test.ts` prüft Vollständigkeit.
-2. `npm run typecheck && npm test` müssen grün sein; bei UI-Änderungen beide Builds
+2. `npm run typecheck && npm test` müssen grün sein (nach Änderungen an Abhängigkeiten `npm run lizenzen`); bei UI-Änderungen beide Builds
    (`npm run build`, `npm run build:server`) – der Browser-Build prüft danach die iOS-15-Kompatibilität.
 3. Nutzer-sichtbare Neuerungen in `src/app/(app)/infos/page.tsx` („Neu in Version …“) und ggf. `README.md`.
 
