@@ -5,6 +5,9 @@ einer Codebasis: statische Browser-Version (GitHub Pages) und Server-Version (SQ
 
 **Zuerst lesen:** [`docs/handbuch/README.md`](docs/handbuch/README.md) – vollständiges Entwickler-Handbuch.
 
+**Offener Auftrag:** [`docs/AUFTRAG-SICHERHEIT.md`](docs/AUFTRAG-SICHERHEIT.md) – Sicherheits-Härtung,
+Schritt für Schritt abzuarbeiten (mit Anweisungen, wie du dabei vorgehst).
+
 ## Pflichten bei jeder Änderung
 
 1. **Handbuch aktuell halten** (`docs/handbuch/`): Neue/umbenannte/gelöschte Dateien in

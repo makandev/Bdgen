@@ -23,6 +23,8 @@ Lernmittel: Es erklärt nicht nur *was* wo liegt, sondern *warum* es so gebaut i
 | 10 | [Stolperfallen](10-stolperfallen.md) | Was schon einmal schiefging – und wie man es vermeidet |
 | 11 | [Dateiverzeichnis](11-dateien.md) | Jede Datei in einem Satz |
 
+Offener Auftrag: [`../AUFTRAG-SICHERHEIT.md`](../AUFTRAG-SICHERHEIT.md) (Sicherheits-Härtung).
+
 Weitere Dokumente: [`../SERVER.md`](../SERVER.md) (Installation für Einsteiger),
 [`../KI-PLAN.md`](../KI-PLAN.md) (Modelle, Kosten, Ausbaustufen), [`../../README.md`](../../README.md) (Projektseite).
 
