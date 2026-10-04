@@ -164,7 +164,7 @@ function StorageNote({ platform }: { platform: Platform }) {
 
 /** Small "install" button bottom right on phones and tablets (and wherever the browser offers it). */
 /** Pages with editors keep the corner free – there it lives in the settings instead. */
-const FAB_PAGES = /^\/(start|beispiele|infos|login)\/?$/;
+const FAB_PAGES = /^\/((beispiele|infos|login)\/?)?$/;
 
 export function InstallFab() {
   const { platform, standalone, canPrompt, prompt } = useInstall();

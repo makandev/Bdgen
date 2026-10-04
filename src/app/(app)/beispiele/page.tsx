@@ -13,6 +13,13 @@ export default function ExamplesPage() {
   const [open, setOpen] = useState<Example | null>(null);
   const full = useMemo(() => (open ? renderCardHTML(exampleCard(open), { reactionMode: "preview" }) : ""), [open]);
 
+  // Deep link from the start page: /beispiele/?zeige=<id> opens that card right away.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("zeige");
+    const e = id ? EXAMPLES.find((x) => x.id === id) : undefined;
+    if (e) setOpen(e);
+  }, []);
+
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && setOpen(null);
     window.addEventListener("keydown", onKey);
@@ -29,7 +36,7 @@ export default function ExamplesPage() {
           <div className="eyebrow">Beispiele</div>
           <h1>So kann deine Überraschung aussehen</h1>
           <p className="muted" style={{ margin: "6px 0 0" }}>
-            Zwölf Designs, zwölf Menschen. Tippe auf eine Karte, um sie in groß mit allen Effekten zu erleben.
+            {EXAMPLES.length} Karten für ganz verschiedene Menschen und Anlässe. Tippe auf eine Karte, um sie in groß mit allen Effekten zu erleben.
           </p>
         </div>
         <div className="gallery">

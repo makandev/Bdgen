@@ -4,13 +4,21 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { errText } from "@/components/client";
 import { dateLabel, daysUntil } from "@/components/dates";
+import { Sparkles } from "@/components/Sparkles";
+import { Thumb } from "@/components/Thumb";
 import { TopBar } from "@/components/TopBar";
+import { EXAMPLES } from "@/lib/examples";
 import { OCCASIONS, relationEmoji } from "@/lib/presets";
 import { repo, SERVER } from "@/lib/repo";
 import type { Reaction } from "@/lib/types";
 import type { Contact } from "@/lib/types";
 
 type Row = Contact & { cardCount: number };
+
+/** A varied handful for the start page – different designs, people and occasions. */
+const INSPIRE = ["oma", "enkel", "silvester", "bruder", "schwester", "kollegin"]
+  .map((id) => EXAMPLES.find((e) => e.id === id))
+  .filter((e): e is (typeof EXAMPLES)[number] => !!e);
 
 export default function Home() {
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -34,7 +42,9 @@ export default function Home() {
   const soon = filtered.filter((r) => (daysUntil(r.date) ?? 999) <= 14);
 
   return (
-    <div className="shell">
+    <>
+    <Sparkles />
+    <div className="shell over-sparkles">
       <TopBar>
         <Link href="/kontakt/?id=neu" className="btn sm">+ Neue Person</Link>
       </TopBar>
@@ -103,7 +113,7 @@ export default function Home() {
 
         {rows && rows.length === 0 && (
           <div className="panel empty stack">
-            <div className="big">✦ ✧ ✦</div>
+            <div className="big twinkle-row" aria-hidden="true"><span>✦</span> <span>✧</span> <span>✦</span></div>
             <h2>Noch niemand da.</h2>
             <p className="muted" style={{ margin: 0 }}>
               Leg die erste Person an – mit ein paar Stichworten, Erinnerungen oder Gefühlen. Den Rest schreibt die KI.
@@ -113,6 +123,23 @@ export default function Home() {
               <Link href="/beispiele/" className="btn ghost">👀 Beispiele ansehen</Link>
             </div>
           </div>
+        )}
+
+        {rows && rows.length < 3 && (
+          <section className="inspire">
+            <div className="spread">
+              <h2>So kann es aussehen</h2>
+              <Link href="/beispiele/" className="small">Alle {EXAMPLES.length} Beispiele →</Link>
+            </div>
+            <div className="inspire-row">
+              {INSPIRE.map((e) => (
+                <Link key={e.id} href={`/beispiele/?zeige=${e.id}`}>
+                  <Thumb e={e} />
+                  <span>{e.title}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
 
         <div className="contact-grid">
@@ -144,5 +171,6 @@ export default function Home() {
         </div>
       </div>
     </div>
+    </>
   );
 }

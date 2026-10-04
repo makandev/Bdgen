@@ -1,5 +1,6 @@
 "use client";
 
+import { Sparkles } from "@/components/Sparkles";
 import { useEffect, useState } from "react";
 import { errText } from "@/components/client";
 import { BASE, HOME } from "@/lib/base";
@@ -49,6 +50,7 @@ export default function LoginPage() {
 
   return (
     <main className="login">
+      <Sparkles />
       <form className="panel stack" onSubmit={submit}>
         <div style={{ fontSize: "1.25rem", letterSpacing: ".55em", color: "var(--accent)" }}>✦ ✧ ✦</div>
         <div className="eyebrow">Privater Bereich</div>

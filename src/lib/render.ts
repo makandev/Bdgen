@@ -11,9 +11,9 @@ export interface RenderOptions {
   reactUrl?: string;
   /**
    * What a reaction tap does: "send" (default) posts it or opens the share sheet,
-   * "preview" (editor/gallery) explains it, "showcase" (start page) just says thanks.
+   * "preview" (editor/gallery) only explains it.
    */
-  reactionMode?: "send" | "preview" | "showcase";
+  reactionMode?: "send" | "preview";
 }
 
 export function esc(s: string): string {
@@ -513,7 +513,6 @@ document.querySelectorAll('[data-reactions]').forEach(function(box){var sent=nul
   box.querySelectorAll('.react').forEach(function(x){x.classList.toggle('picked',x===b)});
   var done=box.querySelector('.react-done'),th=box.querySelector('.react-thanks'),more=box.querySelector('.react-more'),send=box.querySelector('.react-send');
   done.classList.remove('hidden');box.querySelector('.react-big').textContent=em;floatEmoji(em);
-  if(CFG.reactionMode==='showcase'){th.textContent='Danke! 💌';return}
   if(CFG.reactionMode==='preview'){th.textContent='Vorschau: So reagiert die Person – du bekommst die Reaktion dann.';return}
   if(CFG.reactUrl){th.textContent='Wird gesendet …';
    fetch(CFG.reactUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({emoji:em,label:lb,id:sent})}).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(j){sent=j.id;th.textContent='Deine Reaktion ist angekommen 💌';more.classList.remove('hidden')}).catch(function(){th.textContent='Hat gerade nicht geklappt – bitte nochmal tippen.'});return}

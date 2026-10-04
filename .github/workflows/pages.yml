@@ -32,15 +32,11 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
-      - name: Passwort-Zugang verschlüsseln
-        run: npx tsx scripts/build-vault.ts out/zugang.json
-        env:
-          BDGEN_PASSWORD: ${{ secrets.BDGEN_PASSWORD }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
-          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
-          AI_PROVIDER: ${{ vars.AI_PROVIDER }}
+      # KI-Schlüssel gehören NICHT hierher: jede Person trägt ihren eigenen Schlüssel nur auf dem
+      # eigenen Gerät ein. Der Build bekommt deshalb absichtlich keine Secrets.
+      - name: Keine Schlüssel in der Webseite
+        run: |
+          if grep -rEl "AIza[0-9A-Za-z_-]{30,}|sk-or-v1-[0-9a-f]{20,}" out; then echo "::error::Im Build steckt etwas, das wie ein KI-Schlüssel aussieht."; exit 1; fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

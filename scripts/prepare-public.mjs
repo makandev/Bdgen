@@ -2,10 +2,9 @@
 //  - public/k/index.html: the standalone card viewer (works on older iPhones, no Next.js runtime)
 //  - public/vendor/pdfjs/: pdf.js, loaded only when someone attaches a PDF voucher
 import { build, transform } from "esbuild";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const pub = join(root, "public");
@@ -31,16 +30,6 @@ mkdirSync(join(pub, "k"), { recursive: true });
 writeFileSync(join(pub, "k/index.html"), html);
 
 // The "legacy" build carries polyfills – the modern one needs browser features from 2026 (fails even in current Chrome/Safari).
-// Start page card: a static file the showcase iframe loads (keeps the page itself small).
-const show = await build({ entryPoints: [join(root, "scripts/viewer/showcase.ts")], bundle: true, platform: "node", format: "esm", write: false });
-const tmp = join(tmpdir(), `funkelpost-showcase-${process.pid}.mjs`);
-writeFileSync(tmp, show.outputFiles[0].text);
-try {
-  writeFileSync(join(pub, "showcase.html"), (await import(pathToFileURL(tmp).href)).showcaseHTML());
-} finally {
-  rmSync(tmp, { force: true });
-}
-
 const pdf = join(root, "node_modules/pdfjs-dist/legacy/build");
 mkdirSync(join(pub, "vendor/pdfjs"), { recursive: true });
 // pdf.js calls structuredClone (iOS 15.4+); this covers what it clones: plain data, typed arrays, Map, Set, Date.
@@ -51,4 +40,4 @@ for (const [from, to] of [["pdf.min.mjs", "pdf.min.js"], ["pdf.worker.min.mjs", 
   const r = await transform(readFileSync(join(pdf, from), "utf8"), { target: "safari15", format: "esm", minify: true, legalComments: "none" });
   writeFileSync(join(pub, "vendor/pdfjs", to), CLONE_POLYFILL + r.code);
 }
-console.log(`public/k/index.html (${Math.round(html.length / 1024)} KB), showcase.html + pdf.js ready`);
+console.log(`public/k/index.html (${Math.round(html.length / 1024)} KB) + pdf.js ready`);

@@ -6,7 +6,7 @@ import { SERVER } from "@/lib/repo";
 import { useApp } from "./Gate";
 
 export function TopBar({ children }: { children?: React.ReactNode }) {
-  const { hasVault, lock, showIntro } = useApp();
+  const { canLock, lock, showIntro } = useApp();
   return (
     <header className="topbar">
       <Link href={HOME} className="brand">
@@ -18,7 +18,7 @@ export function TopBar({ children }: { children?: React.ReactNode }) {
         <Link href="/infos/" className="btn ghost sm icon" title="Infos & KI-Leitfaden" aria-label="Infos">ℹ️</Link>
         <button className="btn ghost sm icon" onClick={showIntro} title="Hilfe & Einführung" aria-label="Hilfe">?</button>
         <Link href="/einstellungen/" className="btn ghost sm icon" title="Einstellungen" aria-label="Einstellungen">⚙</Link>
-        {hasVault && (
+        {canLock && (
           <button className="btn ghost sm hide-sm" onClick={lock} title={SERVER ? "Abmelden" : "Gerät sperren"}>{SERVER ? "Abmelden" : "Sperren"}</button>
         )}
       </div>

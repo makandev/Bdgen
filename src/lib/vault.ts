@@ -1,7 +1,6 @@
-import { BASE } from "./base";
 import type { AIConfig } from "./settings";
 
-/** AI keys, encrypted with the app password. Safe to publish; useless without the password. */
+/** AI keys encrypted with the device password (PBKDF2 600k + AES-GCM). Only ever stored on the device itself. */
 export interface Vault {
   v: 1;
   id: string;
@@ -44,16 +43,5 @@ export async function openVault(v: Vault, password: string): Promise<AIConfig> {
     return JSON.parse(dec.decode(plain)) as AIConfig;
   } catch {
     throw new Error("Falsches Passwort.");
-  }
-}
-
-export async function fetchVault(): Promise<Vault | null> {
-  try {
-    const res = await fetch(`${BASE}/zugang.json`, { cache: "no-store" });
-    if (!res.ok) return null;
-    const v = (await res.json()) as Vault;
-    return v && v.v === 1 && v.data ? v : null;
-  } catch {
-    return null;
   }
 }
