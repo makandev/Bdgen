@@ -33,8 +33,9 @@ export function VoucherFields({ value, onChange }: { value: Voucher | null | und
     setErr("");
     try {
       if (mode === "pdf" || file.type === "application/pdf") {
-        const { image, pdf } = await pdfFileToVoucher(file, SERVER);
+        const { image, pdf, note } = await pdfFileToVoucher(file, SERVER);
         onChange({ ...v, kind: "image", image, pdf, code: "" });
+        if (note) setErr(note);
       } else {
         const image = await imageFileToVoucher(file, SERVER);
         onChange({ ...v, kind: "image", image, pdf: "", code: "" });

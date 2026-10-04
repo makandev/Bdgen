@@ -176,6 +176,26 @@ function dataUrl(v: unknown, kind: RegExp, max: number): string {
   return typeof v === "string" && v.length <= max && kind.test(v) && /^[^,]+,[A-Za-z0-9+/=]+$/.test(v) ? v : "";
 }
 
+/**
+ * PDFs can carry scripts, launch actions or attached files. Those never pass: only a plain PDF
+ * (starts with %PDF, no active content) may be handed to the recipient as original.
+ */
+function plainPdf(url: string): string {
+  return url && pdfIsPlain(url) ? url : "";
+}
+
+export function pdfIsPlain(dataUrl: string): boolean {
+  try {
+    const bin = atob(dataUrl.slice(dataUrl.indexOf(",") + 1));
+    if (!bin.startsWith("%PDF-")) return false;
+    // Names may be hex-escaped (#4A = J) – undo that before looking.
+    const text = bin.replace(/#([0-9a-fA-F]{2})/g, (_, h: string) => String.fromCharCode(parseInt(h, 16)));
+    return !/\/(JavaScript|JS|Launch|EmbeddedFile|EmbeddedFiles|OpenAction|AA|RichMedia|XFA|SubmitForm|ImportData|GoToR|GoToE)\b/.test(text);
+  } catch {
+    return false;
+  }
+}
+
 /** Voucher on a gift scene. Pictures must be real base64 data URLs – nothing that could load from elsewhere. */
 export function normalizeVoucher(raw: unknown): Voucher | null {
   if (!isObj(raw)) return null;
@@ -188,7 +208,7 @@ export function normalizeVoucher(raw: unknown): Voucher | null {
     label: str(raw.label, "", 120),
     code: kind === "code" ? code : "",
     image: kind === "image" ? image : "",
-    pdf: kind === "image" ? dataUrl(raw.pdf, /^data:application\/pdf;base64,/, MAX_PDF_CHARS) : "",
+    pdf: kind === "image" ? plainPdf(dataUrl(raw.pdf, /^data:application\/pdf;base64,/, MAX_PDF_CHARS)) : "",
     note: str(raw.note, "", 240),
     show: bool(raw.show, true),
   };

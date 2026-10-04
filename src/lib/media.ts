@@ -1,7 +1,7 @@
 "use client";
 
 import { BASE } from "./base";
-import { MAX_PDF_CHARS } from "./validate";
+import { MAX_PDF_CHARS, pdfIsPlain } from "./validate";
 
 /** How big a voucher picture may get. Browser version: the picture travels inside the link, so it stays small. */
 export function imageBudget(server: boolean) {
@@ -75,12 +75,13 @@ async function pdfLib(): Promise<PdfLib> {
 }
 
 /** First page of a PDF as voucher picture; on the server the original PDF is kept for download. */
-export async function pdfFileToVoucher(file: File, server: boolean): Promise<{ image: string; pdf: string }> {
+export async function pdfFileToVoucher(file: File, server: boolean): Promise<{ image: string; pdf: string; note?: string }> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   let image: string;
   try {
     const lib = await pdfLib();
-    const doc = await lib.getDocument({ data: bytes.slice() }).promise;
+    // No scripting, no eval: a PDF is only ever drawn as a picture here.
+    const doc = await lib.getDocument({ data: bytes.slice(), isEvalSupported: false, enableScripting: false } as { data: Uint8Array }).promise;
     const page = await doc.getPage(1);
     const base = page.getViewport({ scale: 1 });
     const viewport = page.getViewport({ scale: Math.min(3, 1600 / Math.max(base.width, base.height)) });
@@ -99,7 +100,10 @@ export async function pdfFileToVoucher(file: File, server: boolean): Promise<{ i
   let pdf = "";
   if (server) {
     const url = await readAsDataUrl(file);
-    if (url.startsWith("data:application/pdf;base64,") && url.length <= MAX_PDF_CHARS) pdf = url;
+    if (url.startsWith("data:application/pdf;base64,") && url.length <= MAX_PDF_CHARS) {
+      if (!pdfIsPlain(url)) return { image, pdf: "", note: "Das PDF enthält aktive Inhalte (z. B. Skripte oder Anhänge). Zur Sicherheit wird nur das Bild verschickt." };
+      pdf = url;
+    }
   }
   return { image, pdf };
 }
