@@ -47,7 +47,16 @@ export default function InfoPage() {
         </nav>
 
         <section className="panel stack" id="neu">
-          <h2>🆕 Neu in Version 0.6</h2>
+          <h2>🆕 Neu in Version 0.7</h2>
+          <ul className="info-list">
+            <li><b>📅 Geburtstags-Organizer:</b> alle Geburtstage, Hochzeitstage und besonderen Tage auf einen Blick – nach Monaten, mit Countdown und Alter („wird 70“). Mit „Datum vormerken“ in Sekunden eingetragen, auch ohne Geburtsjahr.</li>
+            <li><b>📲 Erinnerung im Handy-Kalender:</b> ein Tipp lädt alle Termine in deinen Kalender – jedes Jahr wiederkehrend, mit Erinnerung am Tag und auf Wunsch schon Tage vorher.</li>
+            <li><b>💍 Mehrere Termine pro Person:</b> neben dem Geburtstag z. B. Hochzeitstag oder Namenstag.</li>
+          </ul>
+        </section>
+
+        <section className="panel stack">
+          <h2>Neu in Version 0.6</h2>
           <ul className="info-list">
             <li><b>🔔 Erinnerung:</b> Steht in den nächsten 7 Tagen ein Geburtstag oder Anlass an, zeigt die Startseite ein Kärtchen mit „Karte erstellen“.</li>
             <li><b>🖼️ Bild + Link teilen:</b> Im Teilen-Tab entsteht ein Vorschaubild in den Farben der Karte – zusammen mit dem Link verschickt, ohne Warnungen wie bei HTML-Dateien.</li>

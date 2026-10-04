@@ -37,7 +37,7 @@ test("vault opens only with the right password", async () => {
 
 test("store: renaming a contact renames its cards, deleting removes them", async () => {
   const { contacts, cards, exportBackup, importBackup } = await import("../src/lib/store");
-  const c = contacts.create({ name: "Lena", relation: "Schwester", address: "du", occasion: "geburtstag", date: "", mood: [], notes: "" });
+  const c = contacts.create({ name: "Lena", relation: "Schwester", address: "du", occasion: "geburtstag", date: "", events: [], mood: [], notes: "" });
   const k = cards.create({ contactId: c.id, title: "T", data: defaultCardData({ recipientName: "Lena", address: "du", occasion: "geburtstag" }) });
   contacts.update(c.id, { ...c, name: "Lenchen" });
   assert.equal(cards.get(k.id)!.data.recipientName, "Lenchen");

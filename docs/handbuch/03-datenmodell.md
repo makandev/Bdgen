@@ -3,7 +3,8 @@
 Alle Typen stehen in **`src/lib/types.ts`**. Die wichtigsten:
 
 ```ts
-Contact   { id, name, relation, address: "du"|"sie", occasion, date, mood[], notes, … }
+Contact   { id, name, relation, address: "du"|"sie", occasion, date, events: ExtraDate[], mood[], notes, … }
+ExtraDate { label, date }   – weitere jährliche Termine; Jahr ≤ 1904 heißt „Jahr unbekannt“
 Card      { id, contactId, title, data: CardData, slug?, shared?, createdAt, updatedAt }
 CardData  { recipientName, address, occasion, topLine, theme, effects, scenes[], cinema,
             iosHint, reactions, meta? }
@@ -14,6 +15,10 @@ Effects   { ambient, confetti, ribbons, sparks, orbit, shine, cinema, progress, 
 Voucher   { kind: "code"|"image", label, code, image (data-URL), pdf (data-URL, nur Server), note, show }
 Rating    { value ±1, reasons[], Merkmale (preset, style, variant, …), sample? }   – nie Namen/Stichworte
 ```
+
+**Organizer:** `date` (zum Anlass) und `events` (bis 12 weitere Termine) ergeben zusammen die
+Einträge in `src/lib/organizer.ts`. Der Server legt die Spalte `events` in alten Datenbanken beim
+Start automatisch an; im Browser bekommen alte Personen `events: []` beim Lesen.
 
 Anlässe (`Occasion`): `geburtstag`, `danke`, `besserung`, `jubilaeum`, `neujahr`, `einfach`.
 

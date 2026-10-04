@@ -77,6 +77,7 @@ sequenceDiagram
 
 | Pfad | Datei | Zweck |
 |---|---|---|
+| `/kalender/` | `src/app/(app)/kalender/page.tsx` | Geburtstags-Organizer mit Kalender-Export |
 | `/` | `src/app/(app)/page.tsx` | Übersicht: Erinnerungen (≤ 7 Tage), Personen, Schnell-Karte, Beispiel-Vorschauen, Funkeln |
 | `/kontakt/?id=…` | `src/app/(app)/kontakt/page.tsx` | Person anlegen/bearbeiten, Karte erstellen |
 | `/karte/?id=…` | `src/app/(app)/karte/page.tsx` | Editor (Texte, Design, Teilen), Autosave |

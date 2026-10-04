@@ -9,10 +9,18 @@ export interface Contact {
   address: Address;
   occasion: Occasion;
   date: string;
+  /** Further yearly dates of this person (wedding day, name day …) for the birthday organizer. */
+  events: ExtraDate[];
   mood: string[];
   notes: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** A yearly date. A year up to 1904 (a leap year, so 29 Feb works) means "year unknown". */
+export interface ExtraDate {
+  label: string;
+  date: string;
 }
 
 export interface DayText {
