@@ -16,9 +16,23 @@ export function fail(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
-export async function body(req: Request): Promise<Record<string, unknown>> {
+/** An error with a status code that may be shown to the caller. */
+export class HttpError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
+}
+
+/** Largest request body by default: a card with photo and original PDF fits comfortably. */
+export const BODY_MAX = 6 * 1024 * 1024;
+
+export async function body(req: Request, max = BODY_MAX): Promise<Record<string, unknown>> {
+  const tooBig = () => new HttpError("Die Daten sind zu groß.", 413);
+  if (Number(req.headers.get("content-length") || 0) > max) throw tooBig();
+  const text = await req.text();
+  if (text.length > max) throw tooBig();
   try {
-    const b = await req.json();
+    const b = JSON.parse(text);
     return b && typeof b === "object" ? (b as Record<string, unknown>) : {};
   } catch {
     return {};
@@ -30,8 +44,8 @@ export function handle(fn: () => Promise<Response> | Response): Promise<Response
     .then(fn)
     .catch((e: unknown) => {
       const message = e instanceof Error ? e.message : "Unbekannter Fehler";
-      const status = e instanceof AIError ? e.status : 500;
-      if (!(e instanceof AIError)) console.error(e);
+      const status = e instanceof AIError || e instanceof HttpError ? e.status : 500;
+      if (!(e instanceof AIError || e instanceof HttpError)) console.error(e);
       return fail(message, status);
     });
 }

@@ -69,3 +69,9 @@ wiederholt sich als „letzter Tag im Februar“, sonst fehlt er in drei von vie
 `appCSP()` erlaubt sein. Eine Regel per `<meta>` kann nur verschärfen, nie lockern; mehrere Regeln
 gelten gleichzeitig (Schnittmenge). Im Entwicklungsmodus (`next dev`) setzt die App keine Regel,
 weil das Neuladen dort `eval` braucht.
+## PDFs verstecken Objekte in komprimierten Streams
+
+Ein Textsuche über die rohen PDF-Bytes reicht nicht: Objekt-Streams (`/Type /ObjStm`) packen ganze
+Objekte – auch `/JavaScript` oder `/OpenAction` – per FlateDecode zusammen. `pdfIsPlain()` entpackt
+deshalb jeden Flate-Stream (gemeinsames Limit gegen Zip-Bomben) und lehnt Objekt-Streams ab, die es
+nicht lesen kann.

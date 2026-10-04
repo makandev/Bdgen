@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeBackup } from "@/lib/records";
+import { BACKUP_MAX_BYTES, sizeLabel } from "@/lib/uploads";
 import { HOME } from "@/lib/base";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -124,7 +126,12 @@ export default function SettingsPage() {
 
   async function restore(file: File) {
     try {
-      const r = await repo.importBackup(JSON.parse(await file.text()));
+      if (file.size > BACKUP_MAX_BYTES) throw new Error(`Die Datei ist zu groß für eine Sicherung (höchstens ${sizeLabel(BACKUP_MAX_BYTES)}).`);
+      const raw = JSON.parse(await file.text());
+      // Check first and ask: a restore overwrites people and cards with the same id.
+      const n = normalizeBackup(raw);
+      if (!window.confirm(`Sicherung einspielen: ${n.contacts.length} Personen und ${n.cards.length} Karten.\n\nGleiche Einträge auf diesem Gerät werden dabei überschrieben. Fortfahren?`)) return;
+      const r = await repo.importBackup(raw);
       setMsg({ kind: "ok", text: `Wiederhergestellt: ${r.contacts} Personen und ${r.cards} Karten.` });
     } catch (e) {
       setMsg({ kind: "err", text: e instanceof SyntaxError ? "Die Datei ist keine gültige Sicherung." : errText(e) });

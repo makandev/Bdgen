@@ -1,6 +1,7 @@
 "use client";
 
 import { BASE } from "./base";
+import { imageKind, PDF_MAX_BYTES, PHOTO_MAX_BYTES, sizeLabel } from "./uploads";
 import { MAX_PDF_CHARS, pdfIsPlain } from "./validate";
 
 /** How big a voucher picture may get. Browser version: the picture travels inside the link, so it stays small. */
@@ -49,6 +50,11 @@ export function compressToJpeg(src: CanvasImageSource & { width: number; height:
 }
 
 export async function imageFileToVoucher(file: File, server: boolean): Promise<string> {
+  if (file.size > PHOTO_MAX_BYTES) throw new Error(`Das Foto ist zu groß (höchstens ${sizeLabel(PHOTO_MAX_BYTES)}).`);
+  // Only real pictures, judged by their first bytes – not by name or type, which can lie (SVG, HTML …).
+  if (!imageKind(new Uint8Array(await file.slice(0, 32).arrayBuffer()))) {
+    throw new Error("Das ist kein Foto, das wir öffnen können. Bitte ein JPG, PNG, WebP oder HEIC wählen.");
+  }
   const img = await loadImage(file);
   try {
     return compressToJpeg(img, imageBudget(server));
@@ -76,7 +82,9 @@ async function pdfLib(): Promise<PdfLib> {
 
 /** First page of a PDF as voucher picture; on the server the original PDF is kept for download. */
 export async function pdfFileToVoucher(file: File, server: boolean): Promise<{ image: string; pdf: string; note?: string }> {
+  if (file.size > PDF_MAX_BYTES) throw new Error(`Das PDF ist zu groß (höchstens ${sizeLabel(PDF_MAX_BYTES)}).`);
   const bytes = new Uint8Array(await file.arrayBuffer());
+  if (String.fromCharCode(...bytes.subarray(0, 5)) !== "%PDF-") throw new Error("Das ist keine PDF-Datei.");
   let image: string;
   try {
     const lib = await pdfLib();
