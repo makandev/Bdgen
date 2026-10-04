@@ -1,5 +1,5 @@
 import { defaultCardData, giftScene, withGift } from "./templates";
-import type { Address, CardData, Occasion, Scene, Voucher } from "./types";
+import type { Address, CardData, Occasion, Particles, Scene, Voucher } from "./types";
 
 export interface Example {
   id: string;
@@ -19,6 +19,8 @@ export interface Example {
   /** Optional gift page, optionally with a voucher. */
   gift?: string;
   voucher?: Voucher;
+  /** Optional effect recipe (what the AI can invent), e.g. rising balloons. */
+  particles?: Particles;
 }
 
 /** Demo cards for the gallery – texts written the way the AI would turn notes into a card. */
@@ -123,15 +125,76 @@ export const EXAMPLES: Example[] = [
     quote: "Ich wünsche euch ein Wochenende ohne Mails und mit ganz viel Stolz auf euch selbst.",
   },
   {
-    id: "silvester", title: "Silvester für die Clique", relation: "Freunde", preset: "silvester", occasion: "neujahr", address: "du", name: "ihr Lieben",
-    notes: "feiern jedes Jahr zusammen · Brunch am Neujahrsmorgen ist Tradition",
-    greeting: "Bevor um Mitternacht die Raketen steigen: Hier ist schon mal das erste Feuerwerk – nur für euch.",
-    list: ["Vorsätze aufschreiben", "Bis zwölf wach bleiben", "Bleigießen deuten", "Am 1. Januar früh aufstehen"],
-    highlight: "Einziger Vorsatz: mehr Zeit mit euch.",
-    heartfelt: ["Mit euch war dieses Jahr laut, chaotisch und wunderschön.", "Egal was das neue bringt – wir stoßen gemeinsam darauf an."],
-    quote: "Ich wünsche euch ein Jahr voller Lachen, Abenteuer und Abende wie diesen.",
-    gift: "Neujahrs-Brunch für alle",
+    id: "silvester", title: "Silvester mit der besten Freundin", relation: "Beste Freundin", preset: "silvester", occasion: "neujahr", address: "du", name: "Jana",
+    notes: "feiern jedes Jahr zusammen · Brunch am Neujahrsmorgen ist unsere Tradition",
+    greeting: "Bevor um Mitternacht die Raketen steigen: Hier ist schon mal das erste Feuerwerk – nur für dich.",
+    list: ["Vorsätze, die bis zum 3. Januar halten", "Bleigießen-Diskussionen", "Wunderkerzen-Panik", "Am 1. Januar früh aufstehen"],
+    highlight: "Einziger Vorsatz: noch mehr Zeit mit dir.",
+    heartfelt: ["Mit dir war dieses Jahr laut, chaotisch und wunderschön.", "Egal, was das neue bringt – wir stoßen gemeinsam darauf an."],
+    quote: "Ich wünsche dir ein Jahr voller Lachen, Abenteuer und Abende wie unsere Silvesternächte.",
+    gift: "Neujahrs-Brunch zu zweit",
     voucher: { kind: "code", label: "Brunch am 1. Januar", code: "NEUJAHR-BRUNCH", image: "", pdf: "", note: "Einlösbar bei mir in der Küche · ab 11 Uhr 🥐", show: true },
+  },
+  {
+    id: "enkel", title: "Für den Enkel zum 10.", relation: "Enkel", preset: "party", occasion: "geburtstag", address: "du", name: "Paul",
+    notes: "liebt Dinosaurier · baut die höchsten Lego-Türme",
+    greeting: "Zehn Jahre! Das ist so alt wie … na ja, nicht ganz so alt wie ein Dinosaurier. Aber fast!",
+    list: ["Zähne putzen (nur heute!)", "Aufräumen", "Gemüse essen", "Früh ins Bett"],
+    highlight: "Heute: der höchste Lego-Turm aller Zeiten.",
+    heartfelt: ["Wenn du mir von Dinosauriern erzählst, lerne ich jedes Mal etwas Neues.", "Opa und ich sind so stolz auf dich – und ein bisschen neidisch auf deine Lego-Türme."],
+    quote: "Ich wünsche dir ein Jahr voller Abenteuer, mutiger Ideen und Türme, die bis zum Himmel reichen.",
+    particles: { emoji: ["🎈", "🎈", "🦕"], motion: "rise", amount: 1.2, size: 1.2 },
+  },
+  {
+    id: "schwiegermutter", title: "Danke an die Schwiegermutter", relation: "Schwiegermutter", preset: "salbei", occasion: "danke", address: "sie", name: "Frau Berger",
+    notes: "hat während des Umzugs die Kinder genommen · bester Rhabarberkuchen",
+    greeting: "Ein Dankeschön, so leicht wie ein Schmetterling – aber mit ganz viel Gewicht.",
+    list: ["Kartons schleppen", "Kinder trösten", "Für alle kochen", "Nein sagen"],
+    highlight: "Heute: Füße hochlegen.",
+    heartfelt: ["Während des Umzugs hatten Sie die Kinder – und die Kinder hatten die schönste Woche des Jahres.", "Ohne Sie hätten wir das nie so entspannt geschafft."],
+    quote: "Ich wünsche Ihnen ganz viele ruhige Nachmittage – mit Kaffee, Rhabarberkuchen und ohne einen einzigen Karton.",
+    particles: { emoji: ["🦋"], motion: "float", amount: 1, size: 1 },
+  },
+  {
+    id: "kumpel", title: "Gute Besserung für den Kumpel", relation: "Kumpel", preset: "neon", occasion: "besserung", address: "du", name: "Jonas",
+    notes: "Bänderriss beim Fußball · kann nicht stillsitzen",
+    greeting: "Abpfiff für ein paar Wochen – aber das Rückspiel gewinnen wir.",
+    list: ["Elfmeter schießen", "Treppen steigen", "Auf dem Sofa ungeduldig werden", "Krücken-Rennen"],
+    highlight: "Einzige Aufgabe: Fuß hoch.",
+    heartfelt: ["Ohne dich ist das Training nur halb so laut – und halb so lustig.", "Nimm dir die Zeit. Wir halten deinen Platz im Sturm frei."],
+    quote: "Ich wünsche dir schnelle Heilung, gute Serien und ganz bald wieder Rasen unter den Füßen.",
+    particles: { emoji: ["⚽"], motion: "pop", amount: 1, size: 1 },
+  },
+  {
+    id: "schwester", title: "Winterpost für die Schwester", relation: "Schwester", preset: "nacht", occasion: "einfach", address: "du", name: "Sophie",
+    notes: "wohnt jetzt weit weg · wir telefonieren jeden Sonntag",
+    greeting: "Draußen ist es kalt – hier kommt etwas Warmes aus der Ferne.",
+    list: ["Die Entfernung", "Funklöcher beim Telefonieren", "Zu wenig Zeit", "Heimweh"],
+    highlight: "Heute: Tee, Decke und an uns denken.",
+    heartfelt: ["Seit du weggezogen bist, sind unsere Sonntagstelefonate mein Lieblingstermin der Woche.", "Egal, wie weit weg: Du bist immer die Erste, der ich alles erzähle."],
+    quote: "Ich wünsche dir warme Socken, gute Nachbarn und das Gefühl, dass Zuhause nie weit weg ist.",
+    particles: { emoji: ["❄️", "❅", "✦"], motion: "fall", amount: 1.5, size: 0.9 },
+  },
+  {
+    id: "patenkind", title: "Für das Patenkind zum 6.", relation: "Patenkind", preset: "rose", occasion: "geburtstag", address: "du", name: "Mia",
+    notes: "liebt Tiere · will Tierärztin werden",
+    greeting: "Sechs Jahre alt! Weißt du, wer sich darüber am meisten freut? Ich – und alle Tiere im Zoo.",
+    list: ["Schuhe zubinden üben", "Aufräumen", "Leise sein", "Warten"],
+    highlight: "Heute: Geburtstagskrone tragen.",
+    heartfelt: ["Wie du dich um jedes kleine Tier kümmerst, finde ich ganz besonders.", "Ich bin so froh, deine Patentante zu sein."],
+    quote: "Ich wünsche dir ein Jahr voller Tiere, Lachen und kleiner Wunder.",
+    gift: "Ein Tag im Zoo – nur wir zwei",
+    voucher: { kind: "code", label: "Zoo-Tag mit mir", code: "ZOO-MIA-6", image: "", pdf: "", note: "Du suchst den Tag aus 🦒", show: true },
+    particles: { emoji: ["🌸", "🌷", "💮"], motion: "swirl", amount: 1.2, size: 1 },
+  },
+  {
+    id: "chef", title: "25 Jahre im Betrieb", relation: "Chef", preset: "gold", occasion: "jubilaeum", address: "sie", name: "Herr Albers",
+    notes: "25-jähriges Firmenjubiläum · kennt jede Maschine beim Namen",
+    greeting: "Ein Vierteljahrhundert – das verdient mehr als einen Händedruck.",
+    list: ["Spätschichten", "Die Kaffeemaschine reparieren", "Monatsabschlüsse", "Immer als Letzter gehen"],
+    highlight: "Heute: sich ehren lassen.",
+    heartfelt: ["Sie kennen jede Maschine beim Namen – und jeden Menschen im Betrieb auch.", "Fünfundzwanzig Jahre Verlässlichkeit, Humor und offene Türen: Danke."],
+    quote: "Ich wünsche Ihnen viele weitere gute Jahre – und heute einen Tag, an dem einmal nichts repariert werden muss.",
   },
   {
     id: "nachbar", title: "Danke an den Nachbarn", relation: "Nachbar", preset: "minimal", occasion: "danke", address: "sie", name: "Herr Weber",
@@ -153,6 +216,7 @@ export function exampleCard(e: Example): CardData {
     if (s.type === "finale") return { ...s, quote: e.quote };
     return s;
   });
+  if (e.particles) d.effects = { ...d.effects, particles: e.particles };
   if (e.gift) d.scenes = withGift(d.scenes, { ...giftScene(e.address, e.gift), voucher: e.voucher ?? null });
   return d;
 }

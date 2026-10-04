@@ -192,17 +192,67 @@ export function defaultScenes(occasion: Occasion, address: Address): Scene[] {
       cinemaButton: "Okay … eine allerletzte Sache ✨",
     },
   ];
+  if (occasion === "neujahr") applyNewYear(scenes);
   return deep(scenes, address);
+}
+
+/** Silvester/Neujahr has its own story: look back, resolutions, leaving things in the old year. */
+function applyNewYear(scenes: Scene[]) {
+  for (const s of scenes) {
+    if (s.type === "greeting") {
+      s.morning.text = "Das neue Jahr ist noch ganz frisch – und das hier ist eine der ersten Überraschungen darin.";
+      s.day.text = "[[Sie haben|Du hast]] die kleine Überraschung zum Jahreswechsel gefunden.";
+      s.evening.text = "Bevor um Mitternacht die Raketen steigen, gibt es hier schon mal das erste Feuerwerk.";
+      s.note = "Pünktlich zum Jahreswechsel – nur für [[Sie|dich]]. 🎆";
+      s.button = "Countdown starten →";
+    } else if (s.type === "quiz") {
+      s.eyebrow = "Kleine Silvester-Prüfung";
+      s.title = "Was ist [[Ihr|dein]] wichtigster Vorsatz?";
+      s.text = "Bitte ehrlich antworten.";
+      s.options = [
+        { label: "Mehr Sport, gesünder essen & alles anders", reply: "Klingt gut – hält erfahrungsgemäß bis zum 3. Januar. 🙂", correct: false },
+        { label: "Mehr von dem, was glücklich macht", reply: "Genau so. Der beste Vorsatz von allen. 🥂", correct: true },
+      ];
+    } else if (s.type === "list") {
+      s.eyebrow = "Fürs neue Jahr";
+      s.title = "Offiziell im alten Jahr gelassen:";
+      s.items = ["Stress, der sich nicht gelohnt hat", "„Das mache ich später“", "Montagsmuffel-Laune", "Zu viele Sorgen"];
+      s.highlightLabel = "Mitgenommen ins neue Jahr";
+      s.highlight = "Alles, was [[Sie|dich]] glücklich macht.";
+      s.button = "Abgemacht →";
+    } else if (s.type === "text" && s.paragraphs.length > 1) {
+      s.eyebrow = "Jetzt einmal ohne Spaß";
+      s.title = "Danke für dieses Jahr.";
+      s.paragraphs = [
+        "Manche Menschen machen ein Jahr einfach besser – [[Sie gehören|du gehörst]] ganz sicher dazu.",
+        "Für alles, was wir in diesem Jahr geteilt haben: **danke**. Ich freue mich auf das nächste.",
+      ];
+    } else if (s.type === "text") {
+      s.eyebrow = "Kurzer Rückblick";
+      s.title = "Was für ein Jahr.";
+      s.paragraphs = ["Zwölf Monate, unzählige Momente – und [[Sie waren|du warst]] bei so vielen davon dabei."];
+      s.muted = "Zeit, das gebührend zu feiern. 🥂";
+      s.button = "Auf geht’s →";
+    } else if (s.type === "check") {
+      s.tiny = "Eigentlich könnte das neue Jahr jetzt beginnen.";
+    } else if (s.type === "finale") {
+      s.eyebrow = "… kurz vor Mitternacht.";
+      s.title = "Eine Sache noch fürs neue Jahr.";
+      s.quote = "Ich wünsche [[Ihnen|dir]] ein Jahr, das sich leicht anfühlt – mit vielen schönen Momenten, die ganz von selbst passieren.";
+      s.paragraphs = [s.paragraphs[0], "Auf alles, was kommt – und darauf, dass wir es gemeinsam feiern. 🥂"];
+      s.cinemaButton = "Gleich ist Mitternacht … ✨";
+    }
+  }
 }
 
 export function defaultCinema(occasion: Occasion, address: Address): Cinema {
   const w = WORDS[occasion] ?? WORDS.geburtstag;
   return deep(
     {
-      kicker: "Ein kleiner Nachtrag",
+      kicker: occasion === "neujahr" ? "3 · 2 · 1 …" : "Ein kleiner Nachtrag",
       forLabel: "Für",
       title: w.cinemaTitle,
-      final: "Heute [[sind *Sie*|bist *du*]] mal dran.",
+      final: occasion === "neujahr" ? "Auf ein *großartiges* neues Jahr." : "Heute [[sind *Sie*|bist *du*]] mal dran.",
       emoji: w.emoji,
     },
     address,

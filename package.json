@@ -9,7 +9,7 @@
     "build": "next build",
     "build:server": "NEXT_PUBLIC_MODE=server next build",
     "start:server": "NEXT_PUBLIC_MODE=server next start",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --incremental false",
     "test": "tsx --test tests/*.test.ts",
     "predev": "node scripts/prepare-public.mjs",
     "predev:server": "node scripts/prepare-public.mjs",

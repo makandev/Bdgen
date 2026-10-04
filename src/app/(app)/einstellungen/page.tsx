@@ -9,14 +9,14 @@ import { InstallSection } from "@/components/Install";
 import { TopBar } from "@/components/TopBar";
 import type { Provider } from "@/lib/ai";
 import { repo, SERVER, type AISource } from "@/lib/repo";
-import { clearAI, getAI, learnFromTexts, setAI, setLearnFromTexts, type StoredAI } from "@/lib/settings";
+import { clearAI, getAI, hasDeviceLock, learnFromTexts, protectAI, removeProtection, saveAI, setLearnFromTexts, type StoredAI } from "@/lib/settings";
 import { learningStats, type LearningStats } from "@/lib/learning";
 import { PRESETS } from "@/lib/presets";
 
 type Msg = { kind: "ok" | "err"; text: string } | null;
 
 export default function SettingsPage() {
-  const { showIntro, hasVault, lock } = useApp();
+  const { showIntro, canLock, lock, refresh } = useApp();
   const [ai, setAiState] = useState<StoredAI | null>(null);
   const [source, setSource] = useState<AISource | null>(null);
   const [stats, setStats] = useState<LearningStats | null>(null);
@@ -25,6 +25,9 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState<Msg>(null);
   const [busy, setBusy] = useState(false);
   const [advanced, setAdvanced] = useState(false);
+  const [protectedKeys, setProtectedKeys] = useState(false);
+  const [devicePw, setDevicePw] = useState("");
+  const [newPw, setNewPw] = useState({ a: "", b: "" });
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -34,7 +37,8 @@ export default function SettingsPage() {
     if (SERVER) return;
     const cur = getAI();
     setAiState(cur);
-    if (cur?.source === "manual") {
+    setProtectedKeys(hasDeviceLock());
+    if (cur) {
       setForm({
         gemini: cur.gemini ?? "",
         openrouter: cur.openrouter ?? "",
@@ -48,19 +52,53 @@ export default function SettingsPage() {
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v.trim() }));
 
-  function save() {
+  async function save() {
     if (!form.gemini && !form.openrouter) {
+      if (!confirm("Alle KI-Schlüssel von diesem Gerät entfernen?")) return;
       clearAI();
       setAiState(null);
+      setProtectedKeys(false);
+      refresh();
       setSource("none");
       setMsg({ kind: "ok", text: "KI-Schlüssel entfernt." });
       return;
     }
     const v: StoredAI = { ...form, source: "manual" };
-    setAI(v);
-    setAiState(v);
-    setSource("manual");
-    setMsg({ kind: "ok", text: "Gespeichert ✓ – tippe auf „Testen“, um zu prüfen, ob alles klappt." });
+    try {
+      await saveAI(v, devicePw);
+      setDevicePw("");
+      setAiState(v);
+      setSource("manual");
+      setMsg({ kind: "ok", text: "Gespeichert ✓ – tippe auf „KI testen“, um zu prüfen, ob alles klappt." });
+    } catch (e) {
+      setMsg({ kind: "err", text: errText(e) });
+    }
+  }
+
+  async function protect() {
+    if (!ai) return;
+    if (newPw.a !== newPw.b) return setMsg({ kind: "err", text: "Die beiden Passwörter sind verschieden." });
+    try {
+      await protectAI(ai, newPw.a);
+      setNewPw({ a: "", b: "" });
+      setProtectedKeys(true);
+      refresh();
+      setMsg({ kind: "ok", text: "Geschützt ✓ – ab jetzt fragt Funkelpost beim Öffnen nach diesem Passwort." });
+    } catch (e) {
+      setMsg({ kind: "err", text: errText(e) });
+    }
+  }
+
+  function unprotect() {
+    if (!confirm("Passwortschutz entfernen? Die Schlüssel liegen dann wieder unverschlüsselt auf diesem Gerät.")) return;
+    try {
+      removeProtection();
+      setProtectedKeys(false);
+      refresh();
+      setMsg({ kind: "ok", text: "Passwortschutz entfernt." });
+    } catch (e) {
+      setMsg({ kind: "err", text: errText(e) });
+    }
   }
 
   async function test() {
@@ -117,12 +155,11 @@ export default function SettingsPage() {
                 <code>.env</code> des Servers ein und starte ihn neu.
               </div>
             )
-          ) : ai?.source === "vault" ? (
-            <div className="notice ok">Die KI ist über das Passwort freigeschaltet – hier musst du nichts tun.</div>
           ) : (
             <>
               <p className="muted small" style={{ margin: 0 }}>
-                Damit die KI Texte schreiben kann, braucht sie einen kostenlosen Schlüssel – einer von beiden reicht. Der Schlüssel bleibt nur auf diesem Gerät.
+                Damit die KI Texte schreiben kann, braucht sie einen kostenlosen Schlüssel – einer von beiden reicht. Jede Person nutzt ihren
+                eigenen: <b>Der Schlüssel bleibt nur auf diesem Gerät</b> und geht direkt an Google bzw. OpenRouter – nie an GitHub oder auf die Webseite.
               </p>
               <label className="field">
                 <span>Google-Gemini-Schlüssel</span>
@@ -172,9 +209,42 @@ export default function SettingsPage() {
                   </label>
                 </div>
               )}
+              {protectedKeys && (
+                <label className="field">
+                  <span>Geräte-Passwort (zum Speichern)</span>
+                  <input type="password" autoComplete="current-password" value={devicePw} onChange={(e) => setDevicePw(e.target.value)} />
+                </label>
+              )}
               <div className="row">
                 <button className="btn" onClick={save}>Speichern</button>
               </div>
+              {ai && (
+                <div className="sub">
+                  <strong className="small">🔒 Schlüssel mit Passwort schützen (empfohlen)</strong>
+                  {protectedKeys ? (
+                    <>
+                      <p className="small muted" style={{ margin: 0 }}>
+                        Geschützt ✓ Die Schlüssel liegen nur verschlüsselt auf diesem Gerät. Nach dem Öffnen der App gibst du einmal das Passwort ein.
+                      </p>
+                      <div className="row">
+                        <button className="btn ghost sm" onClick={lock}>Jetzt sperren</button>
+                        <button className="btn ghost sm" onClick={unprotect}>Schutz entfernen</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="small muted" style={{ margin: 0 }}>
+                        Dann liegen die Schlüssel nur verschlüsselt auf dem Gerät – wichtig, wenn mehrere Menschen dieses Gerät nutzen.
+                      </p>
+                      <input type="password" autoComplete="new-password" placeholder="Neues Geräte-Passwort (mind. 6 Zeichen)" value={newPw.a} onChange={(e) => setNewPw({ ...newPw, a: e.target.value })} />
+                      <input type="password" autoComplete="new-password" placeholder="Passwort wiederholen" value={newPw.b} onChange={(e) => setNewPw({ ...newPw, b: e.target.value })} />
+                      <div className="row">
+                        <button className="btn ghost sm" onClick={protect} disabled={!newPw.a}>Schützen</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </>
           )}
           {source && source !== "none" && (
@@ -276,7 +346,7 @@ export default function SettingsPage() {
           <h2>❓ Hilfe</h2>
           <div className="row">
             <button className="btn ghost" onClick={showIntro}>Einführung nochmal ansehen</button>
-            {hasVault && (
+            {canLock && (
               <button className="btn ghost" onClick={lock}>{SERVER ? "🔒 Abmelden" : "🔒 Dieses Gerät sperren"}</button>
             )}
           </div>

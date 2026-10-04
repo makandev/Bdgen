@@ -5,7 +5,7 @@
   "description": "Persönliche, KI-gestützte Überraschungskarten für Familie und Freunde",
   "lang": "de",
   "dir": "ltr",
-  "start_url": "./start/",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

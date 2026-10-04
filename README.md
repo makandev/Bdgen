@@ -12,15 +12,37 @@ Kleinigkeiten** ein; die KI macht daraus eine kleine Geschichte in sieben Seiten
 6. **Schein-Ende** – „Protokoll erfolgreich abgeschlossen“ …
 7. **Finale** – Wunsch, Signatur und ein **Kino-Finale**
 
+## So sieht es aus
+
+**Live ausprobieren:** https://makandev.github.io/Bdgen/
+
+| Startseite | Beispiel-Galerie |
+|---|---|
+| ![Startseite mit Beispiel-Vorschauen](docs/bilder/startseite.png) | ![Galerie mit 19 Beispielkarten](docs/bilder/beispiele.png) |
+| **Editor mit Live-Vorschau** | **Design per Wunsch oder Vorlage** |
+| ![Editor](docs/bilder/editor.png) | ![Design-Tab](docs/bilder/design.png) |
+
+**Auf dem Handy der beschenkten Person** – mit Effekten, die die KI selbst erfinden kann:
+
+![Karten auf dem Handy](docs/bilder/handy-karten.png)
+
+**Gutschein mit Silvester-Feuerwerk** – Countdown, Feuerwerk, dann fliegt der Gutschein herein:
+
+![Gutschein-Show](docs/bilder/gutschein-feuerwerk.png)
+
+**KI-Effekt-Rezepte** – Ballons, Schneefall, Blütenwirbel, Herzen:
+
+![Effekt-Rezepte](docs/bilder/effekt-rezepte.png)
+
+## Was drin ist
+
 **13 Designs:** Gold-Eleganz · Schwarz & Gold · Rosé-Gold · Holo-Glanz · Sternennacht · Silvester · Matrix (mit Zeichenregen) ·
 Block-Welt (Roblox-Stil) · Neon-Party · Rosé-Pastell · Bunte Party · Salbei & Natur · Schlicht – dazu fünf Kartenstile,
 sechs Hintergrund-Effekte (inkl. Feuerwerk), Konfetti als Streifen, Herzen, Sterne, Quadrate oder Zeichen und
 **KI-Effekt-Rezepte** (die KI erfindet z. B. aufsteigende Ballons oder Schneefall – geprüft und mit eigenem Code gezeichnet). Alles per KI-Wunsch
 änderbar („wie in einem Videospiel“, „schwarz-gold und luxuriös“) – selbst schreiben ist optional.
 
-**Startseite:** Wer die Adresse öffnet, sieht zuerst nur eine fertige Beispielkarte – ohne Hinweis auf die App. Hinein geht es über **„✦ Funkelpost“ oben links** (die App selbst liegt unter `/start/`; installiert öffnet sie direkt dort).
-
-In der App: **👀 Beispiele** (dreizehn fertige Karten zum Anschauen) und **ℹ️ Infos** (Neuigkeiten, Pläne, KI-Leitfaden).
+In der App: **👀 Beispiele** (19 fertige Karten zum Anschauen) und **ℹ️ Infos** (Neuigkeiten, Pläne, KI-Leitfaden).
 
 **Außerdem:**
 
@@ -37,8 +59,8 @@ In der App: **👀 Beispiele** (dreizehn fertige Karten zum Anschauen) und **ℹ
 | | **Browser-Version** (GitHub Pages) | **Server-Version** (eigener Server) |
 |---|---|---|
 | Daten | im Browser des jeweiligen Geräts | zentral in SQLite – auf jedem Gerät dieselben Personen & Karten |
-| KI-Schlüssel | im verschlüsselten Zugang (Passwort) | nur auf dem Server, nie im Browser |
-| Passwort | entschlüsselt den Zugang | Login mit Session-Cookie (30 Tage), Schutz gegen Durchprobieren |
+| KI-Schlüssel | nur auf dem eigenen Gerät (optional mit Geräte-Passwort verschlüsselt) | nur auf dem Server, nie im Browser |
+| Passwort | optional: Geräte-Passwort für die KI-Schlüssel | Login mit Session-Cookie (30 Tage), Schutz gegen Durchprobieren |
 | Link teilen | Karte steckt im Link (`/k/#…`) | kurzer Link `/k/abc123/` – abschaltbar, Änderungen sofort sichtbar |
 | Bauen | `npm run build` (automatisch per GitHub Actions) | `npm run build:server` bzw. Docker |
 
@@ -77,27 +99,27 @@ richtet bei Domain automatisch HTTPS ein und startet alles. Danach: `./update.sh
 | **Datenschutz** | Der Name der Person wird **nie** an die KI geschickt – sie arbeitet mit dem Platzhalter `{{name}}`. |
 | **Sicherheit** | Geteilte Karten laufen in einer abgeschotteten Umgebung (Sandbox) und können nicht auf gespeicherte Daten oder Schlüssel zugreifen. Alle Inhalte aus Links werden geprüft und bereinigt. |
 
-## Browser-Version: Passwortsperre & KI für die ganze Familie (einmalig einrichten)
+## Browser-Version: KI-Schlüssel – nur auf dem eigenen Gerät
 
-Die KI-Schlüssel werden beim Veröffentlichen **mit deinem Passwort verschlüsselt** (AES-256, PBKDF2 mit
-600 000 Runden) und als `zugang.json` mit ausgeliefert. Wer das Passwort kennt, kann die App auf jedem
-Gerät mit KI nutzen – ohne selbst Schlüssel einzutragen. Ohne Passwort ist die Datei nutzlos.
+Jede Person trägt unter **⚙ Einstellungen** ihren **eigenen** kostenlosen Schlüssel ein
+(Gemini: https://aistudio.google.com/apikey · OpenRouter: https://openrouter.ai/keys).
 
-1. Auf GitHub im Repository: **Settings → Secrets and variables → Actions → New repository secret**
-2. Diese Secrets anlegen:
-   - `BDGEN_PASSWORD` – das Familien-Passwort (**mindestens 12 Zeichen**, kein einfaches Wort)
-   - `GEMINI_API_KEY` – kostenlos unter https://aistudio.google.com/apikey
-   - `OPENROUTER_API_KEY` – optional, https://openrouter.ai/keys
-3. **Actions → „Veröffentlichen (GitHub Pages)“ → Run workflow** (oder einfach den nächsten Push abwarten)
+- Der Schlüssel bleibt **nur auf diesem Gerät** und geht direkt an Google bzw. OpenRouter.
+  Er landet **nie** auf GitHub, in der veröffentlichten Webseite oder in einem Link.
+- **Empfohlen:** „🔒 Schlüssel mit Passwort schützen“. Dann liegt der Schlüssel nur verschlüsselt
+  (AES-256-GCM, PBKDF2 mit 600 000 Runden) auf dem Gerät. Nach dem Öffnen der App fragt sie einmal
+  nach dem Geräte-Passwort; entschlüsselt liegt er nur, solange der Tab bzw. die App offen ist.
+- Der Veröffentlichungs-Workflow bekommt absichtlich **keine** Secrets und bricht ab, falls im Build
+  etwas steht, das wie ein KI-Schlüssel aussieht. Alte Secrets `GEMINI_API_KEY`, `OPENROUTER_API_KEY`
+  und `BDGEN_PASSWORD` werden nicht mehr gebraucht und können gelöscht werden.
 
-Danach fragt die App beim Öffnen nach dem Passwort; ein Gerät bleibt 30 Tage entsperrt.
-Ohne diese Secrets ist die App offen, und jede Person kann unter ⚙ Einstellungen einen eigenen
-Schlüssel nur für ihr Gerät eintragen.
+Dauerhaft und für alle Geräte gemeinsam geht es mit der **Server-Version**: Dort stehen die Schlüssel
+in der `.env` auf deinem eigenen Server.
 
 Optional als *Variables* (nicht Secrets): `GEMINI_MODEL`, `OPENROUTER_MODEL`, `AI_PROVIDER` (`gemini`/`openrouter`).
 
-> Hinweis: Die Sperre schützt die KI-Schlüssel. Die Webseite selbst (HTML/JavaScript) ist wie jede
-> Webseite öffentlich abrufbar – sie enthält aber weder Schlüssel noch persönliche Daten.
+> Hinweis: Die Webseite selbst (HTML/JavaScript) ist wie jede Webseite öffentlich abrufbar – sie enthält
+> aber weder Schlüssel noch persönliche Daten. Personen und Karten liegen nur auf deinem Gerät.
 
 ## Browser-Version veröffentlichen
 
@@ -118,32 +140,10 @@ npm run build        # Browser-Version → ./out
 npm run build:server # Server-Version → .next
 ```
 
-## Aufbau
+## Für Entwickler:innen
 
-```
-src/
-  app/(app)/           App-Seiten: Übersicht, Person (kontakt), Karten-Editor (karte), Einstellungen
-  app/k/[slug]/        Empfänger-Ansicht der Server-Version (kurze Links)
-  components/          Sperre (Gate), Einführung (Intro), Editor-Bausteine
-  lib/render.ts        Karten-Renderer: erzeugt die komplette, eigenständige HTML-Karte
-  lib/templates.ts     Textvorlagen (du/Sie, verschiedene Anlässe)
-  lib/presets.ts       Design-Vorlagen und Effekt-Standards
-  lib/prompts.ts       KI-Prompts (ganze Karte, einzelne Seite, Design)
-  lib/ai.ts            Gemini/OpenRouter-Anbindung mit Fallback
-  lib/share.ts         Karte ⇄ Link (komprimiert)
-  lib/vault.ts         verschlüsselter Zugang
-  lib/examples.ts      Beispielkarten für die Galerie
-  lib/learning.ts      Lernen aus Bewertungen (Schreibstil, Design-Vorschläge, Vorbilder)
-  lib/questions.ts     Fragen der Schnell-Karte je nach Beziehung
-  lib/repo.ts          Weiche: Browser-Speicher oder Server-API (gleiche Schnittstelle)
-  lib/store.ts         Speicher im Browser, Sicherung
-  lib/validate.ts      prüft und begrenzt alle Daten (auch KI-Antworten und Links)
-  app/**/*.server.ts   API-Routen und Login-Schutz – nur im Server-Build enthalten
-  server/              SQLite-Datenbank, Session, Server-Hilfen
-scripts/build-vault.ts erzeugt zugang.json beim Veröffentlichen
-scripts/viewer/        Empfänger-Ansicht für Links /k/#… (eigenständig, für alte iPhones gebaut)
-scripts/prepare-public.mjs  baut vor dev/build public/k/ und kopiert pdf.js nach public/vendor/
-install.sh, update.sh, backup.sh, docker-compose.yml, deploy/   Server-Betrieb
-```
+Das vollständige **Entwickler-Handbuch** (Architektur, Datenmodell, Renderer, KI, Sicherheit, Tests,
+Rezepte, Stolperfallen, Dateiverzeichnis) liegt in [`docs/handbuch/`](docs/handbuch/README.md).
+Arbeitsregeln für KI-Assistenten: [`CLAUDE.md`](CLAUDE.md).
 
 Texte unterstützen `{{name}}` (Anrede), `**fett**`, `*betont*` und Zeilenumbrüche.

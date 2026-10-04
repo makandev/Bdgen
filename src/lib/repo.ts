@@ -13,7 +13,7 @@ import type { Card, CardData, Contact, Effects, Rating, Reaction, Scene, Theme }
 export const SERVER = process.env.NEXT_PUBLIC_MODE === "server";
 
 export type ContactRow = Contact & { cardCount: number };
-export type AISource = "server" | "vault" | "manual" | "none";
+export type AISource = "server" | "manual" | "none";
 
 /** Everything the UI needs from storage and AI. Two implementations: browser-only and server. */
 export interface Repo {

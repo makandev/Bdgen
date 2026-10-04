@@ -47,7 +47,18 @@ export default function InfoPage() {
         </nav>
 
         <section className="panel stack" id="neu">
-          <h2>🆕 Neu in Version 0.5</h2>
+          <h2>🆕 Neu in Version 0.6</h2>
+          <ul className="info-list">
+            <li><b>✨ Neue Startseite:</b> sanft funkelnd, mit Vorschauen fertiger Karten.</li>
+            <li><b>🔒 KI-Schlüssel nur auf deinem Gerät:</b> Nichts mehr über GitHub. Auf Wunsch schützt ein Geräte-Passwort die Schlüssel (verschlüsselt gespeichert).</li>
+            <li><b>👀 Sieben neue Beispiele</b> – mit Ballons, Schneefall, Schmetterlingen, Fußbällen und Gutscheinen.</li>
+            <li><b>🎆 Silvester:</b> eigene Texte – Rückblick, Vorsatz-Quiz und „im alten Jahr gelassen“.</li>
+            <li><b>📱 iPhone:</b> läuft jetzt ab iOS 15, Karten ab iOS 11; viele kleine Verbesserungen aus einer Experten-Prüfung.</li>
+          </ul>
+        </section>
+
+        <section className="panel stack">
+          <h2>Version 0.5</h2>
           <ul className="info-list">
             <li><b>🎟️ Gutschein mit Feuerwerk:</b> Auf der Geschenk-Seite kannst du einen Gutschein anhängen – als <b>Code</b> (mit Kopieren-Knopf), <b>Foto</b> oder <b>PDF</b>. Beim Auspacken startet ein Countdown 3-2-1, buntes Feuerwerk – und dann fliegt der Gutschein herein.</li>
             <li><b>🎆 Silvester & Neujahr:</b> neuer Anlass, neues Design „Silvester“ und der Hintergrund-Effekt <b>Feuerwerk</b>.</li>
