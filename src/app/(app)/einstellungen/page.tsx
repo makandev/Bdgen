@@ -54,6 +54,15 @@ export default function SettingsPage() {
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v.trim() }));
 
+  async function pasteGemini() {
+    try {
+      const t = await navigator.clipboard.readText();
+      if (t.trim()) set("gemini", t);
+    } catch {
+      setMsg({ kind: "err", text: "Einfügen ging nicht automatisch – tippe lange ins Feld und wähle „Einfügen“." });
+    }
+  }
+
   async function save() {
     if (!form.gemini && !form.openrouter) {
       if (!confirm("Alle KI-Schlüssel von diesem Gerät entfernen?")) return;
@@ -187,24 +196,37 @@ export default function SettingsPage() {
           ) : (
             <>
               <p className="muted small" style={{ margin: 0 }}>
-                Damit die KI Texte schreiben kann, braucht sie einen kostenlosen Schlüssel – einer von beiden reicht. Jede Person nutzt ihren
-                eigenen: <b>Der Schlüssel bleibt nur auf diesem Gerät</b> und geht direkt an Google bzw. OpenRouter – nie an GitHub oder auf die Webseite.
+                Damit die KI Texte schreiben kann, braucht sie einen <b>kostenlosen Schlüssel</b>. Das dauert etwa zwei Minuten.{" "}
+                <b>Der Schlüssel bleibt nur auf diesem Gerät</b> und geht direkt an Google – nie an GitHub oder auf die Webseite.
               </p>
-              <label className="field">
-                <span>Google-Gemini-Schlüssel</span>
-                <input type="password" autoComplete="off" value={form.gemini} placeholder="AIza…" onChange={(e) => set("gemini", e.target.value)} />
-                <small>Kostenlos: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">aistudio.google.com/apikey</a></small>
-              </label>
-              <label className="field">
-                <span>OpenRouter-Schlüssel</span>
-                <input type="password" autoComplete="off" value={form.openrouter} placeholder="sk-or-…" onChange={(e) => set("openrouter", e.target.value)} />
-                <small><a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">openrouter.ai/keys</a> – nutzt automatisch kostenlose Modelle</small>
-              </label>
+              <ol className="key-steps">
+                <li>
+                  <b>Schlüssel holen:</b> Tippe auf den Knopf und melde dich mit deinem Google-Konto an.
+                  <div>
+                    <a className="btn sm" href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">Google-Seite öffnen ↗</a>
+                  </div>
+                </li>
+                <li>
+                  <b>Kopieren:</b> Dort auf <i>„Create API key“</i> (Schlüssel erstellen) tippen und den langen Text, der mit <code>AIza</code> beginnt, kopieren.
+                </li>
+                <li>
+                  <b>Hier einfügen</b> und unten auf <i>Speichern</i> tippen:
+                  <div className="row" style={{ flexWrap: "nowrap", marginTop: 6 }}>
+                    <input type="password" autoComplete="off" aria-label="Google-Gemini-Schlüssel" value={form.gemini} placeholder="AIza…" onChange={(e) => set("gemini", e.target.value)} />
+                    <button type="button" className="btn ghost sm" onClick={pasteGemini}>📋 Einfügen</button>
+                  </div>
+                </li>
+              </ol>
               <button type="button" className="chip" style={{ justifySelf: "start" }} onClick={() => setAdvanced(!advanced)}>
-                {advanced ? "▴" : "▾"} Erweitert
+                {advanced ? "▴" : "▾"} Erweitert (OpenRouter, Modelle)
               </button>
               {advanced && (
                 <div className="sub">
+                  <label className="field">
+                    <span>OpenRouter-Schlüssel (Alternative zu Google)</span>
+                    <input type="password" autoComplete="off" value={form.openrouter} placeholder="sk-or-…" onChange={(e) => set("openrouter", e.target.value)} />
+                    <small><a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">openrouter.ai/keys</a> – nutzt automatisch kostenlose Modelle</small>
+                  </label>
                   <label className="field">
                     <span>Zuerst probieren</span>
                     <select value={form.provider} onChange={(e) => set("provider", e.target.value)}>

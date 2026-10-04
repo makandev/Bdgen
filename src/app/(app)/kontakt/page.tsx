@@ -3,20 +3,24 @@
 import { HOME } from "@/lib/base";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { errText } from "@/components/client";
 import { TopBar } from "@/components/TopBar";
 import { MOODS, NOTE_STARTERS, OCCASIONS, PRESETS } from "@/lib/presets";
 import { ExtraDates } from "@/components/ExtraDates";
+import { LivePreview } from "@/components/LivePreview";
 import { RelationPicker } from "@/components/RelationPicker";
 import { PresetGrid } from "@/components/Swatch";
 import { Thumb } from "@/components/Thumb";
 import { EXAMPLES } from "@/lib/examples";
+import { startData } from "@/lib/cardbase";
 import { contactInput, NOTES_MAX } from "@/lib/records";
 import { repo } from "@/lib/repo";
 import type { Address, Card, Contact, Occasion } from "@/lib/types";
 
 type Form = Pick<Contact, "name" | "relation" | "address" | "occasion" | "date" | "events" | "mood" | "notes">;
+
+const STEPS = ["Wer?", "Erzählen", "Design"];
 
 const EMPTY: Form = { name: "", relation: "", address: "du", occasion: "geburtstag", date: "", events: [], mood: ["herzlich", "witzig"], notes: "" };
 
@@ -47,6 +51,19 @@ function ContactEditor() {
   const [gift, setGift] = useState("");
   const [ai, setAi] = useState<boolean | null>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
+  const [step, setStep] = useState(0);
+
+  function goTo(k: number) {
+    if (k > 0 && !form.name.trim()) return;
+    setStep(k);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Template texts with the current choices – the AI writes the real texts later.
+  const previewData = useMemo(() => {
+    const contact: Contact = { ...form, name: form.name.trim() || "Du", id: "vorschau", createdAt: "", updatedAt: "" };
+    return startData(contact, { preset, mode: "template", extra: "", example: example?.id, gift }).data;
+  }, [form, preset, example, gift]);
 
   useEffect(() => {
     repo.aiSource().then((s) => setAi(s !== "none")).catch(() => setAi(false));
@@ -170,187 +187,217 @@ function ContactEditor() {
             <h1>{form.name || "Wer ist es?"}</h1>
           </div>
 
-          <section className="panel stack">
-            <label className="field">
-              <span>Name bzw. Anrede in der Karte</span>
-              <input
-                type="text"
-                value={form.name}
-                placeholder="z. B. Mama, Lena, Frau Muster"
-                onChange={(e) => set("name", e.target.value)}
-              />
-              <small>So wird die Person in der Karte angesprochen. Der Name wird nie an die KI geschickt.</small>
-            </label>
+          <nav className="steps" aria-label="Schritte">
+            {STEPS.map((s, k) => (
+              <button
+                key={s}
+                type="button"
+                className={k === step ? "on" : k < step ? "done" : ""}
+                onClick={() => goTo(k)}
+                aria-current={k === step ? "step" : undefined}
+              >
+                <b>{k < step ? "✓" : k + 1}</b> {s}
+              </button>
+            ))}
+          </nav>
 
-            <RelationPicker value={form.relation} onChange={(v) => set("relation", v)} />
+          {step === 0 && (
+            <section className="panel stack">
+              <label className="field">
+                <span>Wie nennst du die Person in der Karte?</span>
+                <input
+                  type="text"
+                  value={form.name}
+                  autoFocus={isNew}
+                  placeholder="z. B. Mama, Lena, Frau Muster"
+                  onChange={(e) => set("name", e.target.value)}
+                />
+                <small>Der Name wird nie an die KI geschickt.</small>
+              </label>
 
-            <div className="row" style={{ alignItems: "flex-end" }}>
+              <RelationPicker value={form.relation} onChange={(v) => set("relation", v)} />
+
               <div className="field">
-                <span style={{ fontWeight: 600, color: "var(--text2)", fontSize: ".85rem" }}>Anrede</span>
-                <div className="seg">
-                  {(["du", "sie"] as Address[]).map((a) => (
-                    <button key={a} type="button" className={form.address === a ? "on" : ""} onClick={() => set("address", a)}>
-                      {a === "du" ? "du" : "Sie"}
+                <span style={{ fontWeight: 600, color: "var(--text2)", fontSize: ".85rem" }}>Wofür ist die Überraschung?</span>
+                <div className="chips">
+                  {OCCASIONS.map((o) => (
+                    <button key={o.id} type="button" className={`chip${form.occasion === o.id ? " on" : ""}`} onClick={() => set("occasion", o.id)}>
+                      {o.emoji} {o.label}
                     </button>
                   ))}
                 </div>
               </div>
-            </div>
 
-            <div className="row" style={{ alignItems: "flex-end" }}>
-              <label className="field grow" style={{ minWidth: 180 }}>
-                <span>Anlass</span>
-                <select value={form.occasion} onChange={(e) => set("occasion", e.target.value as Occasion)}>
-                  {OCCASIONS.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.emoji} {o.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field" style={{ minWidth: 170 }}>
-                <span>Datum (optional)</span>
-                <input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />
-              </label>
-            </div>
-            <ExtraDates value={form.events} onChange={(v) => set("events", v)} />
-          </section>
-
-          <section className="panel stack">
-            <div>
-              <h2>✨ Erzähl der KI von der Person</h2>
-              <p className="muted small" style={{ margin: "4px 0 0" }}>
-                Du schreibst keine Karte – nur ein paar Stichworte: Situationen, Gefühle, Kleinigkeiten. Die KI macht daraus die ganze Karte.
-              </p>
-            </div>
-            <div className="tip">
-              <span aria-hidden="true">💡</span>
-              <span>
-                <b>So geht’s:</b> Schreib einfach auf, was dir einfällt – z. B. <i>„backt den besten Kuchen“</i> oder{" "}
-                <i>„war für mich da, als ich krank war“</i>. Die Knöpfe unter dem Feld helfen beim Anfangen.
-              </span>
-            </div>
-            <div className="field">
-              <span style={{ fontWeight: 600, color: "var(--text2)", fontSize: ".85rem" }}>Stimmung</span>
-              <div className="chips">
-                {MOODS.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={`chip${form.mood.includes(m) ? " on" : ""}`}
-                    onClick={() => set("mood", form.mood.includes(m) ? form.mood.filter((x) => x !== m) : [...form.mood, m])}
-                  >
-                    {m}
-                  </button>
-                ))}
+              <div className="row" style={{ alignItems: "flex-end" }}>
+                <div className="field">
+                  <span style={{ fontWeight: 600, color: "var(--text2)", fontSize: ".85rem" }}>Anrede</span>
+                  <div className="seg">
+                    {(["du", "sie"] as Address[]).map((a) => (
+                      <button key={a} type="button" className={form.address === a ? "on" : ""} onClick={() => set("address", a)}>
+                        {a === "du" ? "du" : "Sie"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <label className="field" style={{ minWidth: 170 }}>
+                  <span>Datum (optional)</span>
+                  <input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />
+                </label>
               </div>
-            </div>
-            <label className="field">
-              <span>Stichworte</span>
-              <textarea
-                ref={notesRef}
-                rows={8}
-                maxLength={NOTES_MAX}
-                value={form.notes}
-                placeholder={
-                  "z. B.\n– ist immer für alle da und vergisst sich dabei selbst\n– wir lachen jedes Mal über den kaputten Kaffeeautomaten\n– hatte ein anstrengendes Jahr, hat es aber super gemeistert\n– liebt ihren Garten und schlechte Wortwitze"
-                }
-                onChange={(e) => set("notes", e.target.value)}
-              />
-            </label>
-            <div className="chips">
-              {NOTE_STARTERS.map((s) => (
-                <button key={s} type="button" className="chip" onClick={() => addStarter(s)}>
-                  + {s.replace(/: $/, "")}
-                </button>
-              ))}
-            </div>
-          </section>
+              <ExtraDates value={form.events} onChange={(v) => set("events", v)} />
+            </section>
+          )}
+
+          {step === 1 && (
+            <section className="panel stack">
+              <div>
+                <h2>✨ Erzähl ein bisschen von {form.name.trim() || "der Person"}</h2>
+                <p className="muted small" style={{ margin: "4px 0 0" }}>
+                  Keine schönen Sätze nötig – ein paar Stichworte reichen. Die KI macht daraus die ganze Karte.
+                </p>
+              </div>
+              <div className="field">
+                <span style={{ fontWeight: 600, color: "var(--text2)", fontSize: ".85rem" }}>Wie soll die Karte klingen?</span>
+                <div className="chips">
+                  {MOODS.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      className={`chip${form.mood.includes(m) ? " on" : ""}`}
+                      onClick={() => set("mood", form.mood.includes(m) ? form.mood.filter((x) => x !== m) : [...form.mood, m])}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="field">
+                <span style={{ fontWeight: 600, color: "var(--text2)", fontSize: ".85rem" }}>Tippe, um anzufangen:</span>
+                <div className="chips">
+                  {NOTE_STARTERS.map((s) => (
+                    <button key={s} type="button" className="chip" onClick={() => addStarter(s)}>
+                      + {s.replace(/: $/, "")}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <label className="field">
+                <span>Stichworte</span>
+                <textarea
+                  ref={notesRef}
+                  rows={7}
+                  maxLength={NOTES_MAX}
+                  value={form.notes}
+                  placeholder={"z. B.\n– backt den besten Kuchen\n– war für mich da, als ich krank war\n– liebt ihren Garten und schlechte Wortwitze"}
+                  onChange={(e) => set("notes", e.target.value)}
+                />
+              </label>
+            </section>
+          )}
+
+          {step === 2 && (
+            <section className="panel stack">
+              <div>
+                <h2>{example ? "🎨 Deine Vorlage" : "🎨 Wie soll die Karte aussehen?"}</h2>
+                <p className="muted small" style={{ margin: "4px 0 0" }}>Tippe ein Design an – die Vorschau zeigt es sofort.</p>
+              </div>
+              {example ? (
+                <div className="template-banner">
+                  <Thumb e={example} small />
+                  <div className="stack" style={{ gap: 6 }}>
+                    <strong>{example.title}</strong>
+                    <span className="tag" style={{ justifySelf: "start" }}>{PRESETS[preset]?.label ?? PRESETS[example.preset].label}</span>
+                    <span className="muted small">Design, Effekte und Aufbau werden übernommen – die KI schreibt die Texte neu für deine Person.</span>
+                    <div className="row">
+                      <Link href="/beispiele/" className="btn ghost sm">Andere Vorlage</Link>
+                      <button type="button" className="btn ghost sm" onClick={() => setExample(null)}>Ohne Vorlage</button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              {example ? (
+                <details className="optional">
+                  <summary>🎨 Anderes Design für diese Vorlage (optional)</summary>
+                  <div className="inner">
+                    <PresetGrid value={preset} onPick={setPreset} />
+                  </div>
+                </details>
+              ) : (
+                <>
+                  <PresetGrid value={preset} onPick={setPreset} />
+                  <Link href="/beispiele/" className="small">👀 Oder eine fertige Vorlage aus den Beispielen nehmen →</Link>
+                </>
+              )}
+              <label className="field">
+                <span>🎁 Schenkst du etwas dazu? (optional)</span>
+                <input type="text" value={gift} placeholder="z. B. Konzertkarten, ein Wellness-Tag" onChange={(e) => setGift(e.target.value)} />
+                <small>Dann bekommt die Karte ein Päckchen zum Auspacken. Einen Gutschein kannst du danach im Editor anhängen.</small>
+              </label>
+              <details className="optional">
+                <summary>💬 Besonderer Wunsch an die KI (optional)</summary>
+                <div className="inner">
+                  <input type="text" value={extra} placeholder="z. B. „eher kurz“, „mit Garten-Anspielungen“" onChange={(e) => setExtra(e.target.value)} />
+                </div>
+              </details>
+            </section>
+          )}
 
           {msg && <div className={`notice ${msg.kind}`}>{msg.text}</div>}
 
-          <div className="row">
-            <button className="btn ghost" onClick={save} disabled={!!busy || !form.name.trim()}>
-              Speichern
-            </button>
-            {!isNew && (
-              <button className="btn danger" onClick={remove} disabled={!!busy}>
-                Person löschen
+          <div className="row step-nav">
+            {step > 0 && (
+              <button type="button" className="btn ghost" onClick={() => goTo(step - 1)} disabled={!!busy}>
+                ← Zurück
               </button>
             )}
+            {step < STEPS.length - 1 ? (
+              <button type="button" className="btn" onClick={() => goTo(step + 1)} disabled={!form.name.trim()}>
+                Weiter →
+              </button>
+            ) : (
+              <>
+                <button className="btn" onClick={() => createCard("ai")} disabled={!!busy || !form.name.trim() || ai === false}>
+                  {busy === "create" ? (
+                    <>
+                      <span className="spinner" /> KI schreibt …
+                    </>
+                  ) : example ? (
+                    "✨ Mit KI für diese Person schreiben"
+                  ) : (
+                    "✨ Karte mit KI erstellen"
+                  )}
+                </button>
+                <button type="button" className="linklike small" onClick={() => createCard("template")} disabled={!!busy || !form.name.trim()}>
+                  {example ? "oder Vorlage 1:1 übernehmen" : "oder ohne KI mit Vorlage-Texten starten"}
+                </button>
+              </>
+            )}
           </div>
+          {step === STEPS.length - 1 && ai === false && (
+            <p className="notice" style={{ margin: 0 }}>
+              Die KI ist auf diesem Gerät noch nicht eingerichtet – das dauert zwei Minuten und ist kostenlos.{" "}
+              <Link href="/einstellungen/">So geht’s →</Link>
+            </p>
+          )}
+          {step === 0 && !form.name.trim() && <p className="muted small" style={{ margin: 0 }}>Gib zuerst einen Namen ein, dann geht’s weiter.</p>}
+
+          {!isNew && (
+            <div className="row">
+              <button className="btn ghost sm" onClick={save} disabled={!!busy || !form.name.trim()}>
+                Speichern
+              </button>
+              <button className="btn danger sm" onClick={remove} disabled={!!busy}>
+                Person löschen
+              </button>
+            </div>
+          )}
         </div>
 
         <aside className="stack editor-side" style={{ display: "grid" }}>
-          <section className="panel stack">
-            <div>
-              <div className="eyebrow">Neue Karte</div>
-              <h2>{example ? "Deine Vorlage" : "Design wählen"}</h2>
-            </div>
-            {example ? (
-              <div className="template-banner">
-                <Thumb e={example} small />
-                <div className="stack" style={{ gap: 6 }}>
-                  <strong>{example.title}</strong>
-                  <span className="tag" style={{ justifySelf: "start" }}>{PRESETS[preset]?.label ?? PRESETS[example.preset].label}</span>
-                  <span className="muted small">Design, Effekte und Aufbau werden übernommen – die KI schreibt die Texte neu für deine Person.</span>
-                  <div className="row">
-                    <Link href="/beispiele/" className="btn ghost sm">Andere Vorlage</Link>
-                    <button type="button" className="btn ghost sm" onClick={() => setExample(null)}>Ohne Vorlage</button>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-            {example ? (
-              <details className="optional">
-                <summary>🎨 Anderes Design für diese Vorlage (optional)</summary>
-                <div className="inner">
-                  <PresetGrid value={preset} onPick={setPreset} />
-                </div>
-              </details>
-            ) : (
-              <>
-                <PresetGrid value={preset} onPick={setPreset} />
-                <Link href="/beispiele/" className="small">👀 Oder eine fertige Vorlage aus den Beispielen nehmen →</Link>
-              </>
-            )}
-            <label className="field">
-              <span>🎁 Schenkst du etwas dazu? (optional)</span>
-              <input type="text" value={gift} placeholder="z. B. Konzertkarten, ein Wellness-Tag" onChange={(e) => setGift(e.target.value)} />
-              <small>Dann bekommt die Karte eine Seite mit einem Päckchen zum Auspacken. Einen Gutschein (Code, Foto oder PDF) mit Feuerwerk-Show kannst du danach im Editor auf der Geschenk-Seite anhängen.</small>
-            </label>
-            <label className="field">
-              <span>Besonderer Wunsch an die KI (optional)</span>
-              <input
-                type="text"
-                value={extra}
-                placeholder="z. B. „eher kurz“, „mit Garten-Anspielungen“"
-                onChange={(e) => setExtra(e.target.value)}
-              />
-            </label>
-            <button className="btn" onClick={() => createCard("ai")} disabled={!!busy || !form.name.trim() || ai === false}>
-              {busy === "create" ? (
-                <>
-                  <span className="spinner" /> KI schreibt …
-                </>
-              ) : (
-                example ? "✨ Mit KI für diese Person schreiben" : "✨ Karte mit KI erstellen"
-              )}
-            </button>
-            <button
-              type="button"
-              className="linklike small"
-              onClick={() => createCard("template")}
-              disabled={!!busy || !form.name.trim()}
-            >
-              {example ? "oder Vorlage 1:1 übernehmen (nur den Namen einsetzen)" : "oder ohne KI mit einer Vorlage starten"}
-            </button>
-            {ai === false && (
-              <p className="muted small" style={{ margin: 0 }}>
-                Die KI ist noch nicht eingerichtet. <Link href="/einstellungen/">Mehr dazu →</Link>
-              </p>
-            )}
-          </section>
+          <LivePreview
+            data={previewData}
+            caption={step === 2 ? "So ungefähr wird es aussehen – die Texte schreibt danach die KI." : "Live-Vorschau – ändert sich mit jeder Auswahl."}
+          />
 
           {cards.length > 0 && (
             <section className="panel stack">

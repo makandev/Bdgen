@@ -4,7 +4,7 @@ import { useState } from "react";
 import { RELATION_GROUPS, relationEmoji } from "@/lib/presets";
 
 export function RelationPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [open, setOpen] = useState(!value);
+  const [open, setOpen] = useState(false);
   return (
     <div className="field">
       <span style={{ fontWeight: 600, color: "var(--text2)", fontSize: ".85rem" }}>Wer ist das für dich?</span>

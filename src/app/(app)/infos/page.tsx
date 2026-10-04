@@ -47,7 +47,17 @@ export default function InfoPage() {
         </nav>
 
         <section className="panel stack" id="neu">
-          <h2>🆕 Neu in Version 0.8</h2>
+          <h2>🆕 Neu in Version 0.9</h2>
+          <ul className="info-list">
+            <li><b>👣 Person anlegen in drei Schritten:</b> Wer? · Erzählen · Design – mit einer Live-Vorschau daneben, die sich bei jeder Auswahl sofort ändert.</li>
+            <li><b>📱 Menü unten auf dem Handy:</b> Start, Kalender, Beispiele, Infos, Hilfe und Einstellungen – mit Beschriftung statt nur Symbolen.</li>
+            <li><b>🔑 KI einrichten in drei Schritten:</b> Schlüssel holen, kopieren, mit „📋 Einfügen“ übernehmen.</li>
+            <li><b>⚡ Schnellere Vorschauen:</b> Beispielkarten zeigen sofort ein Standbild; die Einführung erscheint nur noch auf der Startseite.</li>
+          </ul>
+        </section>
+
+        <section className="panel stack">
+          <h2>Neu in Version 0.8</h2>
           <ul className="info-list">
             <li><b>🎵 Hintergrundmusik:</b> eine kleine Melodie passend zum Anlass – Spieluhr, festlich oder ruhig. Sie wird im Browser erzeugt (keine Dateien), startet beim ersten Antippen und lässt sich über 🔇/🔊 in der Ecke ausschalten. Wählbar im Design-Tab; die KI schlägt auf Wunsch eine passende vor.</li>
             <li><b>✍️ Handschrift-Unterschrift:</b> im Finale mit Finger oder Maus unterschreiben. In der Karte wird sie wie mit Tinte Strich für Strich nachgezeichnet. Gespeichert als kleine Zahlenliste – der Link bleibt kurz.</li>

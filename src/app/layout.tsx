@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Persönliche, KI-gestützte Überraschungskarten für Familie und Freunde",
   robots: { index: false, follow: false },
   manifest: `${BASE}/manifest.webmanifest`,
-  icons: { apple: `${BASE}/apple-touch-icon.png` },
+  icons: { icon: `${BASE}/icon.svg`, apple: `${BASE}/apple-touch-icon.png` },
   appleWebApp: { capable: true, title: "Funkelpost", statusBarStyle: "default" },
   referrer: "no-referrer",
 };

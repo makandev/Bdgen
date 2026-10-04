@@ -99,3 +99,10 @@ ein echter Schluss-Marker, hinter dem eingeschleuste „Regeln“ standen (gefun
 Prüfung). Darum ersetzen (`‹›`), damit sich die Reste links und rechts nie zu etwas Neuem verbinden.
 Dasselbe bei Tags: `scrubText()` machte aus `<<b>script>` ein `<script>` (CodeQL-Fund). Jetzt wird
 jedes übrige `<` zu `‹` (aus `<3` wird `‹3`).
+
+## Vorschau-Iframes sind anfangs leer
+
+Die Karte blendet ihre erste Seite ein – ein frisch geladenes Iframe zeigt deshalb kurz nur die Hintergrundfarbe.
+Galerie-Vorschauen (`Thumb`) legen daher ein Standbild in den Design-Farben darunter und blenden das Iframe erst
+kurz nach `onLoad` ein. Wird das Iframe beim Wegscrollen entfernt, muss dieser Zustand zurückgesetzt werden.
+

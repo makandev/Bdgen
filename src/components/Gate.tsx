@@ -34,7 +34,9 @@ export function Gate({ children }: { children: React.ReactNode }) {
 
   const open = useCallback(() => {
     setState("open");
-    if (!introSeen()) setIntro(true);
+    // Only greet on the start page – someone following a link straight into the organizer wants to get going.
+    const atStart = window.location.pathname.slice(BASE.length).replace(/\/(index\.html)?$/, "") === "";
+    if (atStart && !introSeen()) setIntro(true);
   }, []);
 
   useEffect(() => {

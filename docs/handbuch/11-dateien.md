@@ -12,7 +12,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/app/(app)/layout.tsx` | legt `<Gate>` um alle App-Seiten |
 | `src/app/(app)/page.tsx` | Übersicht/Startseite: Erinnerungen an nahe Termine, Schnell-Karte, Personen, Beispiel-Vorschauen, Funkeln |
 | `src/app/(app)/kalender/page.tsx` | Geburtstags-Organizer: alle Termine nach Monaten, Countdown, Alter, Filter, „Datum vormerken“, Kalender-Export (.ics) |
-| `src/app/(app)/kontakt/page.tsx` | Person anlegen/bearbeiten, Beziehung, Stichworte, Design, Karte erstellen |
+| `src/app/(app)/kontakt/page.tsx` | Person anlegen/bearbeiten in drei Schritten (Wer? · Erzählen · Design) mit Live-Vorschau daneben, Karte erstellen |
 | `src/app/(app)/karte/page.tsx` | Karten-Editor: Texte, Design, Teilen, Bewerten, Autosave, Rückgängig |
 | `src/app/(app)/schnell/page.tsx` | Schnell-Karte mit zwei Fragen |
 | `src/app/(app)/beispiele/page.tsx` | Galerie der Beispielkarten, `?zeige=<id>` |
@@ -49,8 +49,8 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 
 | Datei | Inhalt |
 |---|---|
-| `src/components/Gate.tsx` | Geräte-Passwort-Sperre, Einführung, Kontext (`useApp`) |
-| `src/components/TopBar.tsx` | Kopfleiste mit Logo, Beispiele, Infos, Hilfe, Einstellungen, Sperren |
+| `src/components/Gate.tsx` | Geräte-Passwort-Sperre, Einführung (automatisch nur auf der Startseite), Kontext (`useApp`) |
+| `src/components/TopBar.tsx` | Kopfleiste mit Logo und Hauptmenü (Kalender, Beispiele, Infos, Hilfe, Einstellungen, Sperren); auf dem Handy als Leiste unten mit Beschriftung |
 | `src/components/Intro.tsx` | Einführung in 5 Schritten |
 | `src/components/Sparkles.tsx` | sanft funkelnde Sterne (nur CSS) |
 | `src/components/Install.tsx` | „App installieren“: Geräte-Erkennung, Anleitungen, Knopf, Einstellungs-Abschnitt |
@@ -61,7 +61,8 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/components/RatingBar.tsx` | 👍/👎 mit Gründen und Neuversuch |
 | `src/components/RelationPicker.tsx` | Beziehung mit Emoji auswählen |
 | `src/components/Swatch.tsx` | Design-Vorschau-Kacheln (`PresetGrid`) |
-| `src/components/Thumb.tsx` | lebende Mini-Vorschau einer Beispielkarte |
+| `src/components/Thumb.tsx` | lebende Mini-Vorschau einer Beispielkarte; zeigt ein Standbild in den Design-Farben, bis die Karte gezeichnet ist |
+| `src/components/LivePreview.tsx` | Handy-Rahmen mit Live-Vorschau beliebiger Kartendaten (leicht verzögert neu gezeichnet) |
 | `src/components/fields.tsx` | Eingabefelder `Text`, `List` |
 | `src/components/client.ts` | `errText`, `download` (iPhone-App: Teilen-Menü), `copyText` |
 | `src/components/ExtraDates.tsx` | Weitere Termine einer Person (Hochzeitstag …) und Datumswahl mit optionalem Jahr |
