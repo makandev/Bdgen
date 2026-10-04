@@ -64,7 +64,10 @@ jemand, der Checklisten abhakt:
   (`/ObjStm`, FlateDecode) abdeckt – falls nicht: pdf.js-Metadaten/Struktur nutzen oder Original-PDF in
   diesem Fall verwerfen. Tests mit echten präparierten PDFs.
 
-### [ ] 3 · Karten-Links und Viewer
+### [x] 3 · Karten-Links und Viewer
+> Erledigt (Oktober 2026): Grenzen in `src/lib/share.ts` (Test schlug vorher fehl: eine 300-KB-Zip-Bombe
+> entpackte auf 200 MB). `tests/security.test.ts`: 3000 manipulierte Karten, 500 KI-Antworten, 1000
+> kaputte Links – jedes Tag und Attribut des Karten-HTML wird geprüft. Keine Escaping-Lücke gefunden.
 - Grenzen beim Entpacken (`src/lib/share.ts`): maximale Link-Länge und maximale entpackte Größe
   (Zip-Bomben).
 - Fuzz-Test (`tests/security.test.ts`): tausende zufällige/bösartige Karten, Links und KI-Antworten →

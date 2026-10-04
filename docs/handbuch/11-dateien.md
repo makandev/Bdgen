@@ -119,6 +119,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | Datei | Inhalt |
 |---|---|
 | `tests/render.test.ts` | Renderer und Namensverbot |
+| `tests/security.test.ts` | Angriffssammlung: tausende manipulierte Karten und KI-Antworten (HTML bleibt harmlos), kaputte/übergroße Links, Zip-Bomben, Prototype-Pollution |
 | `tests/uploads.test.ts` | Präparierte PDFs (versteckte Skripte in Objekt-Streams, Zip-Bomben), Bild-Erkennung, Limits |
 | `tests/theme.test.ts` | Farben und Kontraste |
 | `tests/designs.test.ts` | Designs und Beispiele |
