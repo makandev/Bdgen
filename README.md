@@ -154,3 +154,10 @@ Fahrplan und was vor einem Verkauf noch fehlt: [`docs/FAHRPLAN.md`](docs/FAHRPLA
 [`docs/LIZENZEN-DRITTANBIETER.md`](docs/LIZENZEN-DRITTANBIETER.md).
 
 Texte unterstützen `{{name}}` (Anrede), `**fett**`, `*betont*` und Zeilenumbrüche.
+
+## Lizenz
+
+Funkelpost steht unter der **[PolyForm Noncommercial License 1.0.0](LICENSE.md)**: privat und nicht-kommerziell
+nutzen, ändern und weitergeben ist erlaubt. **Kommerzielle Nutzung** (Verkauf, bezahlter Betrieb für andere) nur mit
+Erlaubnis – Anfrage über [github.com/makandev](https://github.com/makandev). Lizenzen der mitgelieferten
+Fremd-Bibliotheken: [`docs/LIZENZEN-DRITTANBIETER.md`](docs/LIZENZEN-DRITTANBIETER.md).

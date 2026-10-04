@@ -15,7 +15,7 @@ Keine Rechtsberatung – vor dem Verkauf von einer Anwältin oder einem Anwalt p
 
 | # | Was | Stand |
 |---|---|---|
-| 1 | **Lizenz für Funkelpost selbst** festlegen (`LICENSE`-Datei). Ohne Lizenz darf niemand den Code nutzen. Das Repository ist öffentlich – vor dem Verkauf überlegen, ob es privat werden soll. | ❌ fehlt |
+| 1 | **Lizenz für Funkelpost selbst:** [PolyForm Noncommercial 1.0.0](../LICENSE.md) – nicht-kommerziell frei, kommerziell nur mit Erlaubnis. Für jeden Verkauf eine eigene schriftliche Erlaubnis bzw. kommerzielle Lizenz ausstellen (Vorlage noch offen). | ✅ seit 0.9 |
 | 2 | **Impressum** und **Datenschutzerklärung** als Seiten in der App (inkl. Hinweis, dass Texte an Google bzw. OpenRouter gehen) | ❌ fehlt |
 | 3 | **Nutzungsbedingungen / AGB** für Käufer | ❌ fehlt |
 | 4 | **AVV** (Auftragsverarbeitung), falls du für Kunden einen Server betreibst | ❌ fehlt |
