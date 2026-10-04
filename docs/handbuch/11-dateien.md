@@ -115,6 +115,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 |---|---|
 | `scripts/prepare-public.mjs` | baut `public/k/` und `public/vendor/pdfjs/` |
 | `scripts/check-compat.mjs` | iOS-15-Prüfung nach dem Build |
+| `scripts/lizenzen.mjs` | erzeugt `docs/LIZENZEN-DRITTANBIETER.md` (Lizenzen aller mitgelieferten Pakete), `npm run lizenzen` |
 | `scripts/viewer/entry.ts` | Empfänger-Ansicht für `/k/#…` |
 | `scripts/viewer/index.html` | HTML-Hülle der Empfänger-Ansicht |
 

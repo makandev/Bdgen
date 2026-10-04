@@ -150,5 +150,7 @@ npm run build:server # Server-Version → .next
 Das vollständige **Entwickler-Handbuch** (Architektur, Datenmodell, Renderer, KI, Sicherheit, Tests,
 Rezepte, Stolperfallen, Dateiverzeichnis) liegt in [`docs/handbuch/`](docs/handbuch/README.md).
 Arbeitsregeln für KI-Assistenten: [`CLAUDE.md`](CLAUDE.md).
+Fahrplan und was vor einem Verkauf noch fehlt: [`docs/FAHRPLAN.md`](docs/FAHRPLAN.md) · Lizenzen der Fremd-Bibliotheken:
+[`docs/LIZENZEN-DRITTANBIETER.md`](docs/LIZENZEN-DRITTANBIETER.md).
 
 Texte unterstützen `{{name}}` (Anrede), `**fett**`, `*betont*` und Zeilenumbrüche.
