@@ -1,22 +1,21 @@
 import { cookies } from "next/headers";
 import { body, fail, handle, json } from "@/server/http";
+import { clientIp, Limiter } from "@/server/limit";
 import { checkPassword, createSession, SESSION_COOKIE, SESSION_DAYS } from "@/server/session";
 
-const failures = new Map<string, { n: number; until: number }>();
+// 5 tries per minute per address, and at most 30 failed tries per 10 minutes overall.
+const attempts = new Limiter(5, 60_000, 30, 10 * 60_000);
 
 export function POST(req: Request) {
   return handle(async () => {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
-    const f = failures.get(ip);
-    if (f && f.until > Date.now()) return fail("Zu viele Versuche – bitte eine Minute warten.", 429);
+    const ip = clientIp(req);
+    if (!attempts.take(ip)) return fail("Zu viele Versuche – bitte ein paar Minuten warten.", 429);
     const { password } = await body(req);
     if (typeof password !== "string" || !(await checkPassword(password))) {
-      const n = (f?.n ?? 0) + 1;
-      failures.set(ip, { n, until: n >= 5 ? Date.now() + 60_000 : 0 });
       await new Promise((r) => setTimeout(r, 700));
       return fail("Falsches Passwort.", 401);
     }
-    failures.delete(ip);
+    attempts.clear(ip);
     (await cookies()).set(SESSION_COOKIE, await createSession(), {
       httpOnly: true,
       sameSite: "lax",
