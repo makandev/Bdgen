@@ -1,5 +1,6 @@
 "use client";
 
+import { HOME } from "@/lib/base";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -10,7 +11,7 @@ import { RelationPicker } from "@/components/RelationPicker";
 import { PresetGrid } from "@/components/Swatch";
 import { Thumb } from "@/components/Thumb";
 import { EXAMPLES } from "@/lib/examples";
-import { contactInput } from "@/lib/records";
+import { contactInput, NOTES_MAX } from "@/lib/records";
 import { repo } from "@/lib/repo";
 import type { Address, Card, Contact, Occasion } from "@/lib/types";
 
@@ -74,6 +75,12 @@ function ContactEditor() {
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
+  const saving = useRef<Promise<Contact> | null>(null);
+  const savedId = useRef<string | null>(null);
+  useEffect(() => {
+    savedId.current = null;
+  }, [id]);
+
   async function save(): Promise<Contact | null> {
     setMsg(null);
     const input = contactInput(form);
@@ -81,14 +88,24 @@ function ContactEditor() {
       setMsg({ kind: "err", text: input });
       return null;
     }
-    try {
-      const c = await repo.saveContact(isNew ? null : id, input);
+    // A double click must not create the person twice: wait for the first save and reuse its id.
+    if (saving.current) return saving.current;
+    const run = (async () => {
+      const c = await repo.saveContact(isNew && !savedId.current ? null : (savedId.current ?? id), input);
+      savedId.current = c.id;
       if (isNew) router.replace(`/kontakt/?id=${c.id}`);
+      return c;
+    })();
+    saving.current = run;
+    try {
+      const c = await run;
       setMsg({ kind: "ok", text: "Gespeichert ✓" });
       return c;
     } catch (e) {
       setMsg({ kind: "err", text: errText(e) });
       return null;
+    } finally {
+      saving.current = null;
     }
   }
 
@@ -111,7 +128,7 @@ function ContactEditor() {
     if (!confirm(`„${form.name}“ und alle Karten für diese Person wirklich löschen?`)) return;
     try {
       await repo.deleteContact(id);
-      router.push("/");
+      router.push(HOME);
     } catch (e) {
       setMsg({ kind: "err", text: errText(e) });
     }
@@ -142,7 +159,7 @@ function ContactEditor() {
   return (
     <div className="shell">
       <TopBar>
-        <Link href="/" className="btn ghost sm hide-sm">← Übersicht</Link>
+        <Link href={HOME} className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
 
       <div className="editor contact-layout">
@@ -231,6 +248,7 @@ function ContactEditor() {
               <textarea
                 ref={notesRef}
                 rows={8}
+                maxLength={NOTES_MAX}
                 value={form.notes}
                 placeholder={
                   "z. B.\n– ist immer für alle da und vergisst sich dabei selbst\n– wir lachen jedes Mal über den kaputten Kaffeeautomaten\n– hatte ein anstrengendes Jahr, hat es aber super gemeistert\n– liebt ihren Garten und schlechte Wortwitze"

@@ -9,3 +9,4 @@ data/*.db
 data/*.db-*
 public/k/
 public/vendor/
+public/showcase.html

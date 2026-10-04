@@ -1,25 +1,23 @@
 import { str } from "@/lib/validate";
 import { cards, reactions } from "@/server/db";
 import { body, fail, handle, json } from "@/server/http";
+import { clientIp, Limiter } from "@/server/limit";
 
 type Ctx = { params: Promise<{ slug: string }> };
 
 const MAX_PER_CARD = 30;
 const MESSAGE_WINDOW_MS = 30 * 60_000;
-const hits = new Map<string, number[]>();
+// 10 reactions per minute per address, 120 per minute overall.
+const hits = new Limiter(10, 60_000, 120, 60_000);
 
 /** Public: the recipient reacts to a card. Only the card's own reaction options are accepted. */
 export function POST(req: Request, ctx: Ctx) {
   return handle(async () => {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
     const now = Date.now();
-    const recent = (hits.get(ip) ?? []).filter((t) => now - t < 60_000);
-    if (recent.length >= 10) return fail("Zu viele Reaktionen – bitte kurz warten.", 429);
-    hits.set(ip, [...recent, now]);
-
     const { slug } = await ctx.params;
     const card = cards.bySlug(slug);
     if (!card || !card.shared) return fail("Nicht gefunden.", 404);
+    if (!hits.take(clientIp(req))) return fail("Zu viele Reaktionen – bitte kurz warten.", 429);
     const b = await body(req);
 
     if (typeof b.id === "string" && typeof b.message === "string") {

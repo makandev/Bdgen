@@ -23,13 +23,13 @@ type Obj = Record<string, unknown>;
 
 const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
 
-export function str(v: unknown, fallback = "", max = 800): string {
+export function str(v: unknown, fallback = "", max = 2000): string {
   if (typeof v === "number") v = String(v);
   if (typeof v !== "string") return fallback;
   return v.replace(/\r\n?/g, "\n").slice(0, max);
 }
 
-function strList(v: unknown, fallback: string[], maxItems = 8, max = 600): string[] {
+function strList(v: unknown, fallback: string[], maxItems = 12, max = 2000): string[] {
   if (!Array.isArray(v)) return fallback;
   const out = v.map((x) => str(x, "", max)).filter((x) => x.trim() !== "");
   return out.slice(0, maxItems);
@@ -150,7 +150,7 @@ export function normalizeScene(raw: unknown, addr: Address, forceType?: SceneTyp
         title: str(o.title, f.title, 200),
         teaser: str(o.teaser, f.teaser, 200),
         gift: str(o.gift, f.gift, 160),
-        detail: str(o.detail, f.detail, 400),
+        detail: str(o.detail, f.detail, 1000),
         button: str(o.button, f.button, 80),
         voucher: normalizeVoucher(o.voucher),
       };
@@ -163,7 +163,7 @@ export function normalizeScene(raw: unknown, addr: Address, forceType?: SceneTyp
         title: str(o.title, f.title, 200),
         quote: str(o.quote, f.quote),
         paragraphs: strList(o.paragraphs, f.paragraphs),
-        signature: str(o.signature, f.signature, 400),
+        signature: str(o.signature, f.signature, 1000),
         status: str(o.status, f.status, 120),
         tiny: str(o.tiny, f.tiny, 200),
         cinemaButton: str(o.cinemaButton, f.cinemaButton, 80),
@@ -205,9 +205,13 @@ export function normalizeParticles(raw: unknown): Particles | null {
   return { emoji, motion: oneOf(raw.motion, MOTIONS, "float"), amount: num(raw.amount, 1, 0.2, 2), size: num(raw.size, 1, 0.5, 2) };
 }
 
+export const MAX_SCENES = 20;
+
 export function normalizeScenes(raw: unknown, addr: Address, fallback: Scene[]): Scene[] {
   if (!Array.isArray(raw)) return fallback;
-  const out = raw.map((s) => normalizeScene(s, addr)).filter((s): s is Scene => s !== null).slice(0, 14);
+  let out = raw.map((s) => normalizeScene(s, addr)).filter((s): s is Scene => s !== null);
+  // Too many pages: drop from the middle, never the finale at the end.
+  if (out.length > MAX_SCENES) out = [...out.slice(0, MAX_SCENES - 1), out[out.length - 1]];
   return out.length ? out : fallback;
 }
 

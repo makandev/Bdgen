@@ -2,17 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { errText } from "@/components/client";
-import { BASE } from "@/lib/base";
+import { BASE, HOME } from "@/lib/base";
 import { SERVER } from "@/lib/repo";
 
 /** Login for the server version. The browser version unlocks inside the app instead. */
+/** Only same-site paths – "/\\evil.com" or "/<Tab>/evil.com" would otherwise leave the site. */
+function safeNext(next: string | null): string {
+  const fallback = BASE + HOME;
+  if (!next || !next.startsWith("/")) return fallback;
+  try {
+    const u = new URL(BASE + next, window.location.origin);
+    return u.origin === window.location.origin ? u.pathname + u.search : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!SERVER) window.location.replace(`${BASE}/`);
+    if (!SERVER) window.location.replace(`${BASE}${HOME}`);
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -28,7 +40,7 @@ export default function LoginPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error((data as { error?: string }).error || `Fehler ${res.status}`);
       const next = new URLSearchParams(window.location.search).get("next");
-      window.location.href = BASE + (next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
+      window.location.href = safeNext(next);
     } catch (err) {
       setError(errText(err));
       setBusy(false);

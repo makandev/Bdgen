@@ -16,22 +16,30 @@ export interface CreateOpts {
 
 /** Context for the AI. Deliberately excludes the recipient's name. */
 export function briefFromCard(card: Card, contact: Contact | null): Brief {
-  const gift = card.data.scenes.find((s) => s.type === "gift");
   return {
     relation: contact?.relation ?? "",
     address: card.data.address,
     occasion: card.data.occasion,
     mood: contact?.mood ?? [],
     notes: contact?.notes ?? "",
-    gift: gift && gift.type === "gift" ? gift.gift : undefined,
+    gift: giftOf(card.data),
   };
+}
+
+/** What the card gives as a present (text of its gift page), if it has one. */
+export function giftOf(d: CardData): string | undefined {
+  const g = d.scenes.find((s) => s.type === "gift");
+  return g && g.type === "gift" ? g.gift : undefined;
 }
 
 /** New AI texts on top of a card. The AI never sees vouchers, so they are carried over to the new gift page. */
 export function withGenerated(data: CardData, gen: Pick<Generated, "scenes" | "cinema" | "topLine" | "reactions" | "variant" | "provider">): CardData {
-  const old = data.scenes.find((s) => s.type === "gift");
-  const voucher = old && old.type === "gift" ? old.voucher : null;
-  const scenes = voucher ? gen.scenes.map((s) => (s.type === "gift" && !s.voucher ? { ...s, voucher } : s)) : gen.scenes;
+  const found = data.scenes.find((s) => s.type === "gift");
+  const old = found && found.type === "gift" ? found : null;
+  let scenes = gen.scenes;
+  // A gift page the user added never disappears just because the AI left it out.
+  if (old && !scenes.some((s) => s.type === "gift")) scenes = withGift(scenes, old);
+  if (old?.voucher) scenes = scenes.map((s) => (s.type === "gift" && !s.voucher ? { ...s, voucher: old.voucher } : s));
   return { ...data, scenes, cinema: gen.cinema, topLine: gen.topLine, reactions: gen.reactions, meta: { variant: gen.variant, provider: gen.provider } };
 }
 

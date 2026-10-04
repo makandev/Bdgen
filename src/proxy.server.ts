@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySession } from "@/server/session";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH || "";
-const PUBLIC = [/^\/login\/?$/, /^\/api\/(login|health)\/?$/, /^\/api\/react\/[A-Za-z0-9]+\/?$/, /^\/k(\/[^/]+)?\/?$/, /^\/(manifest\.webmanifest|icon-\d+\.png|apple-touch-icon\.png|icon\.svg)$/];
+const PUBLIC = [/^\/$/, /^\/login\/?$/, /^\/api\/(login|health)\/?$/, /^\/api\/react\/[A-Za-z0-9]+\/?$/, /^\/k(\/[^/]+)?\/?$/, /^\/(manifest\.webmanifest|icon-\d+\.png|apple-touch-icon\.png|icon\.svg|showcase\.html)$/];
 
 export default async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname.slice(BASE.length) || "/";
@@ -19,7 +19,7 @@ export default async function proxy(req: NextRequest) {
   if (path.startsWith("/api/")) return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
   const url = req.nextUrl.clone();
   url.pathname = `${BASE}/login/`;
-  url.search = path === "/" ? "" : `?next=${encodeURIComponent(path + req.nextUrl.search)}`;
+  url.search = path === "/start/" ? "" : `?next=${encodeURIComponent(path + req.nextUrl.search)}`;
   return NextResponse.redirect(url);
 }
 

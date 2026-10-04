@@ -1,6 +1,7 @@
 import { aiEnabled } from "./ai";
+import { newId } from "./id";
 import { BASE } from "./base";
-import { briefFromCard, startData, withGenerated, type CreateOpts } from "./cardbase";
+import { briefFromCard, giftOf, startData, withGenerated, type CreateOpts } from "./cardbase";
 import { chooseVariant, excerpt, pickSamples, relationGroup } from "./learning";
 import { generateCard, restyle, restyleOffline, rewriteScene, testAI, type Brief, type Generated, type GenOptions } from "./prompts";
 import type { Backup, ContactInput } from "./records";
@@ -50,7 +51,7 @@ export interface Feedback {
 /** Builds a rating from the current card; never contains the name or the notes. */
 export function buildRating(card: Card, data: CardData, contact: Contact | null, input: { value: 1 | -1; reasons: string[]; attempt: number }): Rating {
   return {
-    id: crypto.randomUUID(),
+    id: newId(),
     cardId: card.id,
     value: input.value,
     reasons: input.reasons,
@@ -216,7 +217,8 @@ const serverRepo: Repo = {
   },
   generate: (card, extra, feedback) =>
     call(`cards/${encodeURIComponent(card.id)}/generate/`, {
-      body: { extra, feedback: feedback ? { reasons: feedback.reasons, text: feedback.text, previous: excerpt(feedback.previous, 300) } : undefined },
+      // The editor may have changed the gift since the last autosave – send the current one along.
+      body: { extra, gift: giftOf(card.data) ?? null, feedback: feedback ? { reasons: feedback.reasons, text: feedback.text, previous: excerpt(feedback.previous, 300) } : undefined },
     }),
   rewrite: (card, scene, instruction) => call("ai/scene/", { body: { cardId: card.id, scene, instruction } }),
   restyle: (card, data, instruction) => call("ai/style/", { body: { cardId: card.id, instruction, theme: data.theme, effects: data.effects } }),

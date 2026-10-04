@@ -126,7 +126,7 @@ server {
   location / {
     proxy_pass http://127.0.0.1:3000;
     proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-For $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
   }
 }
@@ -149,7 +149,7 @@ server {
 
 ## 8. Sicherheit auf einen Blick
 
-- Die App ist komplett passwortgeschützt; nur Empfänger-Links (`/k/…`) sind ohne Passwort erreichbar.
+- Die App ist komplett passwortgeschützt; ohne Passwort erreichbar sind nur die Startseite (eine Beispielkarte – in die App geht es über „✦ Funkelpost“ oben links) und Empfänger-Links (`/k/…`).
 - Die Links sind zufällig und nicht erratbar. Du kannst jeden Link in der Karte unter **📨 Teilen** abschalten.
 - KI-Schlüssel und Passwort stehen nur in `.env` auf dem Server (nur für den Besitzer lesbar) und erreichen nie den Browser.
 - Der Name der Person wird nie an die KI geschickt.

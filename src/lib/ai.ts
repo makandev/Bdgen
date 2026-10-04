@@ -98,7 +98,11 @@ export function extractJSON(text: string): unknown {
       return JSON.parse(slice);
     } catch {
       // Common model slip: trailing commas.
-      return JSON.parse(slice.replace(/,\s*([}\]])/g, "$1"));
+      try {
+        return JSON.parse(slice.replace(/,\s*([}\]])/g, "$1"));
+      } catch {
+        // Fall through: an AIError lets askJSON give the same provider one more try.
+      }
     }
   }
   throw new AIError("Die KI-Antwort war kein gültiges JSON.");

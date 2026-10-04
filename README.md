@@ -18,6 +18,8 @@ sechs Hintergrund-Effekte (inkl. Feuerwerk), Konfetti als Streifen, Herzen, Ster
 **KI-Effekt-Rezepte** (die KI erfindet z. B. aufsteigende Ballons oder Schneefall – geprüft und mit eigenem Code gezeichnet). Alles per KI-Wunsch
 änderbar („wie in einem Videospiel“, „schwarz-gold und luxuriös“) – selbst schreiben ist optional.
 
+**Startseite:** Wer die Adresse öffnet, sieht zuerst nur eine fertige Beispielkarte – ohne Hinweis auf die App. Hinein geht es über **„✦ Funkelpost“ oben links** (die App selbst liegt unter `/start/`; installiert öffnet sie direkt dort).
+
 In der App: **👀 Beispiele** (dreizehn fertige Karten zum Anschauen) und **ℹ️ Infos** (Neuigkeiten, Pläne, KI-Leitfaden).
 
 **Außerdem:**

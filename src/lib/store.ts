@@ -1,4 +1,5 @@
 import { normalizeBackup, type Backup, type ContactInput } from "./records";
+import { newId } from "./id";
 import type { Card, Contact, Rating } from "./types";
 
 export { contactInput, type ContactInput } from "./records";
@@ -37,7 +38,7 @@ export const contacts = {
   },
   create(input: ContactInput): Contact {
     const t = now();
-    const c: Contact = { ...input, id: crypto.randomUUID(), createdAt: t, updatedAt: t };
+    const c: Contact = { ...input, id: newId(), createdAt: t, updatedAt: t };
     write(KEYS.contacts, [...read<Contact>(KEYS.contacts), c]);
     return c;
   },
@@ -76,7 +77,7 @@ export const cards = {
   },
   create(input: Pick<Card, "contactId" | "title" | "data">): Card {
     const t = now();
-    const card: Card = { ...input, id: crypto.randomUUID(), createdAt: t, updatedAt: t };
+    const card: Card = { ...input, id: newId(), createdAt: t, updatedAt: t };
     write(KEYS.cards, [...read<Card>(KEYS.cards), card]);
     return card;
   },

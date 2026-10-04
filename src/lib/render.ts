@@ -9,8 +9,11 @@ export interface RenderOptions {
   exportFile?: boolean;
   /** Server version: where the recipient's reaction is posted. Without it, the reaction is sent back via share/WhatsApp. */
   reactUrl?: string;
-  /** Editor/gallery preview: reactions only show what the recipient would see. */
-  preview?: boolean;
+  /**
+   * What a reaction tap does: "send" (default) posts it or opens the share sheet,
+   * "preview" (editor/gallery) explains it, "showcase" (start page) just says thanks.
+   */
+  reactionMode?: "send" | "preview" | "showcase";
 }
 
 export function esc(s: string): string {
@@ -118,8 +121,16 @@ export function legacyInset(css: string): string {
   });
 }
 
+/** clamp() needs iOS 13.4: put a plain fallback (the smallest value – old iPhones are small) in front. */
+export function legacyClamp(css: string): string {
+  return css.replace(/(^|[;{\s])([a-z-]+):([^;{}]*clamp\([^;{}]*)/g, (m, pre: string, prop: string, value: string) => {
+    const plain = value.replace(/clamp\(([^,()]+),[^()]*\)/g, "$1");
+    return plain.includes("clamp(") ? m : `${pre}${prop}:${plain};${prop}:${value}`;
+  });
+}
+
 function css(d: CardData): string {
-  return legacyInset(baseCss(d));
+  return legacyClamp(legacyInset(baseCss(d)));
 }
 
 function baseCss(d: CardData): string {
@@ -171,7 +182,7 @@ button:hover{transform:translateY(-2px)}button:focus-visible{outline:3px solid v
 @keyframes floatSpark{from{transform:translate3d(0,0,0) scale(.7);opacity:.25}to{transform:translate3d(var(--dx),var(--dy),0) scale(1.45);opacity:.9}}
 .ribbon{position:fixed;top:-70px;width:8px;height:42px;border-radius:8px;pointer-events:none;z-index:5;opacity:.82;animation:ribbonFall linear forwards}
 @keyframes ribbonFall{0%{transform:translate3d(0,-70px,0) rotate(0deg)}100%{transform:translate3d(var(--drift),calc(100vh + 130px),0) rotate(var(--rot))}}
-.spark{position:fixed;width:8px;height:8px;pointer-events:none;z-index:7;background:var(--accent);clip-path:polygon(50% 0,61% 37%,100% 50%,61% 63%,50% 100%,39% 63%,0 50%,39% 37%);animation:sparkPop .9s ease-out forwards}
+.spark{position:fixed;width:8px;height:8px;pointer-events:none;z-index:7;background:var(--accent);-webkit-clip-path:polygon(50% 0,61% 37%,100% 50%,61% 63%,50% 100%,39% 63%,0 50%,39% 37%);clip-path:polygon(50% 0,61% 37%,100% 50%,61% 63%,50% 100%,39% 63%,0 50%,39% 37%);animation:sparkPop .9s ease-out forwards}
 @keyframes sparkPop{0%{transform:translate(0,0) scale(.2) rotate(0);opacity:0}20%{opacity:1}100%{transform:translate(var(--sx),var(--sy)) scale(1.2) rotate(150deg);opacity:0}}
 .screen.active .card h1,.screen.active .card h2{animation:titleIn .72s .08s both cubic-bezier(.2,.8,.2,1)}
 .screen.active .card p{animation:textIn .65s .18s both ease}
@@ -212,7 +223,7 @@ ${styleCss(d)}
 .react-big{font-size:3rem;margin-top:16px;animation:pop .6s cubic-bezier(.2,.8,.2,1)}
 @keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
 .react-thanks{margin:6px auto}.react-more{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px}
-.react-msg{flex:1;min-width:180px;max-width:360px;font:16px/1.4 inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:${rgba(t.card, 0.9)};color:var(--text)}
+.react-msg{flex:1;min-width:180px;max-width:360px;font-size:16px;line-height:1.4;font-family:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:${rgba(t.card, 0.9)};color:var(--text)}
 .react-more button,.react-send{margin:0}
 .float-emoji{position:fixed;bottom:-40px;z-index:8;pointer-events:none;font-size:2rem;animation:floatUp 2.4s ease-out forwards}
 @keyframes floatUp{to{transform:translate3d(var(--fx),-110vh,0) rotate(var(--fr));opacity:0}}
@@ -248,6 +259,7 @@ canvas#pfx{z-index:3}
 .vshow.done .vs-close{opacity:1;pointer-events:auto;transition:opacity .7s}
 .vs-skip{position:fixed;right:14px;top:14px;margin:0;min-height:38px;padding:6px 14px;font-size:.85rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);color:#fff;box-shadow:none}
 .vshow.done .vs-skip{display:none}
+html.lock,html.lock body{overflow:hidden}.cinema{touch-action:none;overscroll-behavior:contain}.vshow{overscroll-behavior:contain}
 .nojs .gift-reveal{display:block!important}.nojs .gift-wrap{display:none}
 .ioshint{max-width:760px;margin:10px auto 32px;padding:0 18px;text-align:center;font:12px/1.45 system-ui,sans-serif;color:var(--muted)}
 .nojs .screen{display:flex;min-height:auto;margin-bottom:18px}.nojs .card{opacity:1;transform:none;animation:none}.nojs .revealbox div{opacity:1;transform:none}.nojs .hidden{display:none!important}.nojs [data-next],.nojs .finish,.nojs .cinema-start{display:none}
@@ -350,6 +362,10 @@ var FX=CFG.effects,PAL=CFG.palette,SPD=FX.speed||1;
 var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 var screens=[].slice.call(document.querySelectorAll('.screen')),total=screens.length,step=1;
 var bar=document.getElementById('bar'),lab=document.getElementById('stepLabel');
+// Phones fire resize whenever the browser toolbar slides in or out while scrolling. Only a real change
+// (rotation, window width) re-creates the canvases – otherwise every scroll would reset the animations.
+function onRealResize(fn){var w=innerWidth,h=innerHeight;addEventListener('resize',function(){if(innerWidth!==w||Math.abs(innerHeight-h)>160){w=innerWidth;h=innerHeight;fn()}},{passive:true})}
+function lockScroll(on){document.documentElement.classList.toggle('lock',on)}
 function rnd(a){return a[Math.floor(Math.random()*a.length)]}
 function pad(n){return String(n).padStart(2,'0')}
 function updateProgress(){if(bar)bar.style.width=(total>1?(step-1)/(total-1)*100:100)+'%';if(lab)lab.textContent=pad(step)+' / '+pad(total)}
@@ -417,7 +433,7 @@ function ambient(){frame++;
   if(BD==='sparkle'){ctx.globalAlpha=Math.max(0,p.a*1.8*(.35+.65*Math.sin(p.t)));ctx.fillStyle=CFG.light;star(p.x,p.y,p.s*3.2);continue}
   ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,7);ctx.globalAlpha=p.a;ctx.fillStyle=CFG.particle;ctx.fill()}
  ctx.globalAlpha=1;requestAnimationFrame(ambient)}
-size();init();if(!reduced&&FX.ambient>0)ambient();addEventListener('resize',function(){size();init()},{passive:true});
+size();init();if(!reduced&&FX.ambient>0)ambient();onRealResize(function(){size();init()});
 var PF=FX.particles,pc=document.getElementById('pfx');
 if(PF&&pc&&!reduced){var px=pc.getContext('2d'),sprites=[],parts=[];
  PF.emoji.forEach(function(e){var s=document.createElement('canvas');s.width=s.height=72;var g=s.getContext('2d');g.font='56px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillStyle=CFG.light;g.fillText(e,36,40);sprites.push(s)});
@@ -435,9 +451,9 @@ if(PF&&pc&&!reduced){var px=pc.getContext('2d'),sprites=[],parts=[];
    else{dx=p.x+Math.sin(p.t)*30;dy=p.y+Math.cos(p.t*.8)*24}
    var z=p.z*sc;px.globalAlpha=al*.85;px.drawImage(p.img,dx-z/2,dy-z/2,z,z)}
   px.globalAlpha=1;requestAnimationFrame(ploop)}
- psize();pinit();ploop();addEventListener('resize',function(){psize();pinit()},{passive:true})}
+ psize();pinit();ploop();onRealResize(function(){psize();pinit()})}
 var cc=document.getElementById('confetti'),cx=cc.getContext('2d'),bits=[],cr;
-function cs(){cc.width=innerWidth*DPR;cc.height=innerHeight*DPR;cx.setTransform(DPR,0,0,DPR,0,0)}cs();addEventListener('resize',cs,{passive:true});
+function cs(){cc.width=innerWidth*DPR;cc.height=innerHeight*DPR;cx.setTransform(DPR,0,0,DPR,0,0)}cs();onRealResize(cs);
 function sparkBurst(){if(reduced||!FX.sparks)return;var x0=innerWidth/2,y0=Math.min(innerHeight*.42,340);
  for(var i=0;i<28;i++){var s=document.createElement('i');s.className='spark';s.style.left=x0+'px';s.style.top=y0+'px';var a=Math.random()*Math.PI*2,d=55+Math.random()*150;s.style.setProperty('--sx',Math.cos(a)*d+'px');s.style.setProperty('--sy',Math.sin(a)*d+'px');s.style.background=rnd(PAL);s.style.animationDelay=(Math.random()*.15)+'s';document.body.appendChild(s);(function(el){setTimeout(function(){el.remove()},1200)})(s)}}
 function ribbonRain(amount,duration){amount=Math.round(amount*FX.ribbons);if(reduced||amount<1)return;
@@ -455,26 +471,26 @@ if(cinema){var cv=document.getElementById('cinemaCanvas'),cctx=cv.getContext('2d
  function cinemaSize(){cv.width=innerWidth*DPR;cv.height=innerHeight*DPR;cctx.setTransform(DPR,0,0,DPR,0,0)}
  function cinemaStars(){stars=[];for(var i=0;i<110;i++)stars.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:.5+Math.random()*2,a:.15+Math.random()*.75,v:(.08+Math.random()*.35)*SPD,t:Math.random()*6.28})}
  function cinemaDraw(){cctx.clearRect(0,0,innerWidth,innerHeight);stars.forEach(function(s){s.t+=.025;s.y-=s.v;if(s.y<-5)s.y=innerHeight+5;cctx.globalAlpha=Math.max(.05,s.a*(.55+.45*Math.sin(s.t)));cctx.fillStyle=CFG.star;if(BD==='matrix'){cctx.font=Math.round(8+s.r*5)+'px ui-monospace,monospace';cctx.fillText(glyph(),s.x,s.y)}else{cctx.beginPath();cctx.arc(s.x,s.y,s.r,0,7);cctx.fill()}});cctx.globalAlpha=1;craf=requestAnimationFrame(cinemaDraw)}
- function startCinema(){cinema.classList.remove('hidden','done','play');cinema.setAttribute('aria-hidden','false');cinemaSize();cinemaStars();
+ function startCinema(){lockScroll(true);cinema.classList.remove('hidden','done','play');cinema.setAttribute('aria-hidden','false');cinemaSize();cinemaStars();
   if(!reduced){cancelAnimationFrame(craf);cinemaDraw();requestAnimationFrame(function(){cinema.classList.add('play')});setTimeout(function(){ribbonRain(85,5200);sparkBurst()},CIN*.55);ctimer=setTimeout(function(){cinema.classList.add('done')},CIN)}else cinema.classList.add('done')}
- function closeCinema(){clearTimeout(ctimer);cancelAnimationFrame(craf);cinema.classList.add('hidden');cinema.classList.remove('play','done');cinema.setAttribute('aria-hidden','true')}
+ function closeCinema(){lockScroll(false);clearTimeout(ctimer);cancelAnimationFrame(craf);cinema.classList.add('hidden');cinema.classList.remove('play','done');cinema.setAttribute('aria-hidden','true')}
  document.querySelectorAll('.cinema-start').forEach(function(b){b.addEventListener('click',startCinema)});
  document.getElementById('cinemaClose').addEventListener('click',closeCinema);
- addEventListener('resize',function(){if(!cinema.classList.contains('hidden')){cinemaSize();cinemaStars()}},{passive:true})}
+ onRealResize(function(){if(!cinema.classList.contains('hidden')){cinemaSize();cinemaStars()}})}
 var vs=document.getElementById('vshow'),startShow=null;
 if(vs){var vcv=document.getElementById('vshowCanvas'),vctx=vcv.getContext('2d'),vfw=makeFW(vctx,1.25),vraf=null,vrate=0,vtimers=[],vticket=null,vhome=null,vcount=vs.querySelector('.vs-count');
  var vsize=function(){vcv.width=innerWidth*DPR;vcv.height=innerHeight*DPR;vctx.setTransform(DPR,0,0,DPR,0,0)};
  var vloop=function(){vfw.step(vrate);vraf=requestAnimationFrame(vloop)};
  var later=function(f,ms){vtimers.push(setTimeout(f,ms/SPD))};
  var showTicket=function(){vcount.textContent='';vs.querySelector('.vs-slot').appendChild(vticket);vs.classList.add('reveal')};
- startShow=function(t){vticket=t;vhome=t.parentNode;vs.classList.remove('hidden','reveal','done','flash');vs.setAttribute('aria-hidden','false');vsize();vfw.clear();vrate=.07;cancelAnimationFrame(vraf);vloop();
+ startShow=function(t){lockScroll(true);vticket=t;vhome=t.parentNode;vs.classList.remove('hidden','reveal','done','flash');vs.setAttribute('aria-hidden','false');vsize();vfw.clear();vrate=.07;cancelAnimationFrame(vraf);vloop();
   [3,2,1].forEach(function(n,i){later(function(){vcount.textContent=n;vcount.classList.remove('tick');void vcount.offsetWidth;vcount.classList.add('tick')},250+i*900)});
   later(function(){vcount.textContent='';vs.classList.add('flash');for(var k=0;k<5;k++)vfw.explode(innerWidth*(.14+.18*k),innerHeight*(.22+Math.random()*.22),rnd(PAL),true);vrate=.1},2950);
   later(showTicket,3350);later(function(){vs.classList.add('done');vrate=.04},5000)};
- var closeShow=function(){vtimers.forEach(clearTimeout);vtimers=[];cancelAnimationFrame(vraf);if(vticket&&vhome)vhome.appendChild(vticket);vs.classList.add('hidden');vs.classList.remove('reveal','done','flash');vs.setAttribute('aria-hidden','true');burst()};
+ var closeShow=function(){lockScroll(false);vtimers.forEach(clearTimeout);vtimers=[];cancelAnimationFrame(vraf);if(vticket&&vhome)vhome.appendChild(vticket);vs.classList.add('hidden');vs.classList.remove('reveal','done','flash');vs.setAttribute('aria-hidden','true');burst()};
  document.getElementById('vshowClose').addEventListener('click',closeShow);
  document.getElementById('vshowSkip').addEventListener('click',function(){vtimers.forEach(clearTimeout);vtimers=[];if(vticket&&vticket.parentNode===vhome)showTicket();vs.classList.add('done');vrate=.04});
- addEventListener('resize',function(){if(!vs.classList.contains('hidden'))vsize()},{passive:true})}
+ onRealResize(function(){if(!vs.classList.contains('hidden'))vsize()})}
 function openGift(w){if(w.classList.contains('open'))return;var sc=w.closest('.screen');w.classList.add('open');var tz=sc.querySelector('.gift-teaser');if(tz)tz.classList.add('hidden');
  setTimeout(function(){sc.querySelector('.gift-reveal').classList.remove('hidden');var a=sc.querySelector('[data-after]');if(a)a.classList.remove('hidden');
   var t=sc.querySelector('.voucher[data-show="1"]');if(t&&startShow&&!reduced)startShow(t);else burst()},reduced?0:650)}
@@ -483,7 +499,10 @@ function copyText(text,btn){var ok=function(){btn.textContent='✓ Kopiert'};
   var r=false;try{r=document.execCommand('copy')}catch(e){}document.body.removeChild(i);if(r)ok();else btn.textContent='Code antippen & kopieren'};
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(ok,fallback);else fallback()}
 function savePdf(data){try{var b=atob(data.split(',')[1]),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
- var url=URL.createObjectURL(new Blob([u],{type:'application/pdf'})),a=document.createElement('a');a.href=url;a.download='Gutschein.pdf';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},60000)}catch(e){}}
+ var url=URL.createObjectURL(new Blob([u],{type:'application/pdf'})),a=document.createElement('a');
+ // In-app browsers (Instagram, Facebook …) ignore downloads – there the PDF opens in the viewer instead.
+ if(!('download' in a)||/FBAN|FBAV|Instagram|Line\\/|TikTok|; wv\\)/.test(navigator.userAgent)){if(!window.open(url,'_blank'))location.href=url;return}
+ a.href=url;a.download='Gutschein.pdf';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},60000)}catch(e){}}
 document.addEventListener('click',function(e){var b=e.target&&e.target.closest?e.target.closest('.v-copy,.v-pdf'):null;if(!b)return;
  if(b.classList.contains('v-copy'))copyText(b.getAttribute('data-code'),b);else savePdf(b.getAttribute('data-pdf'))});
 document.querySelectorAll('.gift-wrap').forEach(function(w){w.addEventListener('click',function(){openGift(w)});w.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openGift(w)}})});
@@ -494,7 +513,8 @@ document.querySelectorAll('[data-reactions]').forEach(function(box){var sent=nul
   box.querySelectorAll('.react').forEach(function(x){x.classList.toggle('picked',x===b)});
   var done=box.querySelector('.react-done'),th=box.querySelector('.react-thanks'),more=box.querySelector('.react-more'),send=box.querySelector('.react-send');
   done.classList.remove('hidden');box.querySelector('.react-big').textContent=em;floatEmoji(em);
-  if(CFG.preview){th.textContent='Vorschau: So reagiert die Person – du bekommst die Reaktion dann.';return}
+  if(CFG.reactionMode==='showcase'){th.textContent='Danke! 💌';return}
+  if(CFG.reactionMode==='preview'){th.textContent='Vorschau: So reagiert die Person – du bekommst die Reaktion dann.';return}
   if(CFG.reactUrl){th.textContent='Wird gesendet …';
    fetch(CFG.reactUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({emoji:em,label:lb,id:sent})}).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(j){sent=j.id;th.textContent='Deine Reaktion ist angekommen 💌';more.classList.remove('hidden')}).catch(function(){th.textContent='Hat gerade nicht geklappt – bitte nochmal tippen.'});return}
   th.textContent='Schick deine Reaktion zurück:';send.classList.remove('hidden');
@@ -511,7 +531,7 @@ export function renderCardHTML(d: CardData, opts: RenderOptions = {}): string {
   const t = d.theme;
   const cfg = {
     reactUrl: opts.reactUrl ?? null,
-    preview: !!opts.preview,
+    reactionMode: opts.reactionMode ?? "send",
     effects: d.effects,
     palette: t.confetti.length ? t.confetti : [t.accent],
     particle: t.accent,
