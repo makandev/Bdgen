@@ -2,7 +2,7 @@ export function errText(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
-export function download(filename: string, content: string, type: string) {
+export function download(filename: string, content: string | Blob, type: string) {
   // A home-screen app on the iPhone cannot download – there the share sheet offers "In Dateien sichern".
   const nav = navigator as Navigator & { standalone?: boolean };
   if (nav.standalone === true && typeof File !== "undefined") {
