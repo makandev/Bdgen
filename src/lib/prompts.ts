@@ -53,14 +53,14 @@ export function dataBlock(text: string): string {
 }
 
 const URL_LIKE = /\b(?:https?:\/\/|www\.|javascript:|data:|vbscript:)\S*|\b[\w.+-]+@[\w-]+\.[\w.]+\b/gi;
-const TAG_LIKE = /<\/?[a-z!?][^>]*>?/gi;
+const TAG_LIKE = /‹\/?[a-z!?][^>‹]*>?/gi;
 
 /** Removes links, addresses and markup an AI might have been tricked into writing. */
 export function scrubText(s: string): string {
-  // Removing "<b>" from "<<b>script>" would leave "<script>", so every "<" left over becomes "‹"
-  // (a heart "<3" turns into "‹3" – looks the same, can never start a tag).
-  s = s.replace(TAG_LIKE, "").replace(URL_LIKE, "");
-  return s.replace(/</g, "‹").replace(/[ \t]{2,}/g, " ").trim();
+  // First every "<" becomes "‹" (a heart "<3" turns into "‹3"), so nothing removed later can ever join
+  // up into a real tag (removing "<b>" from "<<b>script>" used to leave "<script>").
+  s = s.replace(/</g, "‹");
+  return s.replace(TAG_LIKE, "").replace(URL_LIKE, "").replace(/[ \t]{2,}/g, " ").trim();
 }
 
 /** Applies scrubText to every string inside a value (scenes, cinema, reactions …). */
