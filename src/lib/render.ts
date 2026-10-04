@@ -1,3 +1,4 @@
+import { cardCSP } from "./csp";
 import { contrast, mix, rgba } from "./color";
 import { occasionLabel } from "./presets";
 import type { CardData, GiftScene, Scene } from "./types";
@@ -557,6 +558,7 @@ export function renderCardHTML(d: CardData, opts: RenderOptions = {}): string {
 <html lang="de" class="nojs">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="${cardCSP(!!opts.reactUrl)}">
 <meta name="color-scheme" content="${t.dark ? "dark" : "light"}">
 <meta name="robots" content="noindex,nofollow">
 <title>${esc(title)}</title>

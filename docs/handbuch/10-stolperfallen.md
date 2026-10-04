@@ -61,3 +61,11 @@ Namen landen in der Kalender-Datei des Organizers. Ein Zeilenumbruch im Namen k�
 neue Einträge erzeugen. `icsText()` in `src/lib/organizer.ts` ersetzt Steuerzeichen und escaped
 `\ ; ,`, `foldLine()` begrenzt Zeilen auf 75 Byte, ohne Emoji zu zerteilen. Der 29. Februar
 wiederholt sich als „letzter Tag im Februar“, sonst fehlt er in drei von vier Jahren.
+
+## CSP: Karten-Vorschauen erben die Regel der App
+
+`srcdoc`-iframes übernehmen die Content-Security-Policy der Seite, die sie einbettet – auch mit
+`sandbox`. Was eine Karte braucht (Inline-Skript, `data:`/`blob:`-Bilder), muss deshalb auch in
+`appCSP()` erlaubt sein. Eine Regel per `<meta>` kann nur verschärfen, nie lockern; mehrere Regeln
+gelten gleichzeitig (Schnittmenge). Im Entwicklungsmodus (`next dev`) setzt die App keine Regel,
+weil das Neuladen dort `eval` braucht.

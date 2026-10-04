@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { InstallFab } from "@/components/Install";
 import { BASE } from "@/lib/base";
+import { cspBootScript } from "@/lib/csp";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,6 +23,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
+      <head>
+        {/* Dev mode needs eval for hot reloading; the server version sends the policy as a header too. */}
+        {process.env.NODE_ENV === "production" && <script dangerouslySetInnerHTML={{ __html: cspBootScript() }} />}
+      </head>
       <body>
         {children}
         <InstallFab />
