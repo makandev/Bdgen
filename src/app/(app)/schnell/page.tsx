@@ -76,6 +76,7 @@ export default function QuickCard() {
         address,
         occasion,
         date: "",
+        events: [],
         mood: suggestMood(relation),
         notes: answersToNotes(questions.map((q, i) => ({ q: q.q, a: answers[i] }))),
       });

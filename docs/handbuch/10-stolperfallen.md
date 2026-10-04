@@ -54,3 +54,10 @@ Jeder Punkt hier ist schon einmal passiert. Lies das, bevor du an den betroffene
 - Die Namen aus der ursprünglichen HTML-Karte dürfen **nirgends** vorkommen (Test).
 - Beispiele: du/Sie muss zu den Texten passen (ein Silvester-Beispiel an „ihr Lieben“ mit du-Texten
   wirkte falsch).
+
+## Kalender-Datei (.ics): Namen escapen, Zeilen falten
+
+Namen landen in der Kalender-Datei des Organizers. Ein Zeilenumbruch im Namen könnte dort sonst
+neue Einträge erzeugen. `icsText()` in `src/lib/organizer.ts` ersetzt Steuerzeichen und escaped
+`\ ; ,`, `foldLine()` begrenzt Zeilen auf 75 Byte, ohne Emoji zu zerteilen. Der 29. Februar
+wiederholt sich als „letzter Tag im Februar“, sonst fehlt er in drei von vier Jahren.

@@ -1,5 +1,5 @@
 import { defaultCardData } from "./templates";
-import type { Card, Contact } from "./types";
+import type { Card, Contact, ExtraDate } from "./types";
 import { address, normalizeCardData, occasion, str } from "./validate";
 
 export type ContactInput = Omit<Contact, "id" | "createdAt" | "updatedAt">;
@@ -12,10 +12,31 @@ export function contactInput(b: Record<string, unknown>): ContactInput | string 
     relation: str(b.relation, "", 60).trim(),
     address: address(b.address),
     occasion: occasion(b.occasion),
-    date: /^\d{4}-\d{2}-\d{2}$/.test(String(b.date)) ? String(b.date) : "",
+    date: isoDate(b.date) ? String(b.date) : "",
+    events: extraDates(b.events),
     mood: Array.isArray(b.mood) ? b.mood.map((m) => str(m, "", 30)).filter(Boolean).slice(0, 16) : [],
     notes: str(b.notes, "", NOTES_MAX),
   };
+}
+
+function isoDate(v: unknown): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v));
+  return !!m && Number(m[2]) >= 1 && Number(m[2]) <= 12 && Number(m[3]) >= 1 && Number(m[3]) <= 31;
+}
+
+/** Most extra dates per person – enough for wedding day, name day and a few more. */
+export const EVENTS_MAX = 12;
+
+function extraDates(v: unknown): ExtraDate[] {
+  if (!Array.isArray(v)) return [];
+  const out: ExtraDate[] = [];
+  for (const e of v) {
+    const label = str(e?.label, "", 40).replace(/\s+/g, " ").trim();
+    if (!label || !isoDate(e?.date)) continue;
+    out.push({ label, date: String(e.date) });
+    if (out.length >= EVENTS_MAX) break;
+  }
+  return out;
 }
 
 /** Longest notes about a person (the textarea uses the same limit, so nothing is cut silently). */

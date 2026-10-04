@@ -11,6 +11,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/app/icon.svg` | Favicon |
 | `src/app/(app)/layout.tsx` | legt `<Gate>` um alle App-Seiten |
 | `src/app/(app)/page.tsx` | Übersicht/Startseite: Erinnerungen an nahe Termine, Schnell-Karte, Personen, Beispiel-Vorschauen, Funkeln |
+| `src/app/(app)/kalender/page.tsx` | Geburtstags-Organizer: alle Termine nach Monaten, Countdown, Alter, Filter, „Datum vormerken“, Kalender-Export (.ics) |
 | `src/app/(app)/kontakt/page.tsx` | Person anlegen/bearbeiten, Beziehung, Stichworte, Design, Karte erstellen |
 | `src/app/(app)/karte/page.tsx` | Karten-Editor: Texte, Design, Teilen, Bewerten, Autosave, Rückgängig |
 | `src/app/(app)/schnell/page.tsx` | Schnell-Karte mit zwei Fragen |
@@ -62,6 +63,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/components/Thumb.tsx` | lebende Mini-Vorschau einer Beispielkarte |
 | `src/components/fields.tsx` | Eingabefelder `Text`, `List` |
 | `src/components/client.ts` | `errText`, `download` (iPhone-App: Teilen-Menü), `copyText` |
+| `src/components/ExtraDates.tsx` | Weitere Termine einer Person (Hochzeitstag …) und Datumswahl mit optionalem Jahr |
 | `src/components/dates.ts` | Datumsanzeige und Tage bis zum Termin |
 
 ## Kernlogik (`src/lib/`)
@@ -81,6 +83,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/lib/questions.ts` | Fragen der Schnell-Karte |
 | `src/lib/repo.ts` | Weiche Browser/Server (`Repo`) |
 | `src/lib/store.ts` | Speicher der Browser-Version, Sicherung |
+| `src/lib/organizer.ts` | Organizer-Logik: Termine aller Personen, Alter/Jahre, Erinnerungstexte, Kalender-Datei (iCalendar) |
 | `src/lib/records.ts` | Eingaben für Personen, Sicherungsformat |
 | `src/lib/settings.ts` | KI-Schlüssel auf dem Gerät, Geräte-Passwort, kleine Einstellungen |
 | `src/lib/vault.ts` | Verschlüsselung (PBKDF2 + AES-GCM) |
@@ -118,6 +121,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `tests/designs.test.ts` | Designs und Beispiele |
 | `tests/browser.test.ts` | Links, Verschlüsselung, Speicher |
 | `tests/learning.test.ts` | Lernen |
+| `tests/organizer.test.ts` | Organizer: Reihenfolge, Alter, „Jahr unbekannt“, Prüfung der Termine, Kalender-Export ohne Einschleusung |
 | `tests/extras.test.ts` | Gutscheine, Rezepte, Kompatibilität, Geräte, Geschenkseite |
 | `tests/keys.test.ts` | KI-Schlüssel und Geräte-Passwort |
 | `tests/server-limit.test.ts` | Login-Limits |

@@ -7,6 +7,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { errText } from "@/components/client";
 import { TopBar } from "@/components/TopBar";
 import { MOODS, NOTE_STARTERS, OCCASIONS, PRESETS } from "@/lib/presets";
+import { ExtraDates } from "@/components/ExtraDates";
 import { RelationPicker } from "@/components/RelationPicker";
 import { PresetGrid } from "@/components/Swatch";
 import { Thumb } from "@/components/Thumb";
@@ -15,9 +16,9 @@ import { contactInput, NOTES_MAX } from "@/lib/records";
 import { repo } from "@/lib/repo";
 import type { Address, Card, Contact, Occasion } from "@/lib/types";
 
-type Form = Pick<Contact, "name" | "relation" | "address" | "occasion" | "date" | "mood" | "notes">;
+type Form = Pick<Contact, "name" | "relation" | "address" | "occasion" | "date" | "events" | "mood" | "notes">;
 
-const EMPTY: Form = { name: "", relation: "", address: "du", occasion: "geburtstag", date: "", mood: ["herzlich", "witzig"], notes: "" };
+const EMPTY: Form = { name: "", relation: "", address: "du", occasion: "geburtstag", date: "", events: [], mood: ["herzlich", "witzig"], notes: "" };
 
 export default function ContactPage() {
   return (
@@ -63,8 +64,8 @@ function ContactEditor() {
         setMsg({ kind: "err", text: "Diese Person gibt es nicht (mehr)." });
         return;
       }
-      const { name, relation, address, occasion, date, mood, notes } = r.contact;
-      setForm({ name, relation, address, occasion, date, mood, notes });
+      const { name, relation, address, occasion, date, events, mood, notes } = r.contact;
+      setForm({ name, relation, address, occasion, date, events, mood, notes });
       setCards(r.cards);
       setLoaded(true);
     });
@@ -212,6 +213,7 @@ function ContactEditor() {
                 <input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />
               </label>
             </div>
+            <ExtraDates value={form.events} onChange={(v) => set("events", v)} />
           </section>
 
           <section className="panel stack">
