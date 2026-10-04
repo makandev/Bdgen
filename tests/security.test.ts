@@ -220,7 +220,7 @@ test("AI: name, vouchers and keys never reach the AI; injected text stays data; 
     const all = JSON.stringify(gen);
     assert.doesNotMatch(all, /evil\.example|<script|<img|<a |javascript:|<b>/i);
     assert.match(all, /Guten Morgen, \{\{name\}\}\./);
-    assert.equal(scrubText("Alles Liebe <3 und **viel Glück** 🙂"), "Alles Liebe <3 und **viel Glück** 🙂");
+    assert.equal(scrubText("Alles Liebe <3 und **viel Glück** 🙂"), "Alles Liebe ‹3 und **viel Glück** 🙂");
     for (const nested of ["<<b>script>alert(1)<</b>/script>", "<scr<i>ipt>x", "<<<a>a>a href=x>"]) {
       assert.doesNotMatch(scrubText(nested), /<[a-z\/]/i, `nested tags: ${nested}`);
     }

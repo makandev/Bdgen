@@ -90,4 +90,4 @@ Routen. Nach Änderungen am Proxy immer testen: `curl …/api/contacts/` ohne Co
 ein echter Schluss-Marker, hinter dem eingeschleuste „Regeln“ standen (gefunden in der unabhängigen
 Prüfung). Darum ersetzen (`‹›`), damit sich die Reste links und rechts nie zu etwas Neuem verbinden.
 Dasselbe bei Tags: `scrubText()` machte aus `<<b>script>` ein `<script>` (CodeQL-Fund). Jetzt wird
-jedes übrige `<`, das noch einen Tag beginnen könnte, zu `‹` (`<3` bleibt).
+jedes übrige `<` zu `‹` (aus `<3` wird `‹3`).
