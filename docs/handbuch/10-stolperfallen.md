@@ -38,6 +38,9 @@ Jeder Punkt hier ist schon einmal passiert. Lies das, bevor du an den betroffene
   `typecheck` läuft mit `--incremental false`.
 - **Top-Level-`await`** funktioniert in tsx-Skripten/Tests (CommonJS) nicht → `main()`-Funktion.
 
+- **Install-Skripte von Paketen** laufen nicht (`--ignore-scripts`). esbuild funktioniert trotzdem
+  (Binärdatei kommt als optionales Paket). Braucht ein neues Paket ein Install-Skript, bewusst prüfen.
+
 ## Werkzeuge
 
 - `pkill -f <muster>` in der Shell beendet unter Umständen die eigene Shell, wenn das Muster in der

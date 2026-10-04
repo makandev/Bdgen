@@ -11,6 +11,8 @@
 | Server-Login | Umleitung auf fremde Seiten | `safeNext()` in `src/app/login/page.tsx` lässt nur gleiche Herkunft zu |
 | Sitzung | Fälschung | HMAC-signiertes Cookie, `httpOnly`, `SameSite=Lax`, `secure` in Produktion (`src/server/session.ts`) |
 | Reaktionen (öffentlich) | Spam | nur die Knöpfe der Karte, max. 30 je Karte, Limits je Adresse und gesamt |
+| Empfänger | Schad-PDF als Gutschein | `pdfIsPlain()` in `src/lib/validate.ts`: Original-PDF nur ohne Skripte, Startbefehle, Anhänge, Auto-Aktionen (auch hex-maskierte Namen); pdf.js zeichnet ohne Skripting/`eval` (`src/lib/media.ts`); sonst wird nur das Bild verschickt |
+| Build/Lieferkette | kompromittierte npm-Pakete | `npm ci --ignore-scripts` (CI + Docker), Dependabot (`.github/dependabot.yml`), CodeQL (`.github/workflows/codeql.yml`) |
 | Empfänger | Datenabfluss | keine externen Ressourcen in Karten, `referrer: no-referrer`, `noindex` |
 
 ## Regeln für neuen Code

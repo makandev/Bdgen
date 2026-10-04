@@ -7,7 +7,7 @@ import { restyleOffline } from "../src/lib/prompts";
 import { decodeCard, encodeCard } from "../src/lib/share";
 import { defaultCardData, giftScene, withGift } from "../src/lib/templates";
 import type { GiftScene, Voucher } from "../src/lib/types";
-import { normalizeCardData, normalizeParticles, normalizeVoucher } from "../src/lib/validate";
+import { normalizeCardData, normalizeParticles, normalizeVoucher, pdfIsPlain } from "../src/lib/validate";
 import { detectPlatform } from "../src/components/Install";
 
 const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
@@ -133,4 +133,16 @@ test("too many pages never drop the finale", () => {
   const n = normalizeCardData({ ...d, scenes: many }, d);
   assert.equal(n.scenes.length, 20);
   assert.equal(n.scenes[19].type, "finale");
+});
+
+test("original PDFs with active content are never passed on", () => {
+  const pdf = (body: string) => "data:application/pdf;base64," + Buffer.from("%PDF-1.7\n" + body).toString("base64");
+  assert.equal(pdfIsPlain(pdf("1 0 obj << /Type /Page /URI (https://shop.example) >> endobj")), true);
+  for (const bad of ["/OpenAction << /S /JavaScript /JS (app.alert(1)) >>", "/Launch /F (cmd.exe)", "/EmbeddedFile", "/#4A#61vaScript (x)", "/AA << >>"]) {
+    assert.equal(pdfIsPlain(pdf(bad)), false, bad);
+  }
+  assert.equal(pdfIsPlain("data:application/pdf;base64," + Buffer.from("MZ not a pdf").toString("base64")), false);
+  const img = "data:image/png;base64,iVBORw0KGgo=";
+  assert.equal(normalizeVoucher({ kind: "image", image: img, pdf: pdf("/JS (x)") })!.pdf, "");
+  assert.ok(normalizeVoucher({ kind: "image", image: img, pdf: pdf("/Type /Page") })!.pdf);
 });
