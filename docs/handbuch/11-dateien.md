@@ -85,6 +85,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/lib/settings.ts` | KI-Schlüssel auf dem Gerät, Geräte-Passwort, kleine Einstellungen |
 | `src/lib/vault.ts` | Verschlüsselung (PBKDF2 + AES-GCM) |
 | `src/lib/share.ts` | Karte ⇄ Link (fflate) |
+| `src/lib/postcard.ts` | Vorschaubild der Karte (Canvas) zum Teilen zusammen mit dem Link |
 | `src/lib/media.ts` | Bilder verkleinern, PDF → Bild (pdf.js) |
 | `src/lib/color.ts` | Farbrechnen, Kontrast |
 | `src/lib/id.ts` | `newId`, `clone` (iOS-15-tauglich) |

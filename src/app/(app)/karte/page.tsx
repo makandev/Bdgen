@@ -3,6 +3,7 @@
 import { clone } from "@/lib/id";
 import { HOME } from "@/lib/base";
 import { withGenerated } from "@/lib/cardbase";
+import { drawPostcard } from "@/lib/postcard";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -349,6 +350,26 @@ function CardEditor() {
     }
   }
 
+  async function sharePostcard() {
+    if (!data || !link) return;
+    try {
+      const file = new File([await drawPostcard(data)], "ueberraschung.png", { type: "image/png" });
+      const text = `✨ Eine kleine Überraschung für dich – einfach öffnen: ${link}`;
+      if (navigator.canShare?.({ files: [file], text })) {
+        await navigator.share({ files: [file], text }).catch(() => {});
+        return;
+      }
+      download(file.name, file, "image/png");
+      setMsg(
+        (await copyText(link))
+          ? { kind: "ok", text: "Bild gespeichert und Link kopiert – schick beides zusammen, z. B. per WhatsApp." }
+          : { kind: "ok", text: "Bild gespeichert – schick es zusammen mit dem Link oben." },
+      );
+    } catch (e) {
+      setMsg({ kind: "err", text: errText(e) });
+    }
+  }
+
   if (!data || !card) {
     return (
       <div className="shell">
@@ -580,6 +601,16 @@ function CardEditor() {
                     Link ist aktiv (aus = Link funktioniert nicht mehr)
                   </label>
                 )}
+              </div>
+              <div className="sub">
+                <h3>🖼️ Als Bild mit Link</h3>
+                <p className="muted small" style={{ margin: 0 }}>
+                  Ein schönes Vorschaubild in den Farben der Karte – zusammen mit dem Link verschickt. Bilder kommen überall ohne Warnung an
+                  und machen neugierig.
+                </p>
+                <div className="row">
+                  <button className="btn sm" onClick={sharePostcard} disabled={!link || card.shared === false}>🖼️ Bild + Link teilen</button>
+                </div>
               </div>
               <div className="sub">
                 <h3>📎 Als Datei</h3>
