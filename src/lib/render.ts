@@ -1,7 +1,8 @@
 import { cardCSP } from "./csp";
 import { contrast, mix, rgba } from "./color";
+import { inkBox, inkPath } from "./ink";
 import { occasionLabel } from "./presets";
-import type { CardData, GiftScene, Scene } from "./types";
+import type { CardData, FinaleScene, GiftScene, Scene } from "./types";
 
 export interface RenderOptions {
   /** 1-based scene to open first (editor preview). */
@@ -173,6 +174,9 @@ button:hover{transform:translateY(-2px)}button:focus-visible{outline:3px solid v
 .bigcheck{font-size:3.3rem;margin:5px;color:var(--accent)}.hidden{display:none!important}
 .choice{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:610px;margin:20px auto 0}.choice button{margin:0;border-radius:17px;min-height:82px}
 .signature{margin-top:25px;color:var(--muted);line-height:1.6}
+.ink-wrap{position:relative;width:100%;max-width:300px;margin:10px auto 0}.ink{position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible}
+.ink path{fill:none;stroke:${t.dark ? t.accentLight : t.accentDark};stroke-linecap:round;stroke-linejoin:round}
+.music-btn{position:fixed;right:14px;bottom:14px;z-index:4;width:46px;height:46px;min-height:0;margin:0;padding:0;border-radius:50%;font-size:1.25rem;line-height:1;opacity:.88}
 @media(max-width:580px){.choice{grid-template-columns:1fr}.screen{min-height:68vh}.app{width:min(100% - 18px,840px)}.top{font-size:.67rem}}
 .card.celebrate{animation:cardPop .72s cubic-bezier(.2,.8,.2,1)}
 @keyframes cardPop{0%{transform:scale(.975)}55%{transform:scale(1.012)}100%{transform:scale(1)}}
@@ -344,7 +348,7 @@ ${next(s.button, 'class="hidden" data-after')}`;
             .join("")}</div><div class="react-done hidden"><div class="react-big"></div><p class="react-thanks"></p><div class="react-more hidden"><input class="react-msg" maxlength="200" placeholder="Noch ein paar Worte? (optional)"><button type="button" class="react-msg-send">Senden</button></div><button type="button" class="react-send hidden">📨 Antwort zurückschicken</button></div></div>`
         : "";
       body = `${eyebrow(s.eyebrow)}<h2>${f(s.title)}</h2>${s.quote.trim() ? `<div class="quote">„${f(s.quote)}“</div>` : ""}${paras(s.paragraphs)}
-${s.signature.trim() ? `<div class="signature">${f(s.signature)}</div>` : ""}
+${s.signature.trim() ? `<div class="signature">${f(s.signature)}</div>` : ""}${inkSvg(s)}
 ${s.status.trim() ? `<div class="seal"><span class="dot"></span> ${f(s.status)}</div>` : ""}
 ${s.tiny.trim() ? `<p class="tiny">${f(s.tiny)}</p>` : ""}
 ${d.effects.cinema ? `<button type="button" class="cinema-start" style="margin-top:22px">${f(s.cinemaButton)}</button>` : ""}
@@ -354,6 +358,17 @@ ${step < d.scenes.length ? next("Weiter →") : ""}`;
     }
   }
   return `<section class="screen${step === 1 ? " active" : ""}" data-step="${step}" data-type="${s.type}" id="seite${step}"><div class="card">${body}</div></section>`;
+}
+
+/** Handwritten signature as inline SVG – built only from validated whole numbers (validate.ts → normalizeInk). */
+function inkSvg(s: FinaleScene): string {
+  if (!s.ink?.length) return "";
+  const b = inkBox(s.ink);
+  const width = Math.max(3, Math.round(b.w * 0.009));
+  const ratio = Math.min(60, Math.max(18, (b.h / b.w) * 100)).toFixed(1);
+  return `<div class="ink-wrap" style="padding-top:${ratio}%"><svg class="ink" viewBox="${b.x} ${b.y} ${b.w} ${b.h}" role="img" aria-label="Handschriftliche Unterschrift">${s.ink
+    .map((p) => `<path d="${inkPath(p)}" stroke-width="${width}"/>`)
+    .join("")}</svg></div>`;
 }
 
 const CLIENT_JS = `(function(){'use strict';
@@ -378,6 +393,7 @@ function go(n,quiet){
  try{window.scrollTo(0,0)}catch(e){}
  var type=target.getAttribute('data-type');
  if(type==='list')revealList(target);
+ if(type==='finale')drawInk(target);
  if(quiet)return;
  try{if(step===total)burst();else if(type==='text'&&step>2)sparkBurst();else if(step%2===0)miniBurst()}catch(e){}
 }
@@ -388,6 +404,13 @@ screens.forEach(function(sc){
  var out=sc.querySelector('[data-reply-text]'),after=sc.querySelector('[data-after]');
  answers.forEach(function(b){b.addEventListener('click',function(){answers.forEach(function(x){x.disabled=true});out.innerHTML=b.getAttribute('data-reply');out.classList.remove('hidden');if(after)after.classList.remove('hidden');if(b.className.indexOf('ghost')<0)miniBurst()})});
 });
+// Handwritten signature: each stroke is drawn like ink, one after another.
+function drawInk(sc){var ps=[].slice.call(sc.querySelectorAll('.ink path'));if(!ps.length||reduced)return;
+ var lens=ps.map(function(p){var l=0;try{l=p.getTotalLength()}catch(e){}return (l||1)+2}),tot=0;lens.forEach(function(l){tot+=l});
+ var dur=Math.min(4200,Math.max(1400,tot*1.1))/SPD,at=500/SPD;
+ ps.forEach(function(p,i){p.style.transition='none';p.style.strokeDasharray=lens[i]+' '+lens[i];p.style.strokeDashoffset=lens[i]});
+ void sc.offsetWidth;
+ ps.forEach(function(p,i){var d=Math.max(60,dur*lens[i]/tot);p.style.transition='stroke-dashoffset '+Math.round(d)+'ms linear '+Math.round(at)+'ms';p.style.strokeDashoffset='0';at+=d+70})}
 function revealList(sc){var els=[].slice.call(sc.querySelectorAll('.revealbox div')),btn=sc.querySelector('[data-after]'),gap=430/SPD;
  els.forEach(function(e){e.classList.remove('in')});
  els.forEach(function(e,i){setTimeout(function(){e.classList.add('in')},reduced?0:350+i*gap)});
@@ -522,6 +545,33 @@ document.querySelectorAll('[data-reactions]').forEach(function(box){var sent=nul
    if(navigator.share){navigator.share({text:text}).catch(function(){})}else{window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank')}}})});
  var ms=box.querySelector('.react-msg-send');if(ms)ms.addEventListener('click',function(){var inp=box.querySelector('.react-msg'),th=box.querySelector('.react-thanks');if(!sent||!inp.value.trim())return;
   fetch(CFG.reactUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:sent,message:inp.value.trim()})}).then(function(r){if(!r.ok)throw 0;th.textContent='Danke für deine Worte! 💌';box.querySelector('.react-more').classList.add('hidden')}).catch(function(){th.textContent='Nachricht konnte nicht gesendet werden.'})})});
+// Background tune, made in the browser (Web Audio): no files. Browsers (iOS above all) only allow sound
+// after a tap, so it starts with the first tap anywhere – unless the reader prefers reduced motion.
+// Song rows: [melody MIDI note, beats, bass MIDI note], 0 = silence.
+var SONGS={
+ spieluhr:{bpm:150,w:'sine',box:1,n:[76,1,48,79,1,0,84,1,0,83,1,55,79,1,0,76,1,0,77,1,53,81,1,0,86,1,0,84,2,48,79,1,0,74,1,55,77,1,0,83,1,0,81,1,53,77,1,0,74,1,0,72,1,48,76,1,0,79,1,0,84,2,48,0,1,0]},
+ festlich:{bpm:112,w:'triangle',n:[67,.5,48,72,.5,0,76,.5,0,79,1.5,0,76,.5,0,79,.5,0,84,2,53,81,1,0,79,1,0,77,1,55,79,1,0,81,1,0,83,1,0,84,3,48,0,1,0]},
+ ruhig:{bpm:72,w:'sine',soft:1,n:[72,2,48,76,1,0,79,3,55,77,2,53,76,1,0,74,3,55,76,2,57,72,1,0,69,3,53,71,2,55,74,1,0,72,3,48]}};
+var MU=SONGS[FX.music],mb=document.getElementById('musicBtn');
+if(MU&&mb){var AC=window.AudioContext||window.webkitAudioContext,ac=null,master=null,mOn=false,mWant=!reduced,mTimer=null,mPos=0,mNext=0;
+ if(!AC){mb.parentNode.removeChild(mb)}else{
+ var hz=function(m){return 440*Math.pow(2,(m-69)/12)};
+ var tone=function(m,t,dur,vol,atk,wave){var o=ac.createOscillator(),g=ac.createGain();o.type=wave;o.frequency.setValueAtTime(hz(m),t);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+atk);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.05)};
+ var tick=function(){var beat=60/MU.bpm/SPD,n=MU.n;
+  while(mNext<ac.currentTime+.6){var m=n[mPos],b=n[mPos+1],bs=n[mPos+2],t=mNext,len=b*beat;
+   if(m){if(MU.box){tone(m,t,1.3,.22,.005,'sine');tone(m+12,t,.5,.06,.005,'sine')}else if(MU.soft)tone(m,t,len*1.5,.16,.14,'sine');else tone(m,t,len*.92,.2,.02,MU.w)}
+   if(bs)tone(bs,t,Math.max(len,beat*2.2),MU.soft?.1:.12,MU.soft?.2:.01,'sine');
+   mNext+=len;mPos=(mPos+3)%n.length}};
+ var setBtn=function(){mb.textContent=mOn?'🔊':'🔇';mb.setAttribute('aria-pressed',mOn?'true':'false')};
+ var musicOn=function(){if(!ac){try{ac=new AC()}catch(e){return}master=ac.createGain();master.gain.value=.55;master.connect(ac.destination)}
+  if(ac.resume&&ac.state!=='running')ac.resume();mOn=true;mNext=Math.max(mNext,ac.currentTime+.08);clearInterval(mTimer);mTimer=setInterval(tick,150);tick();setBtn()};
+ var musicOff=function(){mOn=false;clearInterval(mTimer);mTimer=null;if(ac&&ac.suspend)ac.suspend();setBtn()};
+ var firstTap=function(e){document.removeEventListener('click',firstTap,true);document.removeEventListener('touchend',firstTap,true);if(mWant&&!mOn&&e.target!==mb)musicOn()};
+ document.addEventListener('click',firstTap,true);document.addEventListener('touchend',firstTap,true);
+ mb.addEventListener('click',function(){mWant=!mOn;if(mOn)musicOff();else musicOn()});
+ document.addEventListener('visibilitychange',function(){if(!ac||!mOn)return;if(document.hidden){if(ac.suspend)ac.suspend()}else if(ac.resume)ac.resume()});
+ setBtn()}}
 if(CFG.start>1){go(CFG.start,true)}else if(!reduced){setTimeout(function(){miniBurst();ribbonRain(22,2200)},450)}
 })();`;
 
@@ -584,6 +634,7 @@ ${d.scenes.some((s) => s.type === "gift" && hasVoucher(s) && s.voucher?.show) ? 
  <div class="vs-kicker">✨ Für ${n.trim() ? esc(plain(n, n)) : "dich"} ✨</div><div class="vs-slot"></div>
  <button id="vshowClose" class="vs-close" type="button">Zurück zur Karte</button><button id="vshowSkip" class="vs-skip" type="button">Überspringen</button>
 </div>` : ""}
+${(d.effects.music ?? "aus") !== "aus" ? `<button type="button" id="musicBtn" class="music-btn ghost" aria-label="Musik an oder aus" aria-pressed="false">🔇</button>` : ""}
 ${opts.exportFile && d.iosHint ? `<div class="ioshint">iPhone: Falls die Mail-Vorschau Animationen blockiert, die Datei über „Teilen“ → „In Dateien sichern“ und von dort im Browser öffnen.</div>` : ""}
 <script type="application/json" id="cfg">${json}</script>
 <script>${CLIENT_JS}</script>

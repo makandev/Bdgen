@@ -47,7 +47,15 @@ export default function InfoPage() {
         </nav>
 
         <section className="panel stack" id="neu">
-          <h2>🆕 Neu in Version 0.7</h2>
+          <h2>🆕 Neu in Version 0.8</h2>
+          <ul className="info-list">
+            <li><b>🎵 Hintergrundmusik:</b> eine kleine Melodie passend zum Anlass – Spieluhr, festlich oder ruhig. Sie wird im Browser erzeugt (keine Dateien), startet beim ersten Antippen und lässt sich über 🔇/🔊 in der Ecke ausschalten. Wählbar im Design-Tab; die KI schlägt auf Wunsch eine passende vor.</li>
+            <li><b>✍️ Handschrift-Unterschrift:</b> im Finale mit Finger oder Maus unterschreiben. In der Karte wird sie wie mit Tinte Strich für Strich nachgezeichnet. Gespeichert als kleine Zahlenliste – der Link bleibt kurz.</li>
+          </ul>
+        </section>
+
+        <section className="panel stack">
+          <h2>Neu in Version 0.7</h2>
           <ul className="info-list">
             <li><b>📅 Geburtstags-Organizer:</b> alle Geburtstage, Hochzeitstage und besonderen Tage auf einen Blick – nach Monaten, mit Countdown und Alter („wird 70“). Mit „Datum vormerken“ in Sekunden eingetragen, auch ohne Geburtsjahr.</li>
             <li><b>📲 Erinnerung im Handy-Kalender:</b> ein Tipp lädt alle Termine in deinen Kalender – jedes Jahr wiederkehrend, mit Erinnerung am Tag und auf Wunsch schon Tage vorher.</li>
@@ -111,7 +119,7 @@ export default function InfoPage() {
           <ul className="info-list">
             <li>📷 <b>Eigene Fotos</b> auch auf anderen Seiten der Karte (z. B. ein Kinderfoto im Finale) – für Gutscheine geht das schon</li>
             <li>🎨 <b>KI-Bilder</b> passend zur Karte – optional, da die Bildmodelle Geld kosten</li>
-            <li>🎵 <b>Musik oder Sprachnachricht</b>, die beim Öffnen abgespielt wird</li>
+            <li>🎙️ <b>Sprachnachricht</b>, die in der Karte abgespielt wird</li>
             <li>🔔 <b>Erinnerung</b> ein paar Tage vor Geburtstagen – und eine Benachrichtigung, wenn eine Reaktion kommt (Server-Version)</li>
             <li>👨‍👩‍👧 <b>Mehrere Benutzer</b> mit eigenem Login (Server-Version)</li>
             <li>🧩 <b>Neue Seitentypen:</b> Rätsel, Zeitstrahl mit gemeinsamen Erinnerungen</li>

@@ -89,6 +89,11 @@ export interface FinaleScene {
   quote: string;
   paragraphs: string[];
   signature: string;
+  /**
+   * Handwritten signature: one flat list [x0,y0,x1,y1,…] per stroke, whole numbers on a 1000×400 pad.
+   * Stored as numbers (not as a picture) so links stay short. Missing or empty = no handwriting.
+   */
+  ink?: number[][];
   status: string;
   tiny: string;
   cinemaButton: string;
@@ -144,6 +149,9 @@ export type Backdrop = "dots" | "sparkle" | "matrix" | "blocks" | "aurora" | "fi
 
 export type ConfettiShape = "strip" | "square" | "heart" | "star" | "glyph";
 
+/** Background tune, generated in the browser (Web Audio) – no audio files. */
+export type Music = "aus" | "spieluhr" | "festlich" | "ruhig";
+
 export type ParticleMotion = "rise" | "fall" | "float" | "swirl" | "pop";
 
 /** A small effect recipe the AI may invent within safe bounds: which emoji/symbols move how. */
@@ -187,6 +195,8 @@ export interface Effects {
   confettiShape: ConfettiShape;
   /** Extra emoji effect layer (AI "effect recipe"); null = off. */
   particles?: Particles | null;
+  /** Background tune; starts after the first tap. Missing = "aus". */
+  music?: Music;
 }
 
 export interface ReactionOption {

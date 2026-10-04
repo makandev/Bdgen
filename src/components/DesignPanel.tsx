@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BACKDROP_LABELS, CONFETTI_LABELS, FONT_LABELS, presetEffects, presetTheme, STYLE_LABELS } from "@/lib/presets";
-import type { Backdrop, CardStyle, ConfettiShape, Effects, HeadingFont, ParticleMotion, Particles, Theme } from "@/lib/types";
+import { BACKDROP_LABELS, CONFETTI_LABELS, FONT_LABELS, MUSIC_LABELS, presetEffects, presetTheme, STYLE_LABELS } from "@/lib/presets";
+import type { Backdrop, CardStyle, ConfettiShape, Effects, HeadingFont, Music, ParticleMotion, Particles, Theme } from "@/lib/types";
 import { PresetGrid } from "./Swatch";
 
 const COLORS: [keyof Theme, string][] = [
@@ -147,8 +147,13 @@ export function DesignPanel({
         <h3 style={{ marginBottom: 8 }}>Oder eine Vorlage antippen</h3>
         <PresetGrid
           value={theme.preset}
-          onPick={(key) => onChange(presetTheme(key), { ...presetEffects(key), cinema: effects.cinema, clock: effects.clock, progress: effects.progress })}
+          onPick={(key) => onChange(presetTheme(key), { ...presetEffects(key), cinema: effects.cinema, clock: effects.clock, progress: effects.progress, music: effects.music })}
         />
+      </div>
+
+      <div>
+        <Choice<Music> label="🎵 Hintergrundmusik" value={effects.music ?? "aus"} options={MUSIC_LABELS} onChange={(v) => setFx({ music: v })} />
+        <small className="muted">Eine kleine Melodie, im Browser erzeugt. Sie startet beim ersten Antippen; ein Knopf in der Ecke schaltet sie aus. Im Stumm-Modus des iPhones bleibt sie still.</small>
       </div>
 
       <details className="optional">

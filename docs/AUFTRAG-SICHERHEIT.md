@@ -120,7 +120,12 @@ jemand, der Checklisten abhakt:
 Erst wenn die Sicherheitsschritte erledigt sind (oder der Auftraggeber es ausdrücklich vorzieht).
 Gleiche Arbeitsweise wie oben: zuerst planen und kurz vorstellen, dann bauen, testen, dokumentieren.
 
-### [ ] A · 🎵 Hintergrundmusik in der Karte
+### [x] A · 🎵 Hintergrundmusik in der Karte
+> Erledigt (Oktober 2026): `effects.music` (`aus`/`spieluhr`/`festlich`/`ruhig`), Melodien als Notenlisten
+> im Kartenskript (Web Audio, `webkitAudioContext`), Knopf 🔇/🔊, Start beim ersten Antippen, bei
+> reduzierter Bewegung nur per Knopf, Pause im Hintergrund. Design-Tab, KI-Regel und Offline-Wünsche
+> („mit Musik“). Getestet in Chromium im Sandbox-iframe (Klang erst nach Antippen, Knopf schaltet ab).
+> Nicht getestet: echtes iPhone/Safari.
 - Kleine Melodie passend zum Anlass (Spieluhr zum Geburtstag, festlich zu Silvester, ruhig bei Gute
   Besserung), **im Browser erzeugt** mit der Web-Audio-API – keine Audiodateien, keine Lizenzfragen,
   Karten-Links bleiben kurz.
@@ -131,7 +136,12 @@ Gleiche Arbeitsweise wie oben: zuerst planen und kurz vorstellen, dann bauen, te
   prüfen, im Design-Tab wählbar, die KI darf passend vorschlagen.
 - Code gehört ins Kartenskript (`CLIENT_JS`, ES5-Stil, läuft ab iOS 11; `webkitAudioContext` beachten).
 
-### [ ] B · ✍️ Handschrift-Unterschrift
+### [x] B · ✍️ Handschrift-Unterschrift
+> Erledigt (Oktober 2026): `src/lib/ink.ts`, `src/components/SignaturePad.tsx`, `FinaleScene.ink`,
+> `normalizeInk` (nur ganze Zahlen, ≤ 40 Striche, ≤ 1500 Punkte; Test mit präparierten Werten und im
+> Fuzz-Test). Inline-SVG im Finale, Strich für Strich animiert. Geht nie an die KI und bleibt bei neuen
+> KI-Texten erhalten. Eine typische Unterschrift macht den Link etwa 2–3 KB länger. Im Chromium geprüft:
+> Zeichnen, Rückgängig, Speichern, Animation. Nicht getestet: echtes iPhone.
 - Im Editor (Finale-Seite) mit Finger/Maus unterschreiben (Canvas, Zeiger-Ereignisse).
 - Gespeichert als **Strichpunkte** (kompakte Zahlenliste, gerundet und vereinfacht), nicht als Bild –
   damit der Link kurz bleibt; harte Obergrenze für Punkte, Prüfung in `validate.ts` (nur Zahlen!).

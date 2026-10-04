@@ -10,7 +10,10 @@ Kleinigkeiten** ein; die KI macht daraus eine kleine Geschichte in sieben Seiten
 4. **Liste** – „Für heute offiziell gestrichen“
 5. **Der ehrliche Teil** – hier zählen deine Stichworte am meisten
 6. **Schein-Ende** – „Protokoll erfolgreich abgeschlossen“ …
-7. **Finale** – Wunsch, Signatur und ein **Kino-Finale**
+7. **Finale** – Wunsch, Signatur (auf Wunsch **handschriftlich**, wie mit Tinte nachgezeichnet) und ein **Kino-Finale**
+
+Dazu auf Wunsch eine kleine **Hintergrundmelodie** (Spieluhr, festlich oder ruhig) – im Browser erzeugt,
+ohne Audiodateien.
 
 ## So sieht es aus
 
