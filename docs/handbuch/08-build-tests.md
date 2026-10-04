@@ -50,8 +50,10 @@ auslösen. WebKit (echtes Safari) steht in der Testumgebung nicht zur Verfügung
 
 ## Veröffentlichung (GitHub Pages)
 
-`.github/workflows/pages.yml` bei jedem Push auf `main`: `npm ci` → Typecheck → Tests → Server-Build
-(nur zur Prüfung) → Browser-Build mit `NEXT_PUBLIC_BASE_PATH=/<repo>` → **Schlüssel-Suche im Build**
-→ Deploy. Der Workflow bekommt absichtlich keine Secrets.
+`.github/workflows/pages.yml` bei jedem Push auf `main`: `npm ci` → `npm audit --audit-level=high` →
+Typecheck → Tests → Server-Build (nur zur Prüfung) → Browser-Build mit `NEXT_PUBLIC_BASE_PATH=/<repo>` →
+**Schlüssel-Suche im Build** → Deploy. Bei Pull Requests läuft alles bis auf den Deploy. Der Workflow
+bekommt absichtlich keine Secrets. Alle Actions sind auf Commit-Hashes festgenagelt (`@<hash> # v4`),
+damit ein umgehängter Tag keinen fremden Code einschleust; Dependabot hebt die Hashes wöchentlich an.
 
 Voraussetzung einmalig: *Settings → Pages → Source: GitHub Actions*.

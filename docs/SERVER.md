@@ -111,7 +111,7 @@ In der Browser-Version unter **⚙ Einstellungen → Sicherung herunterladen**, 
 Voraussetzung: **Node.js 22.5 oder neuer**.
 
 ```bash
-cp .env.example .env    # APP_PASSWORD, AUTH_SECRET und KI-Schlüssel eintragen
+cp .env.example .env    # APP_PASSWORD, AUTH_SECRET (Pflicht: openssl rand -hex 32) und KI-Schlüssel eintragen
 npm ci
 npm run build:server
 npm run start:server    # läuft auf Port 3000
@@ -141,6 +141,8 @@ server {
 | Login klappt nicht, die Seite lädt einfach neu | Läuft ohne HTTPS? Dann in `.env` `COOKIE_SECURE=false` setzen und `docker compose up -d`. |
 | „Zu viele Versuche“ | Nach 5 falschen Passwörtern ist der Login 1 Minute gesperrt. Kurz warten. |
 | KI schreibt nichts | In der App unter **⚙ Einstellungen → KI testen**. Meist fehlt der Schlüssel in `.env` oder das Gratis-Kontingent ist kurz ausgeschöpft. |
+| Seite zeigt „AUTH_SECRET fehlt oder ist zu kurz“ | `./update.sh` ausführen (ergänzt es), oder in `.env` `AUTH_SECRET=` mit `openssl rand -hex 32` füllen und `docker compose up -d`. |
+| Handy verloren / Passwort könnte bekannt sein | **⚙ Einstellungen → Überall abmelden**, danach `APP_PASSWORD` in `.env` ändern und `docker compose up -d`. |
 | Port 3000 ist belegt | In `.env` z. B. `PORT=3100` setzen, dann `docker compose up -d`. |
 | HTTPS-Zertifikat kommt nicht | Zeigt die Domain wirklich auf den Server? Sind Port 80 und 443 offen? `docker compose logs caddy` zeigt den Grund. |
 | Raspberry Pi: Bauen dauert lange | Beim ersten Mal sind 10–15 Minuten normal. |
@@ -154,3 +156,5 @@ server {
 - KI-Schlüssel und Passwort stehen nur in `.env` auf dem Server (nur für den Besitzer lesbar) und erreichen nie den Browser.
 - Der Name der Person wird nie an die KI geschickt.
 - Nach 5 falschen Passwörtern wird der Login für 1 Minute gesperrt.
+- **Überall abmelden** (⚙ Einstellungen) macht alle Anmeldungen auf allen Geräten sofort ungültig.
+- Der Container läuft ohne Root-Rechte mit schreibgeschütztem System; nur die Daten sind beschreibbar.

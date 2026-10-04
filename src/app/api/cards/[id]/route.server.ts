@@ -1,6 +1,6 @@
 import { normalizeCardData, str } from "@/lib/validate";
 import { cards, contacts } from "@/server/db";
-import { body, fail, handle, json } from "@/server/http";
+import { body, CARD_BODY_MAX, fail, handle, json } from "@/server/http";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -18,7 +18,7 @@ export function PUT(req: Request, ctx: Ctx) {
     const { id } = await ctx.params;
     const cur = cards.get(id);
     if (!cur) return fail("Diese Karte gibt es nicht.", 404);
-    const b = await body(req);
+    const b = await body(req, CARD_BODY_MAX);
     const card = cards.update(id, {
       title: b.title === undefined ? undefined : str(b.title, cur.title, 120),
       shared: typeof b.shared === "boolean" ? b.shared : undefined,

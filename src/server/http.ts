@@ -1,12 +1,15 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { AIError } from "@/lib/ai";
 import { briefFromCard } from "@/lib/cardbase";
+import { PublicError } from "@/lib/errors";
 import { chooseVariant, pickSamples } from "@/lib/learning";
 import type { Brief, GenOptions } from "@/lib/prompts";
 import type { AIConfig } from "@/lib/settings";
 import type { Card } from "@/lib/types";
 import { str } from "@/lib/validate";
-import { contacts, ratings } from "./db";
+import { contacts, ratings, sessions } from "./db";
+import { SESSION_COOKIE, verifySession } from "./session";
 
 export function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -16,18 +19,13 @@ export function fail(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
-/** An error with a status code that may be shown to the caller. */
-export class HttpError extends Error {
-  constructor(message: string, readonly status: number) {
-    super(message);
-  }
-}
-
-/** Largest request body by default: a card with photo and original PDF fits comfortably. */
-export const BODY_MAX = 6 * 1024 * 1024;
+/** Largest request body by default (people, ratings, login …). */
+export const BODY_MAX = 512 * 1024;
+/** Cards may carry a voucher photo and original PDF (see MAX_IMAGE_CHARS/MAX_PDF_CHARS). */
+export const CARD_BODY_MAX = 6 * 1024 * 1024;
 
 export async function body(req: Request, max = BODY_MAX): Promise<Record<string, unknown>> {
-  const tooBig = () => new HttpError("Die Daten sind zu groß.", 413);
+  const tooBig = () => new PublicError("Die Daten sind zu groß.", 413);
   if (Number(req.headers.get("content-length") || 0) > max) throw tooBig();
   const text = await req.text();
   if (text.length > max) throw tooBig();
@@ -39,14 +37,23 @@ export async function body(req: Request, max = BODY_MAX): Promise<Record<string,
   }
 }
 
-export function handle(fn: () => Promise<Response> | Response): Promise<Response> {
+/** True when the request carries a login that is still valid after "log out everywhere". */
+export async function loggedIn(): Promise<boolean> {
+  return verifySession((await cookies()).get(SESSION_COOKIE)?.value, sessions.generation());
+}
+
+/**
+ * Runs a route handler. Unless `open` is set, it first checks the login including its generation –
+ * the edge proxy cannot read the database, so old logins are only refused here.
+ */
+export function handle(fn: () => Promise<Response> | Response, { open = false } = {}): Promise<Response> {
   return Promise.resolve()
-    .then(fn)
+    .then(async () => (open || (await loggedIn()) ? fn() : fail("Nicht angemeldet", 401)))
     .catch((e: unknown) => {
-      const message = e instanceof Error ? e.message : "Unbekannter Fehler";
-      const status = e instanceof AIError || e instanceof HttpError ? e.status : 500;
-      if (!(e instanceof AIError || e instanceof HttpError)) console.error(e);
-      return fail(message, status);
+      if (e instanceof AIError || e instanceof PublicError) return fail(e.message, e.status);
+      // Anything else may contain internal details (paths, SQL) – log it, show a plain message.
+      console.error(e);
+      return fail("Da ist auf dem Server etwas schiefgelaufen. Bitte später noch einmal versuchen.", 500);
     });
 }
 

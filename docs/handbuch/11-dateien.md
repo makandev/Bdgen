@@ -71,6 +71,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | Datei | Inhalt |
 |---|---|
 | `src/lib/types.ts` | alle Datentypen |
+| `src/lib/errors.ts` | `PublicError`: Fehler, deren Meldung der Server nach außen zeigen darf |
 | `src/lib/uploads.ts` | Prüfung gewählter Dateien: Größenlimits (Foto, PDF, Sicherung), Bildformat an den ersten Bytes |
 | `src/lib/validate.ts` | Prüfung/Bereinigung aller Daten von außen |
 | `src/lib/render.ts` | Karten-Renderer (HTML/CSS/JS der Karte) |
@@ -101,7 +102,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | Datei | Inhalt |
 |---|---|
 | `src/server/db.ts` | SQLite-Datenbank |
-| `src/server/http.ts` | Antwort-Helfer, KI aus `.env`, Brief, Lern-Optionen |
+| `src/server/http.ts` | Antwort-Helfer, Anmelde-Prüfung in `handle()`, Größenlimits, KI aus `.env`, Brief, Lern-Optionen |
 | `src/server/session.ts` | Passwortprüfung, signierte Sitzung |
 | `src/server/limit.ts` | Ratenbegrenzung, Client-Adresse |
 
@@ -119,6 +120,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | Datei | Inhalt |
 |---|---|
 | `tests/render.test.ts` | Renderer und Namensverbot |
+| `tests/security.test.ts` | Angriffssammlung: tausende manipulierte Karten und KI-Antworten (HTML bleibt harmlos), kaputte/übergroße Links, Zip-Bomben, Prototype-Pollution |
 | `tests/uploads.test.ts` | Präparierte PDFs (versteckte Skripte in Objekt-Streams, Zip-Bomben), Bild-Erkennung, Limits |
 | `tests/theme.test.ts` | Farben und Kontraste |
 | `tests/designs.test.ts` | Designs und Beispiele |
@@ -138,7 +140,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `next.config.ts` | Export/Server-Weiche, `basePath`, `trailingSlash`, `pageExtensions` |
 | `tsconfig.json` | TypeScript-Einstellungen, Pfad-Alias `@/` |
 | `public/manifest.webmanifest` | PWA-Manifest |
-| `.github/workflows/pages.yml` | Prüfen, bauen, veröffentlichen (ohne Secrets, `npm ci --ignore-scripts`) |
+| `.github/workflows/pages.yml` | Prüfen (auch bei Pull Requests), bauen, veröffentlichen (ohne Secrets, `npm ci --ignore-scripts`, `npm audit`) |
 | `.github/workflows/codeql.yml` | automatische Sicherheitsanalyse des Codes (CodeQL) |
 | `.github/dependabot.yml` | wöchentliche Sicherheits-Updates für npm-Pakete und Actions als PR |
 | `Dockerfile`, `docker-compose.yml` | Server-Version als Container (optional mit Caddy) |

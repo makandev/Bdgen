@@ -3,11 +3,11 @@ import { startData, withGenerated } from "@/lib/cardbase";
 import { generateCard } from "@/lib/prompts";
 import { str } from "@/lib/validate";
 import { cards, contacts } from "@/server/db";
-import { body, briefFor, fail, handle, json, serverAI, serverGenOptions } from "@/server/http";
+import { body, briefFor, CARD_BODY_MAX, fail, handle, json, serverAI, serverGenOptions } from "@/server/http";
 
 export function POST(req: Request) {
   return handle(async () => {
-    const b = await body(req);
+    const b = await body(req, CARD_BODY_MAX);
     const contact = typeof b.contactId === "string" ? contacts.get(b.contactId) : null;
     if (!contact) return fail("Diese Person gibt es nicht.", 404);
     const { data, title, aiExtra } = startData(contact, {

@@ -32,7 +32,7 @@ Empfänger-Seite: `GET /k/<slug>/` (`src/app/k/[slug]/route.server.ts`) – rend
 
 ## Umgebungsvariablen
 
-Siehe `.env.example` (und `docker-compose.yml` für `PORT`, `BIND_ADDRESS`, `DOMAIN`): `APP_PASSWORD` (Pflicht), `AUTH_SECRET` (dringend empfohlen), `GEMINI_API_KEY` /
+Siehe `.env.example` (und `docker-compose.yml` für `PORT`, `BIND_ADDRESS`, `DOMAIN`): `APP_PASSWORD` (Pflicht), `AUTH_SECRET` (Pflicht, mind. 32 Zeichen; `update.sh` ergänzt es), `GEMINI_API_KEY` /
 `OPENROUTER_API_KEY`, `GEMINI_MODEL`, `OPENROUTER_MODEL`, `AI_PROVIDER`, `OPENROUTER_BASE_URL`,
 `DATABASE_PATH`, `COOKIE_SECURE`.
 

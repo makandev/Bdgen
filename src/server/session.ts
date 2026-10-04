@@ -3,16 +3,19 @@ export const SESSION_DAYS = 30;
 
 const enc = new TextEncoder();
 
-let warned = false;
+/** Why the server cannot sign logins yet, or "" when everything is set. */
+export function authSetupProblem(): string {
+  if (!process.env.APP_PASSWORD) return "APP_PASSWORD ist nicht gesetzt. Bitte in .env eintragen (siehe .env.example).";
+  if ((process.env.AUTH_SECRET ?? "").length < 32) {
+    return "AUTH_SECRET fehlt oder ist zu kurz (mindestens 32 Zeichen). Bitte in .env eintragen, z. B. mit: openssl rand -hex 32 (update.sh macht das automatisch).";
+  }
+  return "";
+}
 
 function secret(): string {
-  if (!process.env.AUTH_SECRET && !warned) {
-    warned = true;
-    console.warn("Hinweis: AUTH_SECRET ist nicht gesetzt – die Anmeldung wird dann mit dem App-Passwort signiert. Bitte einen Zufallswert in .env eintragen (install.sh macht das automatisch).");
-  }
-  const s = process.env.AUTH_SECRET || process.env.APP_PASSWORD;
-  if (!s) throw new Error("APP_PASSWORD ist nicht gesetzt (siehe .env.example).");
-  return "bdgen:" + s;
+  const problem = authSetupProblem();
+  if (problem) throw new Error(problem);
+  return "bdgen:" + process.env.AUTH_SECRET;
 }
 
 async function hmac(data: string): Promise<string> {
@@ -28,16 +31,25 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-export async function createSession(): Promise<string> {
+/**
+ * A login is "expiry.generation.signature". Raising the generation ("log out everywhere") makes
+ * every older login invalid at once.
+ */
+export async function createSession(generation: number): Promise<string> {
   const exp = Date.now() + SESSION_DAYS * 864e5;
-  return `${exp}.${await hmac(String(exp))}`;
+  return `${exp}.${generation}.${await hmac(`${exp}.${generation}`)}`;
 }
 
-export async function verifySession(token: string | undefined): Promise<boolean> {
+/**
+ * Checks signature and expiry. Without `generation` only those are checked – that is all the
+ * edge proxy can do (no database there); route handlers pass the current generation as well.
+ */
+export async function verifySession(token: string | undefined, generation?: number): Promise<boolean> {
   if (!token) return false;
-  const [exp, sig] = token.split(".");
-  if (!exp || !sig || !(Number(exp) > Date.now())) return false;
-  return safeEqual(sig, await hmac(exp));
+  const [exp, gen, sig] = token.split(".");
+  if (!exp || !gen || !sig || !(Number(exp) > Date.now())) return false;
+  if (generation !== undefined && Number(gen) !== generation) return false;
+  return safeEqual(sig, await hmac(`${exp}.${gen}`));
 }
 
 export async function checkPassword(input: string): Promise<boolean> {
