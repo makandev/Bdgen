@@ -30,7 +30,13 @@ jemand, der Checklisten abhakt:
 
 ## Offene Schritte (in dieser Reihenfolge)
 
-### [ ] 1 · Content-Security-Policy und Sicherheits-Header
+### [x] 1 · Content-Security-Policy und Sicherheits-Header
+> Erledigt (Oktober 2026): `src/lib/csp.ts`, Karten-`<meta>`, Viewer-`<meta>`, App-`<meta>` per Start-Skript
+> (eigene OpenRouter-Adresse wird nach Speichern + Neuladen erlaubt), Server-Header in `next.config.ts`.
+> Getestet: `tests/render.test.ts` und im Chromium-Browser – ein Testdokument mit eingeschleustem `<img>`,
+> `fetch`, Skript und Stylesheet löste mit Regel 0 Anfragen aus, ohne Regel 5. Nicht getestet: echtes Safari.
+> Offen/bewusst: `'unsafe-inline'` statt Hashes (Next.js-Inline-Skripte ändern sich bei jedem Build).
+
 - **App** (`src/app/layout.tsx`): CSP per `<meta>` – nur eigene Skripte; `connect-src` nur `'self'`,
   `https://generativelanguage.googleapis.com`, `https://openrouter.ai` (+ ggf. eingetragene
   `openrouterBaseUrl` – Lösung finden, z. B. Hinweis in den Einstellungen); `object-src 'none'`,

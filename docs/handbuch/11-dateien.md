@@ -90,6 +90,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/lib/share.ts` | Karte ⇄ Link (fflate) |
 | `src/lib/postcard.ts` | Vorschaubild der Karte (Canvas) zum Teilen zusammen mit dem Link |
 | `src/lib/media.ts` | Bilder verkleinern, PDF → Bild (pdf.js) |
+| `src/lib/csp.ts` | Content-Security-Policy für App, Karten und Server; Start-Skript, das die Regel als `<meta>` setzt |
 | `src/lib/color.ts` | Farbrechnen, Kontrast |
 | `src/lib/id.ts` | `newId`, `clone` (iOS-15-tauglich) |
 | `src/lib/base.ts` | `BASE` (Unterordner), `HOME` |

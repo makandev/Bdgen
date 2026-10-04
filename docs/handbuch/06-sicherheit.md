@@ -14,6 +14,7 @@
 | Empfänger | Schad-PDF als Gutschein | `pdfIsPlain()` in `src/lib/validate.ts`: Original-PDF nur ohne Skripte, Startbefehle, Anhänge, Auto-Aktionen (auch hex-maskierte Namen); pdf.js zeichnet ohne Skripting/`eval` (`src/lib/media.ts`); sonst wird nur das Bild verschickt |
 | Build/Lieferkette | kompromittierte npm-Pakete | `npm ci --ignore-scripts` (CI + Docker), Dependabot (`.github/dependabot.yml`), CodeQL (`.github/workflows/codeql.yml`) |
 | Empfänger | Datenabfluss | keine externen Ressourcen in Karten, `referrer: no-referrer`, `noindex` |
+| Alle | eingeschleuster Code lädt nach oder schickt Daten weg | **Content-Security-Policy** (`src/lib/csp.ts`): Karten `default-src 'none'`, Netz nur für Reaktionen zum eigenen Server; Viewer ohne Netz; App nur eigene Dateien + Gemini/OpenRouter (+ eigene https-Adresse aus den Einstellungen); Server zusätzlich `frame-ancestors 'none'`, `nosniff`, `X-Frame-Options`, `Permissions-Policy` (`next.config.ts`) |
 
 ## Regeln für neuen Code
 
@@ -25,8 +26,15 @@
    (`document.write`), weil alte iPhones iframes falsch skalieren. Das ist vertretbar, weil das HTML
    vollständig aus geprüften Daten entsteht – deshalb ist Regel 2/3 hier besonders wichtig.
 6. Die KI bekommt nie Namen oder Gutscheine.
+7. Neue Netzwerkziele (andere KI-Dienste, Schriften, Bilder von außen) müssen in `src/lib/csp.ts`
+   eingetragen werden – sonst blockiert der Browser sie. Das ist Absicht: jede Ausnahme bewusst prüfen.
 
 ## Bekannte Grenzen
+
+- Die CSP erlaubt Inline-Skripte (`'unsafe-inline'`), weil Next.js und die Karten sie brauchen. Sie
+  verhindert also kein eingeschleustes Skript, wohl aber, dass es etwas nachlädt oder Daten wegschickt.
+  Auf GitHub Pages kommt die Regel per `<meta>` (Pages kann keine Header setzen); `frame-ancestors`
+  wirkt dort deshalb nicht.
 
 - GitHub Pages teilt sich den Ursprung `<benutzer>.github.io` mit allen anderen Pages-Projekten
   desselben Kontos. Ohne Geräte-Passwort könnten diese Seiten die Schlüssel lesen. Abhilfe: Geräte-

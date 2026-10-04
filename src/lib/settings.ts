@@ -1,4 +1,5 @@
 import type { Provider } from "./ai";
+import { AI_ORIGINS, CSP_EXTRA_KEY, safeOrigin } from "./csp";
 import { openVault, sealVault, type Vault } from "./vault";
 
 export interface AIConfig {
@@ -56,6 +57,10 @@ export function isLocked(): boolean {
 
 /** Saves keys. With a device password, the password is needed to encrypt them again. */
 export async function saveAI(v: StoredAI, password?: string): Promise<void> {
+  // The security policy only lets the browser talk to known AI services; a custom address is added here.
+  const extra = safeOrigin(v.openrouterBaseUrl);
+  if (extra && !AI_ORIGINS.includes(extra)) local()?.setItem(CSP_EXTRA_KEY, extra);
+  else local()?.removeItem(CSP_EXTRA_KEY);
   if (hasDeviceLock()) {
     if (!password) throw new Error("Bitte das Geräte-Passwort eingeben, um die Schlüssel zu speichern.");
     await unlockAI(password); // proves it is the right password
@@ -92,6 +97,7 @@ export function removeProtection() {
   if (!v) throw new Error("Bitte zuerst entsperren.");
   local()?.setItem(KEY, JSON.stringify(v));
   local()?.removeItem(LOCKED);
+  local()?.removeItem(CSP_EXTRA_KEY);
   session()?.removeItem(SESSION);
 }
 
