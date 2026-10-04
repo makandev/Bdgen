@@ -96,7 +96,10 @@ jemand, der Checklisten abhakt:
 - Docker: ohne Root, schreibgeschütztes Dateisystem außer `data/`, `no-new-privileges`.
 - Fehlermeldungen nach außen ohne interne Details.
 
-### [ ] 6 · Lieferkette (Rest)
+### [x] 6 · Lieferkette (Rest)
+> Erledigt (Oktober 2026): alle Actions auf Commit-Hashes, `npm audit --audit-level=high` im Workflow
+> (aktuell 0 Funde), Tests laufen jetzt auch bei Pull Requests (vorher nur nach dem Merge).
+> Secret-Scanning und Push-Protection muss der Auftraggeber selbst einschalten (Anleitung im Bericht).
 - GitHub Actions auf Commit-Hashes festnageln (Dependabot hält sie aktuell).
 - `npm audit --audit-level=high` im Workflow; Secret-Scanning/Push-Protection in den Repo-Einstellungen
   (das muss der Auftraggeber selbst einschalten – Anleitung in den Bericht schreiben).

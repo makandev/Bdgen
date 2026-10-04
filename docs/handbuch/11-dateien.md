@@ -140,7 +140,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `next.config.ts` | Export/Server-Weiche, `basePath`, `trailingSlash`, `pageExtensions` |
 | `tsconfig.json` | TypeScript-Einstellungen, Pfad-Alias `@/` |
 | `public/manifest.webmanifest` | PWA-Manifest |
-| `.github/workflows/pages.yml` | Prüfen, bauen, veröffentlichen (ohne Secrets, `npm ci --ignore-scripts`) |
+| `.github/workflows/pages.yml` | Prüfen (auch bei Pull Requests), bauen, veröffentlichen (ohne Secrets, `npm ci --ignore-scripts`, `npm audit`) |
 | `.github/workflows/codeql.yml` | automatische Sicherheitsanalyse des Codes (CodeQL) |
 | `.github/dependabot.yml` | wöchentliche Sicherheits-Updates für npm-Pakete und Actions als PR |
 | `Dockerfile`, `docker-compose.yml` | Server-Version als Container (optional mit Caddy) |
