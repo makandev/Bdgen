@@ -45,7 +45,13 @@ jemand, der Checklisten abhakt:
   `Permissions-Policy` (Kamera, Mikrofon, Ort aus).
 - Test: Karte mit präpariertem Inhalt darf keine Netzwerkanfrage auslösen (Playwright: Requests mitschneiden).
 
-### [ ] 2 · Hochgeladene Dateien
+### [x] 2 · Hochgeladene Dateien
+> Erledigt (Oktober 2026): `src/lib/uploads.ts` (Limits, Bild-Erkennung an den ersten Bytes), Rückfrage
+> mit Vorschau beim Einspielen einer Sicherung, Größenlimit für Server-Anfragen. **Lücke gefunden und
+> geschlossen:** `pdfIsPlain` sah nicht in komprimierte Streams – ein `/JavaScript` in einem `/ObjStm`
+> rutschte durch (Test in `tests/uploads.test.ts` schlug vorher fehl). Jetzt wird entpackt (max. 32 MB).
+> Geprüft mit präparierten PDFs und einem echten Chromium-PDF. Nicht geprüft: PDFs aus anderen Programmen
+> mit Objekt-Streams (kein Werkzeug dafür in der Umgebung).
 - Fotos: Magic Bytes prüfen (JPEG/PNG/WebP/HEIC), bevor sie gezeichnet werden; Größenlimit vor dem Laden.
 - Sicherungs-Import: Größenlimit (z. B. 20 MB), Vorschau „X Personen, Y Karten“ mit Bestätigung.
 - PDF: Größenlimit vor dem Einlesen; prüfen, ob `pdfIsPlain` auch komprimierte Objekt-Streams

@@ -1,3 +1,4 @@
+import { Unzlib } from "fflate";
 import { DEFAULT_EFFECTS, OCCASIONS, PRESETS } from "./presets";
 import { blankScene, defaultReactions } from "./templates";
 import type {
@@ -184,13 +185,63 @@ function plainPdf(url: string): string {
   return url && pdfIsPlain(url) ? url : "";
 }
 
+const PDF_ACTIVE = /\/(JavaScript|JS|Launch|EmbeddedFile|EmbeddedFiles|OpenAction|AA|RichMedia|XFA|SubmitForm|ImportData|GoToR|GoToE)\b/;
+/** Most bytes all compressed parts of one PDF may unpack to (stops zip bombs). */
+const PDF_INFLATE_MAX = 32 * 1024 * 1024;
+
+// Names may be hex-escaped (#4A = J) – undo that before looking.
+const unhexNames = (t: string) => t.replace(/#([0-9a-fA-F]{2})/g, (_, h: string) => String.fromCharCode(parseInt(h, 16)));
+
+/** Unpacks one zlib stream; throws when the shared budget runs out. */
+function inflatePdfStream(raw: string, budget: { left: number }): string {
+  let out = "";
+  const z = new Unzlib((chunk) => {
+    budget.left -= chunk.length;
+    if (budget.left < 0) throw new Error("too big");
+    for (let i = 0; i < chunk.length; i += 0x8000) out += String.fromCharCode.apply(null, Array.from(chunk.subarray(i, i + 0x8000)));
+  });
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i) & 0xff;
+  z.push(bytes, true);
+  return out;
+}
+
+/**
+ * True when a PDF contains no active content (scripts, start actions, attachments …) – also inside
+ * compressed streams, where object streams (/ObjStm) can hide whole objects. Anything that cannot be
+ * checked counts as active.
+ */
 export function pdfIsPlain(dataUrl: string): boolean {
   try {
     const bin = atob(dataUrl.slice(dataUrl.indexOf(",") + 1));
     if (!bin.startsWith("%PDF-")) return false;
-    // Names may be hex-escaped (#4A = J) – undo that before looking.
-    const text = bin.replace(/#([0-9a-fA-F]{2})/g, (_, h: string) => String.fromCharCode(parseInt(h, 16)));
-    return !/\/(JavaScript|JS|Launch|EmbeddedFile|EmbeddedFiles|OpenAction|AA|RichMedia|XFA|SubmitForm|ImportData|GoToR|GoToE)\b/.test(text);
+    if (PDF_ACTIVE.test(unhexNames(bin))) return false;
+    const budget = { left: PDF_INFLATE_MAX };
+    const re = /stream\r?\n/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(bin))) {
+      if (bin.slice(Math.max(0, m.index - 3), m.index) === "end") continue;
+      const start = m.index + m[0].length;
+      const end = bin.indexOf("endstream", start);
+      if (end < 0) return false;
+      // The stream's dictionary sits between the object header and the "stream" keyword.
+      const head = bin.slice(Math.max(0, m.index - 2000), m.index);
+      const dict = unhexNames(head.slice(Math.max(0, head.lastIndexOf(" obj"))));
+      const objStm = /\/Type\s*\/ObjStm\b/.test(dict);
+      re.lastIndex = end + 9;
+      const filters = /\/Filter\s*(\[[^\]]*\]|\/\w+)/.exec(dict)?.[1] ?? "";
+      const first = /\/(\w+)/.exec(filters)?.[1] ?? "";
+      if (!first) {
+        if (PDF_ACTIVE.test(unhexNames(bin.slice(start, end)))) return false;
+        continue;
+      }
+      if (first !== "FlateDecode" && first !== "Fl") {
+        if (objStm) return false; // hidden objects we cannot read
+        continue; // pictures (DCT, JPX …) and fonts
+      }
+      if (PDF_ACTIVE.test(unhexNames(inflatePdfStream(bin.slice(start, end).replace(/\r?\n$/, ""), budget)))) return false;
+    }
+    return true;
   } catch {
     return false;
   }

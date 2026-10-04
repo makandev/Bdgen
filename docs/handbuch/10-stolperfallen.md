@@ -54,3 +54,10 @@ Jeder Punkt hier ist schon einmal passiert. Lies das, bevor du an den betroffene
 - Die Namen aus der ursprünglichen HTML-Karte dürfen **nirgends** vorkommen (Test).
 - Beispiele: du/Sie muss zu den Texten passen (ein Silvester-Beispiel an „ihr Lieben“ mit du-Texten
   wirkte falsch).
+
+## PDFs verstecken Objekte in komprimierten Streams
+
+Ein Textsuche über die rohen PDF-Bytes reicht nicht: Objekt-Streams (`/Type /ObjStm`) packen ganze
+Objekte – auch `/JavaScript` oder `/OpenAction` – per FlateDecode zusammen. `pdfIsPlain()` entpackt
+deshalb jeden Flate-Stream (gemeinsames Limit gegen Zip-Bomben) und lehnt Objekt-Streams ab, die es
+nicht lesen kann.

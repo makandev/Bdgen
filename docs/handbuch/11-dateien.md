@@ -69,6 +69,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | Datei | Inhalt |
 |---|---|
 | `src/lib/types.ts` | alle Datentypen |
+| `src/lib/uploads.ts` | Prüfung gewählter Dateien: Größenlimits (Foto, PDF, Sicherung), Bildformat an den ersten Bytes |
 | `src/lib/validate.ts` | Prüfung/Bereinigung aller Daten von außen |
 | `src/lib/render.ts` | Karten-Renderer (HTML/CSS/JS der Karte) |
 | `src/lib/templates.ts` | Standardtexte je Anlass, du/Sie, Geschenkseite, Reaktionen |
@@ -114,6 +115,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | Datei | Inhalt |
 |---|---|
 | `tests/render.test.ts` | Renderer und Namensverbot |
+| `tests/uploads.test.ts` | Präparierte PDFs (versteckte Skripte in Objekt-Streams, Zip-Bomben), Bild-Erkennung, Limits |
 | `tests/theme.test.ts` | Farben und Kontraste |
 | `tests/designs.test.ts` | Designs und Beispiele |
 | `tests/browser.test.ts` | Links, Verschlüsselung, Speicher |
