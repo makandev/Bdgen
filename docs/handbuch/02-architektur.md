@@ -77,7 +77,7 @@ sequenceDiagram
 
 | Pfad | Datei | Zweck |
 |---|---|---|
-| `/` | `src/app/(app)/page.tsx` | Übersicht: Personen, Schnell-Karte, Beispiel-Vorschauen, Funkeln |
+| `/` | `src/app/(app)/page.tsx` | Übersicht: Erinnerungen (≤ 7 Tage), Personen, Schnell-Karte, Beispiel-Vorschauen, Funkeln |
 | `/kontakt/?id=…` | `src/app/(app)/kontakt/page.tsx` | Person anlegen/bearbeiten, Karte erstellen |
 | `/karte/?id=…` | `src/app/(app)/karte/page.tsx` | Editor (Texte, Design, Teilen), Autosave |
 | `/schnell/` | `src/app/(app)/schnell/page.tsx` | Schnell-Karte mit zwei Fragen |

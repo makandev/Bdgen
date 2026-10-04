@@ -99,10 +99,25 @@ export default function Home() {
         )}
         {error && <div className="notice err">{error}</div>}
 
-        {soon.length > 0 && (
+        {soon.filter((r) => (daysUntil(r.date) ?? 99) <= 7).map((r) => {
+          const d = daysUntil(r.date) ?? 0;
+          const when = d === 0 ? "heute" : d === 1 ? "morgen" : `in ${d} Tagen`;
+          const occ = OCCASIONS.find((o) => o.id === r.occasion);
+          return (
+            <Link key={r.id} href={`/kontakt/?id=${r.id}`} className={`reminder${d <= 1 ? " urgent" : ""}`}>
+              <span className="reminder-emoji" aria-hidden="true">{occ?.emoji ?? "🔔"}</span>
+              <span className="reminder-text">
+                <strong>{r.occasion === "geburtstag" ? `${r.name} hat ${when} Geburtstag!` : `${occ?.label ?? "Anlass"} für ${r.name} – ${when}!`}</strong>
+                <span className="muted small">{r.cardCount > 0 ? "Eine Karte gibt es schon – noch einmal ansehen oder eine neue zaubern." : "Noch keine Karte – jetzt in einer Minute eine Überraschung zaubern."}</span>
+              </span>
+              <span className="btn sm">{r.cardCount > 0 ? "Ansehen →" : "Karte erstellen →"}</span>
+            </Link>
+          );
+        })}
+        {soon.some((r) => (daysUntil(r.date) ?? 0) > 7) && (
           <div className="notice ok">
             <strong>Demnächst:</strong>{" "}
-            {soon.map((r, i) => (
+            {soon.filter((r) => (daysUntil(r.date) ?? 0) > 7).map((r, i) => (
               <span key={r.id}>
                 {i > 0 && " · "}
                 <Link href={`/kontakt/?id=${r.id}`}>{r.name}</Link> ({dateLabel(r.date)})

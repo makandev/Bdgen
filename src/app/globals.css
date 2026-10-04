@@ -295,3 +295,11 @@ code { background: rgba(184, 138, 45, .1); padding: 1px 5px; border-radius: 5px;
 .inspire-row .thumb { transition: transform .15s, box-shadow .15s; }
 @media (prefers-reduced-motion: reduce) { .sparkles i, .twinkle-row span, .brand-mark { animation: none; } .sparkles i { opacity: .35; } }
 .login > .panel { position: relative; z-index: 1; }
+
+/* Reminder for birthdays/occasions in the next 7 days (start page). */
+.reminder { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 18px; text-decoration: none; color: var(--text); border: 1px solid #e3c47a; background: linear-gradient(120deg, #fff6dc, #ffffff); box-shadow: 0 10px 26px rgba(147, 106, 30, .14); }
+.reminder.urgent { border-color: #e08a6a; background: linear-gradient(120deg, #ffe8dc, #fff8f2); }
+.reminder-emoji { font-size: 2.1rem; animation: softPulse 2.6s ease-in-out infinite; }
+.reminder-text { flex: 1; display: grid; gap: 2px; min-width: 0; }
+@media (max-width: 560px) { .reminder { flex-wrap: wrap; } .reminder .btn { width: 100%; text-align: center; } }
+@media (prefers-reduced-motion: reduce) { .reminder-emoji { animation: none; } }
