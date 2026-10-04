@@ -83,3 +83,9 @@ baut Next 16 ohne Fehler – aber der Proxy fehlt danach komplett, und die API a
 mit 200. Der Proxy darf deshalb nichts aus `src/server/db.ts` importieren (SQLite gibt es auf dem Edge
 nicht); alles, was die Datenbank braucht (z. B. die Sitzungs-Generation), prüft `handle()` in den
 Routen. Nach Änderungen am Proxy immer testen: `curl …/api/contacts/` ohne Cookie muss 401 geben.
+
+## Gefährliche Zeichen ersetzen, nicht löschen
+
+`dataBlock()` hat `<<<`/`>>>` zuerst einfach gelöscht. Aus `DATEN>><<<>` wurde dadurch `DATEN>>>` –
+ein echter Schluss-Marker, hinter dem eingeschleuste „Regeln“ standen (gefunden in der unabhängigen
+Prüfung). Darum ersetzen (`‹›`), damit sich die Reste links und rechts nie zu etwas Neuem verbinden.

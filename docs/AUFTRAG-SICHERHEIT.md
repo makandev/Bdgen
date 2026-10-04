@@ -104,7 +104,12 @@ jemand, der Checklisten abhakt:
 - `npm audit --audit-level=high` im Workflow; Secret-Scanning/Push-Protection in den Repo-Einstellungen
   (das muss der Auftraggeber selbst einschalten – Anleitung in den Bericht schreiben).
 
-### [ ] 7 · Abschluss
+### [x] 7 · Abschluss
+> Erledigt (Oktober 2026): Bedrohungsmodell in Kapitel 6. Unabhängige Prüfung fand zwei Punkte, beide
+> behoben: der DATEN-Marker ließ sich durch Löschen zusammensetzen (jetzt ersetzt, mit Test), und der
+> Build-Job bei Pull Requests hatte unnötig Veröffentlichungsrechte (jetzt nur im Deploy-Job; eine laufende
+> Veröffentlichung wird nicht mehr abgebrochen). Bewusst offen: Die globale Login-Sperre (30 Fehlversuche
+> in 10 Minuten) kann ein Angreifer auslösen; bestehende Anmeldungen bleiben davon unberührt.
 - `tests/security.test.ts` mit allen Angriffsbeispielen aus den Schritten, läuft in CI.
 - Unabhängige Prüfung (Prüf-Agent + `security-review`), Funde beheben.
 - Handbuch Kapitel 6 als vollständiges Bedrohungsmodell; Bericht an den Auftraggeber auf Deutsch, in

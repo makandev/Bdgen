@@ -8,15 +8,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Build (also for pull requests) only reads; publishing rights only in the deploy job.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
-# Own group per pull request, so a check never cancels a running publication.
+# Own group per pull request; a running publication is never cancelled.
 concurrency:
   group: ${{ github.event_name == 'pull_request' && github.ref || 'pages' }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -53,6 +52,9 @@ jobs:
   deploy:
     needs: build
     if: github.event_name != 'pull_request'
+    permissions:
+      pages: write
+      id-token: write
     runs-on: ubuntu-latest
     environment:
       name: github-pages

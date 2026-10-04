@@ -52,6 +52,7 @@ export default function InfoPage() {
             <li><b>📅 Geburtstags-Organizer:</b> alle Geburtstage, Hochzeitstage und besonderen Tage auf einen Blick – nach Monaten, mit Countdown und Alter („wird 70“). Mit „Datum vormerken“ in Sekunden eingetragen, auch ohne Geburtsjahr.</li>
             <li><b>📲 Erinnerung im Handy-Kalender:</b> ein Tipp lädt alle Termine in deinen Kalender – jedes Jahr wiederkehrend, mit Erinnerung am Tag und auf Wunsch schon Tage vorher.</li>
             <li><b>💍 Mehrere Termine pro Person:</b> neben dem Geburtstag z. B. Hochzeitstag oder Namenstag.</li>
+            <li><b>🛡️ Sicherheits-Überholung:</b> strengere Regeln im Browser, geprüfte Uploads, Schutz vor manipulierten Links und KI-Antworten; auf dem eigenen Server neu: „Überall abmelden“ unter ⚙ Einstellungen.</li>
           </ul>
         </section>
 
