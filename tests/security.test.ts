@@ -206,3 +206,42 @@ test("AI: name, vouchers and keys never reach the AI; injected text stays data; 
     globalThis.fetch = realFetch;
   }
 });
+
+test("server: logins need AUTH_SECRET, can be revoked everywhere, bodies are limited, errors stay plain", async () => {
+  const { authSetupProblem, createSession, verifySession } = await import("../src/server/session");
+  const { body, handle } = await import("../src/server/http");
+  const { PublicError } = await import("../src/lib/errors");
+  const env = process.env as Record<string, string | undefined>;
+  env.APP_PASSWORD = "testpasswort";
+  env.AUTH_SECRET = "";
+  assert.match(authSetupProblem(), /AUTH_SECRET/);
+  await assert.rejects(createSession(0));
+  env.AUTH_SECRET = "x".repeat(16);
+  assert.match(authSetupProblem(), /AUTH_SECRET/, "too short");
+  env.AUTH_SECRET = "a".repeat(64);
+  assert.equal(authSetupProblem(), "");
+  const t = await createSession(3);
+  assert.equal(await verifySession(t, 3), true);
+  assert.equal(await verifySession(t, 4), false, "after 'log out everywhere' the old login is invalid");
+  const [exp, gen, sig] = t.split(".");
+  assert.equal(await verifySession(`${exp}.4.${sig}`, 4), false, "generation cannot be edited");
+  assert.equal(await verifySession(`${Number(exp) + 1e12}.${gen}.${sig}`, 3), false, "expiry cannot be edited");
+  assert.equal(await verifySession(`${exp}.${sig}`, 0), false, "old token format is refused");
+  assert.equal(await verifySession(t), true, "the edge proxy checks only signature and expiry");
+  assert.equal(await verifySession(`${exp}.9.${sig}`), false, "… but the generation is still signed");
+
+  const big = new Request("http://x/", { method: "POST", body: "x".repeat(600 * 1024) });
+  await assert.rejects(body(big), (e: unknown) => e instanceof PublicError && e.status === 413);
+  const lying = new Request("http://x/", { method: "POST", body: "{}", headers: { "content-length": String(50e6) } });
+  await assert.rejects(body(lying));
+  const leak = await handle(() => {
+    throw new Error("SQLITE_CONSTRAINT at /app/data/funkelpost.db secret");
+  }, { open: true });
+  const msg = (await leak.json()) as { error: string };
+  assert.equal(leak.status, 500);
+  assert.doesNotMatch(msg.error, /SQLITE|\/app|secret/);
+  const plain = await handle(() => {
+    throw new PublicError("Das ist keine Funkelpost-Sicherung.");
+  }, { open: true });
+  assert.equal(plain.status, 400);
+});

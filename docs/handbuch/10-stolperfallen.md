@@ -75,3 +75,11 @@ Ein Textsuche über die rohen PDF-Bytes reicht nicht: Objekt-Streams (`/Type /Ob
 Objekte – auch `/JavaScript` oder `/OpenAction` – per FlateDecode zusammen. `pdfIsPlain()` entpackt
 deshalb jeden Flate-Stream (gemeinsames Limit gegen Zip-Bomben) und lehnt Objekt-Streams ab, die es
 nicht lesen kann.
+
+## Proxy nie auf `runtime: "nodejs"` stellen
+
+`src/proxy.server.ts` läuft als Edge-Middleware. Mit `export const config = { runtime: "nodejs" }`
+baut Next 16 ohne Fehler – aber der Proxy fehlt danach komplett, und die API antwortet ohne Anmeldung
+mit 200. Der Proxy darf deshalb nichts aus `src/server/db.ts` importieren (SQLite gibt es auf dem Edge
+nicht); alles, was die Datenbank braucht (z. B. die Sitzungs-Generation), prüft `handle()` in den
+Routen. Nach Änderungen am Proxy immer testen: `curl …/api/contacts/` ohne Cookie muss 401 geben.

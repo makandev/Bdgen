@@ -1,3 +1,4 @@
+import { PublicError } from "./errors";
 import { defaultCardData } from "./templates";
 import type { Card, Contact, ExtraDate } from "./types";
 import { address, normalizeCardData, occasion, str } from "./validate";
@@ -54,7 +55,7 @@ export interface Backup {
 export function normalizeBackup(raw: unknown): { contacts: Contact[]; cards: Card[] } {
   const b = raw as Partial<Backup>;
   if (!b || b.app !== "bdgen" || !Array.isArray(b.contacts) || !Array.isArray(b.cards)) {
-    throw new Error("Das ist keine Funkelpost-Sicherung.");
+    throw new PublicError("Das ist keine Funkelpost-Sicherung.");
   }
   const t = new Date().toISOString();
   const contacts: Contact[] = [];

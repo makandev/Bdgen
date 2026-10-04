@@ -1,3 +1,4 @@
+import { PublicError } from "./errors";
 import { askJSON } from "./ai";
 import type { AIConfig } from "./settings";
 import { contrast, luminance, mix } from "./color";
@@ -139,7 +140,7 @@ export async function generateCard(brief: Brief, extra: string, cfg?: AIConfig |
   const { json, provider } = await askJSON(BASE_RULES, parts.filter(Boolean).join("\n\n"), opts.feedback ? 1 : 0.95, cfg);
   const o = (json ?? {}) as Record<string, unknown>;
   let scenes = scrubDeep(normalizeScenes(o.scenes, brief.address, []));
-  if (scenes.length < 3) throw new Error("Die KI hat keine vollständige Karte geliefert. Bitte erneut versuchen.");
+  if (scenes.length < 3) throw new PublicError("Die KI hat keine vollständige Karte geliefert. Bitte erneut versuchen.", 502);
   if (gift) {
     const fromAI = scenes.find((x) => x.type === "gift");
     scenes = withGift(scenes, { ...(fromAI && fromAI.type === "gift" ? fromAI : giftScene(brief.address)), gift });
@@ -169,7 +170,7 @@ Gib die überarbeitete Szene als JSON-Objekt mit exakt derselben Struktur und de
   const o = (json && typeof json === "object" && "scene" in (json as object) ? (json as { scene: unknown }).scene : json) as unknown;
   const norm = normalizeScene({ ...(o as object), type: scene.type }, brief.address, scene.type);
   const out = norm ? scrubDeep(norm) : null;
-  if (!out) throw new Error("Die KI-Antwort passte nicht zur Szene.");
+  if (!out) throw new PublicError("Die KI-Antwort passte nicht zur Szene.", 502);
   // Vouchers (codes, pictures) never go to the AI and always stay as they were.
   if (out.type === "gift") out.voucher = scene.type === "gift" ? (scene.voucher ?? null) : null;
   return { scene: out, provider };

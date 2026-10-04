@@ -13,6 +13,14 @@ services:
       DATABASE_PATH: /app/data/funkelpost.db
     volumes:
       - funkelpost-data:/app/data
+    # Hardening: no root (see Dockerfile), read-only system, no extra privileges.
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
     ports:
       - "${BIND_ADDRESS:-0.0.0.0}:${PORT:-3000}:3000"
 
@@ -23,6 +31,8 @@ services:
     profiles: ["https"]
     restart: unless-stopped
     depends_on: [funkelpost]
+    security_opt:
+      - no-new-privileges:true
     environment:
       DOMAIN: ${DOMAIN:-localhost}
     ports:

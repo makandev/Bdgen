@@ -33,5 +33,5 @@ export function POST(req: Request, ctx: Ctx) {
     if (!allowed.some((o) => o.emoji === emoji && o.label === label)) return fail("Unbekannte Reaktion.", 400);
     if (reactions.count(card.id) >= MAX_PER_CARD) return fail("Genug Reaktionen für diese Karte.", 429);
     return json({ id: reactions.add(card.id, emoji, label).id }, 201);
-  });
+  }, { open: true });
 }

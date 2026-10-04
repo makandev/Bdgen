@@ -42,6 +42,14 @@
 - GitHub Pages teilt sich den Ursprung `<benutzer>.github.io` mit allen anderen Pages-Projekten
   desselben Kontos. Ohne Geräte-Passwort könnten diese Seiten die Schlüssel lesen. Abhilfe: Geräte-
   Passwort einschalten oder eine eigene Domain verwenden.
-- Server-Sitzungen sind zustandslos (30 Tage); ein gestohlenes Cookie lässt sich nur durch Ändern von
-  `AUTH_SECRET` ungültig machen. Ohne `AUTH_SECRET` wird mit dem App-Passwort signiert (Warnung im Log).
+- Server-Anmeldungen gelten 30 Tage. **⚙ Einstellungen → Überall abmelden** erhöht die
+  Sitzungs-Generation in der Datenbank (`sessions` in `src/server/db.ts`); jede ältere Anmeldung ist
+  danach ungültig. Der Proxy (Edge, ohne Datenbank) prüft nur Signatur und Ablauf, die Generation prüft
+  `handle()` in `src/server/http.ts` vor jeder geschützten API-Anfrage. `AUTH_SECRET` (mind. 32 Zeichen)
+  ist Pflicht; ohne startet die Anmeldung nicht und zeigt, was in `.env` fehlt.
+- Anfragen an den Server: höchstens 512 KB, Karten 6 MB (Gutscheinfoto + Original-PDF), Sicherungen
+  20 MB – sonst 413. Fehler nach außen nur mit eigenen Meldungen (`PublicError`, `AIError`); alles andere
+  landet im Log, die Antwort sagt nur „etwas schiefgelaufen“.
+- Docker: läuft als Benutzer `node`, Dateisystem schreibgeschützt außer `data/` und `/tmp`,
+  `no-new-privileges`, keine Linux-Capabilities.
 - Hinter keinem Reverse-Proxy ist `X-Forwarded-For` fälschbar – deshalb die globale Grenze beim Login.

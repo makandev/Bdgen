@@ -71,6 +71,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | Datei | Inhalt |
 |---|---|
 | `src/lib/types.ts` | alle Datentypen |
+| `src/lib/errors.ts` | `PublicError`: Fehler, deren Meldung der Server nach außen zeigen darf |
 | `src/lib/uploads.ts` | Prüfung gewählter Dateien: Größenlimits (Foto, PDF, Sicherung), Bildformat an den ersten Bytes |
 | `src/lib/validate.ts` | Prüfung/Bereinigung aller Daten von außen |
 | `src/lib/render.ts` | Karten-Renderer (HTML/CSS/JS der Karte) |
@@ -101,7 +102,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | Datei | Inhalt |
 |---|---|
 | `src/server/db.ts` | SQLite-Datenbank |
-| `src/server/http.ts` | Antwort-Helfer, KI aus `.env`, Brief, Lern-Optionen |
+| `src/server/http.ts` | Antwort-Helfer, Anmelde-Prüfung in `handle()`, Größenlimits, KI aus `.env`, Brief, Lern-Optionen |
 | `src/server/session.ts` | Passwortprüfung, signierte Sitzung |
 | `src/server/limit.ts` | Ratenbegrenzung, Client-Adresse |
 

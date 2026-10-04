@@ -50,6 +50,10 @@ function db(): DatabaseSyncType {
       created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS reactions_card ON reactions(card_id);
+    CREATE TABLE IF NOT EXISTS meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS ratings (
       id TEXT PRIMARY KEY,
       data TEXT NOT NULL,
@@ -301,3 +305,16 @@ export function importBackup(input: { contacts: Contact[]; cards: Card[] }): voi
     throw e;
   }
 }
+
+/** Current login generation; raising it logs out every device. */
+export const sessions = {
+  generation(): number {
+    const r = db().prepare("SELECT value FROM meta WHERE key = 'session_generation'").get() as Row | undefined;
+    return r ? Number(r.value) || 0 : 0;
+  },
+  logoutEverywhere(): number {
+    const next = this.generation() + 1;
+    db().prepare("INSERT INTO meta (key, value) VALUES ('session_generation', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(String(next));
+    return next;
+  },
+};

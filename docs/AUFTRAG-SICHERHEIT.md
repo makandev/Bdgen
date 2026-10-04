@@ -84,7 +84,12 @@ jemand, der Checklisten abhakt:
 - KI-Texte mit Links, HTML-artigen Zeichenfolgen oder Skript-Wörtern bereinigen/markieren.
 - Sicherstellen: Name, Gutscheine, Schlüssel gehen nie an die KI (Test, der den Prompt-Text prüft).
 
-### [ ] 5 · Server-Version
+### [x] 5 · Server-Version
+> Erledigt (Oktober 2026): Limit 512 KB (Karten 6 MB, Sicherungen 20 MB), „Überall abmelden“ mit
+> Sitzungs-Generation, `AUTH_SECRET` Pflicht, Docker schreibgeschützt ohne Rechte, Fehler ohne Interna.
+> Auf einem echten Server getestet: ohne Cookie 401, nach „Überall abmelden“ altes Cookie 401, neue
+> Anmeldung 200, 700-KB-Anfrage 413, ohne `AUTH_SECRET` klare Meldung. **Lücke dabei gefunden:**
+> `runtime: "nodejs"` im Proxy schaltet ihn still ab (siehe Stolperfallen). Docker selbst nicht getestet.
 - Größenlimit pro Anfrage deutlich unter 10 MB (außer Karten mit Gutschein, dort begründet).
 - Sitzungen widerrufbar („überall abmelden“, Sitzungs-Generation in der DB).
 - `AUTH_SECRET` verpflichtend (Start ohne verweigern; `install.sh` setzt es bereits).

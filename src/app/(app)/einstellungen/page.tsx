@@ -2,7 +2,7 @@
 
 import { normalizeBackup } from "@/lib/records";
 import { BACKUP_MAX_BYTES, sizeLabel } from "@/lib/uploads";
-import { HOME } from "@/lib/base";
+import { BASE, HOME } from "@/lib/base";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { download, errText } from "@/components/client";
@@ -150,6 +150,28 @@ export default function SettingsPage() {
         </div>
 
         {msg && <div className={`notice ${msg.kind}`}>{msg.text}</div>}
+
+        {SERVER && (
+          <section className="panel stack">
+            <h2>🔐 Anmeldung</h2>
+            <p className="muted small" style={{ margin: 0 }}>
+              Handy verloren oder auf einem fremden Gerät angemeldet? Damit werden alle Geräte abgemeldet, auch dieses.
+            </p>
+            <div>
+              <button
+                className="btn ghost"
+                onClick={() => {
+                  if (!window.confirm("Wirklich auf allen Geräten abmelden?")) return;
+                  fetch(`${BASE}/api/logout/`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ all: true }) }).finally(
+                    () => (window.location.href = `${BASE}/login/`),
+                  );
+                }}
+              >
+                Überall abmelden
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="panel stack">
           <h2>✨ KI</h2>
