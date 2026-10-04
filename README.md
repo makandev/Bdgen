@@ -49,6 +49,8 @@ In der App: **👀 Beispiele** (19 fertige Karten zum Anschauen) und **ℹ️ In
 
 **Außerdem:**
 
+- **📅 Geburtstags-Organizer:** alle Geburtstage, Hochzeitstage und besonderen Tage nach Monaten, mit Countdown und Alter („wird 70“) – auch ohne Geburtsjahr. Mehrere Termine pro Person möglich.
+- **🔔 Erinnerungen:** Steht in den nächsten 7 Tagen ein Anlass an, zeigt die Startseite „Karte erstellen“. Ein Tipp lädt alle Termine als jährlich wiederkehrende Erinnerung in den Handy-Kalender.
 - **⚡ Schnell-Karte:** Name, Beziehung, ein bis zwei passende Fragen mit Antwort-Ideen – die KI macht den Rest und wählt ein passendes Design.
 - **🎁 Geschenk-Seite:** ein Päckchen, das beim Antippen aufgeht und das Geschenk zeigt.
 - **🎟️ Gutschein mit Feuerwerk:** optional ein Gutschein als Code (mit Kopieren-Knopf), Foto oder PDF – nach Countdown und Feuerwerk-Show fliegt er herein. Die KI sieht Gutscheine nie.
@@ -63,7 +65,7 @@ In der App: **👀 Beispiele** (19 fertige Karten zum Anschauen) und **ℹ️ In
 |---|---|---|
 | Daten | im Browser des jeweiligen Geräts | zentral in SQLite – auf jedem Gerät dieselben Personen & Karten |
 | KI-Schlüssel | nur auf dem eigenen Gerät (optional mit Geräte-Passwort verschlüsselt) | nur auf dem Server, nie im Browser |
-| Passwort | optional: Geräte-Passwort für die KI-Schlüssel | Login mit Session-Cookie (30 Tage), Schutz gegen Durchprobieren |
+| Passwort | optional: Geräte-Passwort für die KI-Schlüssel | Login mit Session-Cookie (30 Tage), Schutz gegen Durchprobieren, „Überall abmelden“ |
 | Link teilen | Karte steckt im Link (`/k/#…`) | kurzer Link `/k/abc123/` – abschaltbar, Änderungen sofort sichtbar |
 | Bauen | `npm run build` (automatisch per GitHub Actions) | `npm run build:server` bzw. Docker |
 
