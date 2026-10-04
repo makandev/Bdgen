@@ -332,3 +332,46 @@ code { background: rgba(184, 138, 45, .1); padding: 1px 5px; border-radius: 5px;
 
 /* Handwritten signature (SignaturePad) */
 .sign-pad { display: block; width: 100%; aspect-ratio: 5 / 2; border: 1px dashed var(--line-strong); border-radius: 14px; background: #fffdf8; touch-action: none; cursor: crosshair; }
+
+/* Main navigation: labelled buttons on wide screens, icons in between, a bottom tab bar on phones. */
+.mainnav { display: flex; gap: 6px; align-items: center; }
+.mainnav .btn.icon { display: inline-flex; align-items: center; gap: 5px; }
+.mainnav .btn.nav-home { display: none; }
+@media (max-width: 900px) { .mainnav .lbl { display: none; } }
+@media (max-width: 560px) {
+  .mainnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; justify-content: space-around; gap: 0;
+    padding: 4px 4px max(6px, env(safe-area-inset-bottom)); background: rgba(251, 247, 237, .97); border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 18px rgba(92, 66, 18, .08); }
+  .mainnav .btn.nav-home { display: flex; }
+  .mainnav .btn.icon { flex: 1 1 0; flex-direction: column; gap: 1px; border: 0; background: none; box-shadow: none; padding: 5px 2px; min-width: 0; font-size: 1.05rem; }
+  .mainnav .lbl { display: block; font-size: .62rem; font-weight: 600; color: var(--text2); white-space: nowrap; }
+  .shell { padding-bottom: 96px; }
+  .install-fab { bottom: calc(70px + env(safe-area-inset-bottom)); }
+}
+
+/* Step-by-step person editor. */
+.steps { display: flex; gap: 6px; }
+.steps button { flex: 1; appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,.6); color: var(--muted); border-radius: 999px; padding: 8px 10px; font: 600 .85rem var(--sans); cursor: pointer; }
+.steps button b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--line); color: var(--text); font-size: .75rem; margin-right: 4px; }
+.steps button.on { border-color: var(--accent); color: var(--text); background: #fff; }
+.steps button.on b, .steps button.done b { background: var(--accent); color: #fff; }
+.step-nav { justify-content: space-between; }
+.step-nav .btn:last-of-type { margin-left: auto; }
+details.optional .inner input { width: 100%; }
+@media (max-width: 900px) {
+  .contact-layout .live-preview .preview-frame { height: 62vh; }
+  /* One swipeable row of designs, so the preview stays close on a phone. */
+  .contact-layout .swatches { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 112px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+}
+
+/* Gallery thumbnails: a static placeholder until the live card has painted. */
+.thumb-ph { position: absolute; inset: 0; display: grid; place-items: center; padding: 14px; }
+.thumb-ph div { width: 100%; border-radius: 10px; padding: 16px 10px; display: grid; gap: 8px; justify-items: center; text-align: center; font-size: .62rem; line-height: 1.35; }
+.thumb-ph strong { font-size: .95rem; line-height: 1.15; }
+.thumb-ph span.pill { width: 60%; height: 12px; border-radius: 9px; }
+.thumb.small .thumb-ph strong { font-size: .7rem; }
+.thumb iframe { opacity: 0; transition: opacity .4s; }
+.thumb iframe.ready { opacity: 1; }
+.key-steps { margin: 0; padding-left: 22px; display: grid; gap: 12px; }
+.key-steps li > div { margin-top: 6px; }
+.key-steps input { flex: 1; min-width: 0; }
