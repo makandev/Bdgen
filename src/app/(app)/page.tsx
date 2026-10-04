@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { errText } from "@/components/client";
-import { dateLabel, daysUntil } from "@/components/dates";
 import { Sparkles } from "@/components/Sparkles";
 import { Thumb } from "@/components/Thumb";
 import { TopBar } from "@/components/TopBar";
 import { EXAMPLES } from "@/lib/examples";
+import { dateLabel, daysUntil } from "@/components/dates";
+import { entries, reminderText } from "@/lib/organizer";
 import { OCCASIONS, relationEmoji } from "@/lib/presets";
 import { repo, SERVER } from "@/lib/repo";
 import type { Reaction } from "@/lib/types";
@@ -39,7 +40,7 @@ export default function Home() {
     return list.sort((a, b) => (daysUntil(a.date) ?? 999) - (daysUntil(b.date) ?? 999) || a.name.localeCompare(b.name));
   }, [rows, q]);
 
-  const soon = filtered.filter((r) => (daysUntil(r.date) ?? 999) <= 14);
+  const soon = useMemo(() => entries(rows ?? []).filter((e) => e.days <= 14), [rows]);
 
   return (
     <>
@@ -99,32 +100,29 @@ export default function Home() {
         )}
         {error && <div className="notice err">{error}</div>}
 
-        {soon.filter((r) => (daysUntil(r.date) ?? 99) <= 7).map((r) => {
-          const d = daysUntil(r.date) ?? 0;
-          const when = d === 0 ? "heute" : d === 1 ? "morgen" : `in ${d} Tagen`;
-          const occ = OCCASIONS.find((o) => o.id === r.occasion);
-          return (
-            <Link key={r.id} href={`/kontakt/?id=${r.id}`} className={`reminder${d <= 1 ? " urgent" : ""}`}>
-              <span className="reminder-emoji" aria-hidden="true">{occ?.emoji ?? "🔔"}</span>
-              <span className="reminder-text">
-                <strong>{r.occasion === "geburtstag" ? `${r.name} hat ${when} Geburtstag!` : `${occ?.label ?? "Anlass"} für ${r.name} – ${when}!`}</strong>
-                <span className="muted small">{r.cardCount > 0 ? "Eine Karte gibt es schon – noch einmal ansehen oder eine neue zaubern." : "Noch keine Karte – jetzt in einer Minute eine Überraschung zaubern."}</span>
-              </span>
-              <span className="btn sm">{r.cardCount > 0 ? "Ansehen →" : "Karte erstellen →"}</span>
-            </Link>
-          );
-        })}
-        {soon.some((r) => (daysUntil(r.date) ?? 0) > 7) && (
-          <div className="notice ok">
-            <strong>Demnächst:</strong>{" "}
-            {soon.filter((r) => (daysUntil(r.date) ?? 0) > 7).map((r, i) => (
-              <span key={r.id}>
-                {i > 0 && " · "}
-                <Link href={`/kontakt/?id=${r.id}`}>{r.name}</Link> ({dateLabel(r.date)})
-              </span>
-            ))}
-          </div>
-        )}
+        {soon.filter((e) => e.days <= 7).map((e) => (
+          <Link key={e.key} href={`/kontakt/?id=${e.contactId}`} className={`reminder${e.days <= 1 ? " urgent" : ""}`}>
+            <span className="reminder-emoji" aria-hidden="true">{e.emoji}</span>
+            <span className="reminder-text">
+              <strong>{reminderText(e)}</strong>
+              <span className="muted small">{e.cardCount > 0 ? "Eine Karte gibt es schon – noch einmal ansehen oder eine neue zaubern." : "Noch keine Karte – jetzt in einer Minute eine Überraschung zaubern."}</span>
+            </span>
+            <span className="btn sm">{e.cardCount > 0 ? "Ansehen →" : "Karte erstellen →"}</span>
+          </Link>
+        ))}
+        <Link href="/kalender/" className="org-cta">
+          <span aria-hidden="true">📅</span>
+          <span>
+            <strong>Geburtstags-Organizer</strong>
+            <span className="muted small">
+              {" "}
+              {soon.length > 0
+                ? `– demnächst: ${soon.filter((e) => e.days > 7).map((e) => `${e.name} (${e.next.getDate()}.${e.next.getMonth() + 1}.)`).join(", ") || "siehe oben"}`
+                : "– Geburtstage & Jahrestage vormerken, nie wieder einen vergessen."}
+            </span>
+          </span>
+          <span className="btn ghost sm">Öffnen →</span>
+        </Link>
 
         {rows && rows.length === 0 && (
           <div className="panel empty stack">

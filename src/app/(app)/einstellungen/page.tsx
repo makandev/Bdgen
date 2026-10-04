@@ -213,6 +213,7 @@ export default function SettingsPage() {
                   <label className="field">
                     <span>OpenRouter-Adresse (für kompatible Dienste)</span>
                     <input type="text" value={form.openrouterBaseUrl} placeholder="https://openrouter.ai/api/v1" onChange={(e) => set("openrouterBaseUrl", e.target.value)} />
+                    <small>Nur https. Eine eigene Adresse wird aus Sicherheitsgründen erst nach dem Speichern und einmal Neuladen der Seite freigeschaltet.</small>
                   </label>
                 </div>
               )}

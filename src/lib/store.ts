@@ -26,15 +26,19 @@ function write(key: string, value: unknown) {
   }
 }
 
+/** Contacts saved before the organizer existed have no `events` yet. */
+const withEvents = (c: Contact): Contact => ({ ...c, events: Array.isArray(c.events) ? c.events : [] });
+
 export const contacts = {
   list(): (Contact & { cardCount: number })[] {
     const all = read<Card>(KEYS.cards);
     return read<Contact>(KEYS.contacts)
-      .map((c) => ({ ...c, cardCount: all.filter((k) => k.contactId === c.id).length }))
+      .map((c) => ({ ...withEvents(c), cardCount: all.filter((k) => k.contactId === c.id).length }))
       .sort((a, b) => a.name.localeCompare(b.name, "de"));
   },
   get(id: string): Contact | null {
-    return read<Contact>(KEYS.contacts).find((c) => c.id === id) ?? null;
+    const c = read<Contact>(KEYS.contacts).find((c) => c.id === id);
+    return c ? withEvents(c) : null;
   },
   create(input: ContactInput): Contact {
     const t = now();

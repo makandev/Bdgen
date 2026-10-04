@@ -56,6 +56,9 @@ function db(): DatabaseSyncType {
       created_at TEXT NOT NULL
     );
   `);
+  // Added later: older databases get the column on start.
+  const cols = d.prepare("PRAGMA table_info(contacts)").all() as Row[];
+  if (!cols.some((c) => c.name === "events")) d.exec("ALTER TABLE contacts ADD COLUMN events TEXT NOT NULL DEFAULT '[]'");
   g.__bdgenDb = d;
   return d;
 }
@@ -66,8 +69,12 @@ type Row = Record<string, unknown>;
 
 function toContact(r: Row): Contact {
   let mood: string[] = [];
+  let events: Contact["events"] = [];
   try {
     mood = JSON.parse(String(r.mood));
+  } catch {}
+  try {
+    events = JSON.parse(String(r.events ?? "[]"));
   } catch {}
   return {
     id: String(r.id),
@@ -76,6 +83,7 @@ function toContact(r: Row): Contact {
     address: r.address === "sie" ? "sie" : "du",
     occasion: String(r.occasion) as Contact["occasion"],
     date: String(r.date),
+    events: Array.isArray(events) ? events : [],
     mood: Array.isArray(mood) ? mood : [],
     notes: String(r.notes),
     createdAt: String(r.created_at),
@@ -115,10 +123,10 @@ export const contacts = {
     const t = now();
     db()
       .prepare(
-        `INSERT INTO contacts (id, name, relation, address, occasion, date, mood, notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO contacts (id, name, relation, address, occasion, date, events, mood, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run(id, input.name, input.relation, input.address, input.occasion, input.date, JSON.stringify(input.mood), input.notes, t, t);
+      .run(id, input.name, input.relation, input.address, input.occasion, input.date, JSON.stringify(input.events), JSON.stringify(input.mood), input.notes, t, t);
     return this.get(id)!;
   },
   update(id: string, input: ContactInput): Contact | null {
@@ -132,10 +140,10 @@ export const contacts = {
     }
     db()
       .prepare(
-        `UPDATE contacts SET name = ?, relation = ?, address = ?, occasion = ?, date = ?, mood = ?, notes = ?, updated_at = ?
+        `UPDATE contacts SET name = ?, relation = ?, address = ?, occasion = ?, date = ?, events = ?, mood = ?, notes = ?, updated_at = ?
          WHERE id = ?`,
       )
-      .run(input.name, input.relation, input.address, input.occasion, input.date, JSON.stringify(input.mood), input.notes, now(), id);
+      .run(input.name, input.relation, input.address, input.occasion, input.date, JSON.stringify(input.events), JSON.stringify(input.mood), input.notes, now(), id);
     return this.get(id);
   },
   remove(id: string): void {
@@ -269,13 +277,13 @@ export function importBackup(input: { contacts: Contact[]; cards: Card[] }): voi
   d.exec("BEGIN");
   try {
     const upC = d.prepare(
-      `INSERT INTO contacts (id, name, relation, address, occasion, date, mood, notes, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO contacts (id, name, relation, address, occasion, date, events, mood, notes, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET name = excluded.name, relation = excluded.relation, address = excluded.address,
-         occasion = excluded.occasion, date = excluded.date, mood = excluded.mood, notes = excluded.notes, updated_at = excluded.updated_at`,
+         occasion = excluded.occasion, date = excluded.date, events = excluded.events, mood = excluded.mood, notes = excluded.notes, updated_at = excluded.updated_at`,
     );
     for (const c of input.contacts) {
-      upC.run(c.id, c.name, c.relation, c.address, c.occasion, c.date, JSON.stringify(c.mood), c.notes, c.createdAt, c.updatedAt);
+      upC.run(c.id, c.name, c.relation, c.address, c.occasion, c.date, JSON.stringify(c.events), JSON.stringify(c.mood), c.notes, c.createdAt, c.updatedAt);
     }
     const upK = d.prepare(
       `INSERT INTO cards (id, slug, contact_id, title, shared, data, created_at, updated_at)

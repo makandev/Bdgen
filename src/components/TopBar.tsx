@@ -14,6 +14,7 @@ export function TopBar({ children }: { children?: React.ReactNode }) {
       </Link>
       <div className="row">
         {children}
+        <Link href="/kalender/" className="btn ghost sm icon" title="Geburtstags-Organizer" aria-label="Geburtstags-Organizer">📅</Link>
         <Link href="/beispiele/" className="btn ghost sm icon" title="Beispiele" aria-label="Beispiele">👀</Link>
         <Link href="/infos/" className="btn ghost sm icon" title="Infos & KI-Leitfaden" aria-label="Infos">ℹ️</Link>
         <button className="btn ghost sm icon" onClick={showIntro} title="Hilfe & Einführung" aria-label="Hilfe">?</button>

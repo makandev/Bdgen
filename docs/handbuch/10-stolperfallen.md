@@ -55,6 +55,20 @@ Jeder Punkt hier ist schon einmal passiert. Lies das, bevor du an den betroffene
 - Beispiele: du/Sie muss zu den Texten passen (ein Silvester-Beispiel an „ihr Lieben“ mit du-Texten
   wirkte falsch).
 
+## Kalender-Datei (.ics): Namen escapen, Zeilen falten
+
+Namen landen in der Kalender-Datei des Organizers. Ein Zeilenumbruch im Namen könnte dort sonst
+neue Einträge erzeugen. `icsText()` in `src/lib/organizer.ts` ersetzt Steuerzeichen und escaped
+`\ ; ,`, `foldLine()` begrenzt Zeilen auf 75 Byte, ohne Emoji zu zerteilen. Der 29. Februar
+wiederholt sich als „letzter Tag im Februar“, sonst fehlt er in drei von vier Jahren.
+
+## CSP: Karten-Vorschauen erben die Regel der App
+
+`srcdoc`-iframes übernehmen die Content-Security-Policy der Seite, die sie einbettet – auch mit
+`sandbox`. Was eine Karte braucht (Inline-Skript, `data:`/`blob:`-Bilder), muss deshalb auch in
+`appCSP()` erlaubt sein. Eine Regel per `<meta>` kann nur verschärfen, nie lockern; mehrere Regeln
+gelten gleichzeitig (Schnittmenge). Im Entwicklungsmodus (`next dev`) setzt die App keine Regel,
+weil das Neuladen dort `eval` braucht.
 ## PDFs verstecken Objekte in komprimierten Streams
 
 Ein Textsuche über die rohen PDF-Bytes reicht nicht: Objekt-Streams (`/Type /ObjStm`) packen ganze

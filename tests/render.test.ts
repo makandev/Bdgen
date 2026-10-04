@@ -65,3 +65,31 @@ test("the original card's personal names are nowhere in the source", async () =>
     for (const w of forbidden) assert.ok(!s.includes(w), `${f} contains a name from the original file`);
   }
 });
+
+test("security policy: cards load and send nothing, app only talks to known services", async () => {
+  const { renderCardHTML } = await import("../src/lib/render");
+  const { defaultCardData } = await import("../src/lib/templates");
+  const { appCSP, cspBootScript, safeOrigin } = await import("../src/lib/csp");
+  const d = defaultCardData({ recipientName: "Test", address: "du", occasion: "geburtstag" });
+  const plain = renderCardHTML(d);
+  assert.match(plain, /<meta http-equiv="Content-Security-Policy" content="default-src 'none';[^"]*connect-src 'none'/);
+  assert.ok(plain.indexOf("Content-Security-Policy") < plain.indexOf("<script"), "policy comes before any script");
+  assert.match(renderCardHTML(d, { reactUrl: "/api/react/abc/" }), /connect-src 'self'/);
+  assert.doesNotMatch(appCSP([]), /https?:|\*/);
+  assert.equal(safeOrigin("https://my.proxy.example:8443/api/v1"), "https://my.proxy.example:8443");
+  for (const bad of ["http://x.example", "javascript:alert(1)", "https://a.example'; script-src *", "data:text/html,x", ""]) assert.equal(safeOrigin(bad), "");
+  // The boot script must ignore anything but a plain https origin stored on the device.
+  const run = (stored: string | null) => {
+    const metas: { content: string }[] = [];
+    const g = globalThis as unknown as Record<string, unknown>;
+    g.localStorage = { getItem: () => stored };
+    g.document = { createElement: () => ({}), head: { appendChild: (m: { content: string }) => metas.push(m) } };
+    new Function(cspBootScript())();
+    delete g.localStorage;
+    delete g.document;
+    return metas[0].content;
+  };
+  assert.match(run(null), /connect-src 'self' https:\/\/generativelanguage\.googleapis\.com https:\/\/openrouter\.ai;/);
+  assert.match(run("https://my.proxy.example"), /connect-src 'self' https:\/\/my\.proxy\.example https:\/\/generativelanguage/);
+  assert.doesNotMatch(run("https://x.example; script-src *"), /x\.example/);
+});
