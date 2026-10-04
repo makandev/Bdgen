@@ -44,15 +44,32 @@ async function post(url: string, headers: Record<string, string>, body: unknown)
   return JSON.parse(text);
 }
 
-async function callGemini(cfg: AIConfig, system: string, user: string, temperature: number): Promise<string> {
-  const model = cfg.geminiModel || "gemini-flash-latest";
+/** Pinned default (cheaper and newer than what the alias points to); the alias is the fallback if Google retires it. */
+export const GEMINI_DEFAULT = "gemini-3.8-flash";
+export const GEMINI_FALLBACK = "gemini-flash-latest";
+
+async function callGemini(cfg: AIConfig, system: string, user: string): Promise<string> {
+  const models = cfg.geminiModel ? [cfg.geminiModel] : [GEMINI_DEFAULT, GEMINI_FALLBACK];
+  for (let i = 0; ; i++) {
+    try {
+      return await callGeminiModel(cfg, models[i], system, user);
+    } catch (e) {
+      // Only an unknown model moves on to the alias; rate limits and bad keys are handled by askJSON.
+      if (i + 1 < models.length && e instanceof AIError && /^HTTP 404\b/.test(e.message)) continue;
+      throw e;
+    }
+  }
+}
+
+async function callGeminiModel(cfg: AIConfig, model: string, system: string, user: string): Promise<string> {
   const data = (await post(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     { "x-goog-api-key": cfg.gemini! },
     {
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: "user", parts: [{ text: user }] }],
-      generationConfig: { temperature, responseMimeType: "application/json" },
+      // No temperature: Google deprecated it for Gemini 3; the model default suits warm, varied card texts.
+      generationConfig: { responseMimeType: "application/json" },
     },
   )) as { candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[] };
   const cand = data.candidates?.[0];
@@ -123,7 +140,7 @@ export async function askJSON(
   for (const p of providers) {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const text = p === "gemini" ? await callGemini(cfg, system, user, temperature) : await callOpenRouter(cfg, system, user, temperature);
+        const text = p === "gemini" ? await callGemini(cfg, system, user) : await callOpenRouter(cfg, system, user, temperature);
         return { json: extractJSON(text), provider: p };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

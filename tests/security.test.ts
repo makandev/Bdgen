@@ -324,3 +324,29 @@ test("server: logins need AUTH_SECRET, can be revoked everywhere, bodies are lim
   }, { open: true });
   assert.equal(plain.status, 400);
 });
+
+test("AI: Gemini uses the pinned model and falls back to the alias only when it is gone", async () => {
+  const realFetch = globalThis.fetch;
+  const urls: string[] = [];
+  const bodies: string[] = [];
+  globalThis.fetch = (async (url: string, init: { body: string }) => {
+    urls.push(String(url));
+    bodies.push(init.body);
+    if (String(url).includes("gemini-3.8-flash")) return new Response(JSON.stringify({ error: { message: "model not found" } }), { status: 404 });
+    return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }] }), { status: 200 });
+  }) as typeof fetch;
+  try {
+    const { askJSON } = await import("../src/lib/ai");
+    const r = await askJSON("s", "u", 0.9, { gemini: "k", provider: "gemini" });
+    assert.deepEqual(r.json, { ok: true });
+    assert.equal(urls.length, 2);
+    assert.match(urls[0], /gemini-3\.8-flash/);
+    assert.match(urls[1], /gemini-flash-latest/);
+    assert.ok(!bodies.some((b) => b.includes("temperature")), "no deprecated temperature for Gemini");
+    urls.length = 0;
+    await askJSON("s", "u", 0.9, { gemini: "k", provider: "gemini", geminiModel: "gemini-3.5-flash-lite" });
+    assert.equal(urls.length, 1, "an own model choice is used as is");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
