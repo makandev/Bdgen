@@ -11,6 +11,8 @@ export function POST(req: Request, ctx: Ctx) {
     const card = cards.get(id);
     if (!card) return fail("Diese Karte gibt es nicht.", 404);
     const b = await body(req);
-    return json(await generateCard(briefFor(card), str(b.extra, "", 1000), serverAI(), serverGenOptions(card, b.feedback)));
+    const brief = briefFor(card);
+    if ("gift" in b) brief.gift = typeof b.gift === "string" && b.gift.trim() ? str(b.gift, "", 160) : undefined;
+    return json(await generateCard(brief, str(b.extra, "", 1000), serverAI(), serverGenOptions(card, b.feedback)));
   });
 }

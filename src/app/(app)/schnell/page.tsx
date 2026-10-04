@@ -3,7 +3,7 @@
 import { HOME } from "@/lib/base";
 import { withGenerated } from "@/lib/cardbase";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { errText } from "@/components/client";
 import { RatingBar } from "@/components/RatingBar";
 import { RelationPicker } from "@/components/RelationPicker";
@@ -62,12 +62,15 @@ export default function QuickCard() {
     }));
   }
 
+  const createdId = useRef<string | null>(null);
+
   async function create() {
     setStep(3);
     setError("");
     try {
       const ratings = await repo.listRatings().catch(() => []);
-      const contact = await repo.saveContact(null, {
+      // A retry after an error reuses the person created the first time instead of adding a second one.
+      const contact = await repo.saveContact(createdId.current, {
         name: name.trim(),
         relation: relation.trim(),
         address,
@@ -76,6 +79,7 @@ export default function QuickCard() {
         mood: suggestMood(relation),
         notes: answersToNotes(questions.map((q, i) => ({ q: q.q, a: answers[i] }))),
       });
+      createdId.current = contact.id;
       const preset = suggestPreset(relation, occasion, ratings);
       const r = await repo.createCard(contact.id, { preset, mode: aiReady ? "ai" : "template", extra: "", gift: showGift ? gift : "" });
       if (r.warning) setError(r.warning);

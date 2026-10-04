@@ -16,7 +16,7 @@ import { renderCardHTML } from "@/lib/render";
 import { buildRating, repo, SERVER } from "@/lib/repo";
 import { RatingBar } from "@/components/RatingBar";
 import { defaultCardData, giftScene, withGift } from "@/lib/templates";
-import { normalizeCardData } from "@/lib/validate";
+import { MAX_SCENES, normalizeCardData } from "@/lib/validate";
 import type { Generated } from "@/lib/prompts";
 import { blankScene } from "@/lib/templates";
 import type { Card, CardData, Contact, Reaction, Scene, SceneType } from "@/lib/types";
@@ -63,8 +63,37 @@ function CardEditor() {
   const [html, setHtml] = useState("");
   const loadedId = useRef("");
   const firstSave = useRef(true);
+  // The newest unsaved state. Kept outside React so it can still be written when the editor closes.
+  const pending = useRef<{ id: string; data: CardData; title: string; shared?: boolean } | null>(null);
+  const saveSeq = useRef(0);
+  const saving = useRef<Promise<void>>(Promise.resolve());
+
+  const flush = useCallback(() => {
+    const p = pending.current;
+    if (!p) return;
+    pending.current = null;
+    const seq = saveSeq.current;
+    // One save after the other, so an older save can never land after a newer one.
+    saving.current = saving.current
+      .then(() => repo.saveCard(p.id, { data: p.data, title: p.title, shared: p.shared }))
+      // Only the save of the newest state may claim "saved".
+      .then(() => {
+        if (seq === saveSeq.current) setSaved(true);
+      })
+      .catch((e) => setMsg({ kind: "err", text: `Speichern fehlgeschlagen: ${errText(e)}` }));
+  }, []);
+
+  // Leaving the editor (link, back button, closing the tab) must not lose the last edit.
+  useEffect(() => {
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, [flush]);
 
   useEffect(() => {
+    flush();
     let alive = true;
     repo.getCard(id).then((r) => {
       if (!alive) return;
@@ -107,15 +136,14 @@ function CardEditor() {
       return;
     }
     setSaved(false);
+    pending.current = { id: card.id, data, title: card.title, shared: card.shared };
+    saveSeq.current++;
     const t = setTimeout(() => {
-      repo
-        .saveCard(card.id, { data, title: card.title, shared: card.shared })
-        .then(() => setSaved(true))
-        .catch((e) => setMsg({ kind: "err", text: `Speichern fehlgeschlagen: ${errText(e)}` }));
+      flush();
       repo.shareLink(card, data).then(setLink);
     }, SERVER ? 700 : 400);
     return () => clearTimeout(t);
-  }, [data, card]);
+  }, [data, card, flush]);
 
   useEffect(() => {
     if (!data) return;
@@ -153,11 +181,16 @@ function CardEditor() {
     setPreviewStart(1);
   };
   const duplicateScene = (i: number) => {
+    if (!data || data.scenes.length >= MAX_SCENES) return;
     remember();
     update((d) => ({ ...d, scenes: [...d.scenes.slice(0, i + 1), structuredClone(d.scenes[i]), ...d.scenes.slice(i + 1)] }));
   };
   const addScene = () => {
     if (!data) return;
+    if (data.scenes.length >= MAX_SCENES) {
+      setMsg({ kind: "err", text: `Mehr als ${MAX_SCENES} Seiten gehen nicht – das wäre auch für die beschenkte Person ziemlich lang. 🙂` });
+      return;
+    }
     const s = blankScene(addType, data.address);
     // Insert before the finale so it stays last.
     const finaleIdx = data.scenes.findIndex((x) => x.type === "finale");
@@ -174,13 +207,15 @@ function CardEditor() {
   }
 
   async function rewrite(i: number, instruction: string) {
-    if (!data || !card) return;
+    if (!data || !card || busy) return; // one AI job at a time
     setBusy(`scene-${i}`);
     setMsg(null);
     try {
-      const r = await repo.rewrite(card, data.scenes[i], instruction);
+      const original = data.scenes[i];
+      const r = await repo.rewrite(card, original, instruction);
       remember();
-      setScene(i, r.scene);
+      // Replace the page that was rewritten, wherever it is now – never whatever sits at that index.
+      update((d) => ({ ...d, scenes: d.scenes.map((x) => (x === original ? r.scene : x)) }));
       setPreviewStart(i + 1);
       setPreviewKey((k) => k + 1);
       setMsg({ kind: "ok", text: `Seite ${i + 1} wurde neu geschrieben. Gefällt’s nicht? „↶ Rückgängig“ oben.` });
@@ -201,11 +236,11 @@ function CardEditor() {
   }
 
   async function retry(reasons: string[], text: string) {
-    if (!data || !card) return;
+    if (!data || !card || busy) return; // one AI job at a time
     setBusy("all");
     setMsg(null);
     try {
-      const r = await repo.generate(card, extra, { reasons, text, previous: data });
+      const r = await repo.generate({ ...card, data }, extra, { reasons, text, previous: data });
       remember();
       update((d) => applyGen(d, r));
       setAttempt((a) => a + 1);
@@ -232,11 +267,11 @@ function CardEditor() {
   }
 
   async function regenerateAll() {
-    if (!data || !card) return;
+    if (!data || !card || busy) return; // one AI job at a time
     setBusy("all");
     setMsg(null);
     try {
-      const r = await repo.generate(card, extra);
+      const r = await repo.generate({ ...card, data }, extra);
       remember();
       update((d) => applyGen(d, r));
       setAttempt(0);
@@ -254,7 +289,7 @@ function CardEditor() {
   }
 
   async function changeStyle(instruction: string) {
-    if (!data || !card) return;
+    if (!data || !card || busy) return; // one AI job at a time
     setBusy("style");
     setMsg(null);
     try {
@@ -369,7 +404,7 @@ function CardEditor() {
 
       <div className="editor" data-view={view}>
         <div className="editor-main panel">
-          <RatingBar key={ratingKey} attempt={attempt} aiReady={aiReady} busy={busy === "all"} onRate={rate} onRetry={retry} />
+          <RatingBar key={ratingKey} attempt={attempt} aiReady={aiReady} busy={!!busy} onRate={rate} onRetry={retry} />
           <nav className="tabs">
             {([["texts", "✨ Texte"], ["design", "🎨 Design"], ["share", "📨 Teilen"]] as [Tab, string][]).map(([k, l]) => (
               <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>
@@ -399,7 +434,7 @@ function CardEditor() {
                     <Link href={`/kontakt/?id=${contact.id}`} className="btn ghost sm">Stichworte ändern</Link>
                   )}
                   {!data.scenes.some((x) => x.type === "gift") && (
-                    <button type="button" className="btn ghost sm" onClick={addGift}>🎁 Geschenk-Seite</button>
+                    <button type="button" className="btn ghost sm" onClick={addGift} disabled={!!busy}>🎁 Geschenk-Seite</button>
                   )}
                 </div>
                 {!aiReady && (
@@ -436,10 +471,10 @@ function CardEditor() {
                           <div className="inner">
                             <SceneFields scene={s} onChange={(ns) => setScene(i, ns)} />
                             <div className="row" style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
-                              <button className="btn ghost sm" onClick={() => moveScene(i, -1)} disabled={i === 0}>↑ Nach oben</button>
-                              <button className="btn ghost sm" onClick={() => moveScene(i, 1)} disabled={i === data.scenes.length - 1}>↓ Nach unten</button>
-                              <button className="btn ghost sm" onClick={() => duplicateScene(i)}>Duplizieren</button>
-                              <button className="btn danger sm" onClick={() => removeScene(i)} disabled={data.scenes.length <= 1}>Entfernen</button>
+                              <button className="btn ghost sm" onClick={() => moveScene(i, -1)} disabled={!!busy || i === 0}>↑ Nach oben</button>
+                              <button className="btn ghost sm" onClick={() => moveScene(i, 1)} disabled={!!busy || i === data.scenes.length - 1}>↓ Nach unten</button>
+                              <button className="btn ghost sm" onClick={() => duplicateScene(i)} disabled={!!busy}>Duplizieren</button>
+                              <button className="btn danger sm" onClick={() => removeScene(i)} disabled={!!busy || data.scenes.length <= 1}>Entfernen</button>
                             </div>
                           </div>
                         </details>
@@ -458,7 +493,7 @@ function CardEditor() {
                         <option key={t} value={t}>{SCENE_LABELS[t]}</option>
                       ))}
                     </select>
-                    <button className="btn ghost sm" onClick={addScene}>+ Seite hinzufügen</button>
+                    <button className="btn ghost sm" onClick={addScene} disabled={!!busy}>+ Seite hinzufügen</button>
                   </div>
                   <Text label="Zeile ganz oben" value={data.topLine} onChange={(v) => update((d) => ({ ...d, topLine: v }))} />
                   {data.effects.cinema && (

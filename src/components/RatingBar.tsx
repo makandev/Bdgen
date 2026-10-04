@@ -16,6 +16,12 @@ export function RatingBar({
   const [phase, setPhase] = useState<"ask" | "liked" | "disliked" | "saved">("ask");
   const [reasons, setReasons] = useState<string[]>([]);
   const [text, setText] = useState("");
+  // One 👎 per version: a retry that fails (e.g. AI limit reached) and is clicked again must not count twice.
+  const [disliked, setDisliked] = useState(false);
+  const dislike = () => {
+    if (!disliked) onRate(-1, reasons);
+    setDisliked(true);
+  };
   const left = MAX_RETRIES - attempt;
 
   if (phase === "liked") {
@@ -48,7 +54,7 @@ export function RatingBar({
               className="btn sm"
               disabled={busy}
               onClick={() => {
-                onRate(-1, reasons);
+                dislike();
                 onRetry(reasons, text.trim());
               }}
             >
@@ -64,7 +70,7 @@ export function RatingBar({
             className="btn ghost sm"
             disabled={busy}
             onClick={() => {
-              onRate(-1, reasons);
+              dislike();
               setPhase("saved");
             }}
           >

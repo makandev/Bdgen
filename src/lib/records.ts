@@ -13,10 +13,13 @@ export function contactInput(b: Record<string, unknown>): ContactInput | string 
     address: address(b.address),
     occasion: occasion(b.occasion),
     date: /^\d{4}-\d{2}-\d{2}$/.test(String(b.date)) ? String(b.date) : "",
-    mood: Array.isArray(b.mood) ? b.mood.map((m) => str(m, "", 30)).filter(Boolean).slice(0, 8) : [],
-    notes: str(b.notes, "", 4000),
+    mood: Array.isArray(b.mood) ? b.mood.map((m) => str(m, "", 30)).filter(Boolean).slice(0, 16) : [],
+    notes: str(b.notes, "", NOTES_MAX),
   };
 }
+
+/** Longest notes about a person (the textarea uses the same limit, so nothing is cut silently). */
+export const NOTES_MAX = 4000;
 
 export interface Backup {
   app: "bdgen";
