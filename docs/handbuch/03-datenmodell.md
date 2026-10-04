@@ -11,7 +11,9 @@ CardData  { recipientName, address, occasion, topLine, theme, effects, scenes[],
 Scene     = GreetingScene | TextScene | QuizScene | ListScene | CheckScene | GiftScene | FinaleScene
 Theme     { preset, Farben…, confetti[], headingFont, style, dark }
 Effects   { ambient, confetti, ribbons, sparks, orbit, shine, cinema, progress, clock, speed,
-            backdrop, confettiShape, particles? }
+            backdrop, confettiShape, particles?, music? }   – music: "aus"|"spieluhr"|"festlich"|"ruhig"
+FinaleScene.ink?  number[][] – Handschrift-Unterschrift: je Strich [x0,y0,x1,y1,…], ganze Zahlen auf
+            einem 1000×400-Feld; höchstens 40 Striche / 1500 Punkte (src/lib/ink.ts)
 Voucher   { kind: "code"|"image", label, code, image (data-URL), pdf (data-URL, nur Server), note, show }
 Rating    { value ±1, reasons[], Merkmale (preset, style, variant, …), sample? }   – nie Namen/Stichworte
 ```
@@ -36,7 +38,8 @@ Was die Prüfung garantiert: nur bekannte Szenentypen, Farben nur als `#rrggbb`,
 Hintergründe nur aus festen Listen, Zahlen in Grenzen, Texte gekürzt auf großzügige Längen
 (2000 Zeichen), höchstens `MAX_SCENES` = 20 Seiten (das Finale bleibt immer), Bilder nur als
 base64-`data:image/(jpeg|png|webp)`, PDFs nur als `data:application/pdf`, Effekt-Rezepte nur
-Symbole ohne Buchstaben/Markup.
+Symbole ohne Buchstaben/Markup, Musik nur aus fester Liste, Unterschrift nur als ganze Zahlen im Feld
+(`normalizeInk`, Strings/NaN/Riesenlisten fallen weg).
 
 > Wer ein neues Feld einführt, muss es in `validate.ts` aufnehmen – sonst wird es beim nächsten Laden
 > **stillschweigend entfernt**.

@@ -32,7 +32,7 @@ export function giftOf(d: CardData): string | undefined {
   return g && g.type === "gift" ? g.gift : undefined;
 }
 
-/** New AI texts on top of a card. The AI never sees vouchers, so they are carried over to the new gift page. */
+/** New AI texts on top of a card. The AI never sees vouchers or the signature, so they are carried over. */
 export function withGenerated(data: CardData, gen: Pick<Generated, "scenes" | "cinema" | "topLine" | "reactions" | "variant" | "provider">): CardData {
   const found = data.scenes.find((s) => s.type === "gift");
   const old = found && found.type === "gift" ? found : null;
@@ -40,6 +40,10 @@ export function withGenerated(data: CardData, gen: Pick<Generated, "scenes" | "c
   // A gift page the user added never disappears just because the AI left it out.
   if (old && !scenes.some((s) => s.type === "gift")) scenes = withGift(scenes, old);
   if (old?.voucher) scenes = scenes.map((s) => (s.type === "gift" && !s.voucher ? { ...s, voucher: old.voucher } : s));
+  // Same for the handwritten signature on the finale.
+  const fin = data.scenes.find((s) => s.type === "finale");
+  const ink = fin && fin.type === "finale" ? fin.ink : undefined;
+  scenes = scenes.map((s) => (s.type === "finale" ? (ink?.length ? { ...s, ink } : (({ ink: _drop, ...rest }) => rest)(s)) : s));
   return { ...data, scenes, cinema: gen.cinema, topLine: gen.topLine, reactions: gen.reactions, meta: { variant: gen.variant, provider: gen.provider } };
 }
 

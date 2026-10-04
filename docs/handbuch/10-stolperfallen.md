@@ -38,6 +38,14 @@ Jeder Punkt hier ist schon einmal passiert. Lies das, bevor du an den betroffene
   `typecheck` läuft mit `--incremental false`.
 - **Top-Level-`await`** funktioniert in tsx-Skripten/Tests (CommonJS) nicht → `main()`-Funktion.
 
+- **Unterschrift nie an die KI:** Die KI sieht die Striche nicht (`rewriteScene` lässt sie weg), eine
+  KI-Antwort mit `ink` wird verworfen, und neue KI-Texte (`withGenerated`) übernehmen die alte
+  Unterschrift – sonst wäre sie beim „Alle Texte neu schreiben“ verschwunden.
+- **SVG-Animation mit `getTotalLength`** erst aufrufen, wenn die Seite sichtbar ist (`go()` schaltet sie
+  vorher aktiv); die Strichlänge kommt in Benutzer-Einheiten der `viewBox`.
+- **Web Audio in der Sandbox:** Klang erst nach einem Antippen *im* iframe; der erste Tipp startet die
+  Musik, ein Tipp auf den Knopf selbst nicht doppelt (`firstTap` prüft das Ziel).
+
 - **Install-Skripte von Paketen** laufen nicht (`--ignore-scripts`). esbuild funktioniert trotzdem
   (Binärdatei kommt als optionales Paket). Braucht ein neues Paket ein Install-Skript, bewusst prüfen.
 

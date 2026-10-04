@@ -1,4 +1,4 @@
-import type { Backdrop, CardStyle, ConfettiShape, Effects, HeadingFont, Occasion, Theme } from "./types";
+import type { Backdrop, CardStyle, ConfettiShape, Effects, HeadingFont, Music, Occasion, Theme } from "./types";
 
 export const APP_NAME = "Funkelpost";
 
@@ -101,6 +101,13 @@ export const BACKDROP_LABELS: Record<Backdrop, string> = {
   fireworks: "Feuerwerk",
 };
 
+export const MUSIC_LABELS: Record<Music, string> = {
+  aus: "🔇 Keine",
+  spieluhr: "🎁 Spieluhr",
+  festlich: "🎺 Festlich",
+  ruhig: "🌙 Ruhig",
+};
+
 export const CONFETTI_LABELS: Record<ConfettiShape, string> = {
   strip: "Streifen",
   square: "Quadrate",
@@ -133,6 +140,7 @@ export const DEFAULT_EFFECTS: Effects = {
   backdrop: "dots",
   confettiShape: "strip",
   particles: null,
+  music: "aus",
 };
 
 export const PRESETS: Record<string, PresetDef> = {

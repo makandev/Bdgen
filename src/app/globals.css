@@ -329,3 +329,6 @@ code { background: rgba(184, 138, 45, .1); padding: 1px 5px; border-radius: 5px;
 .reminder-text { flex: 1; display: grid; gap: 2px; min-width: 0; }
 @media (max-width: 560px) { .reminder { flex-wrap: wrap; } .reminder .btn { width: 100%; text-align: center; } }
 @media (prefers-reduced-motion: reduce) { .reminder-emoji { animation: none; } }
+
+/* Handwritten signature (SignaturePad) */
+.sign-pad { display: block; width: 100%; aspect-ratio: 5 / 2; border: 1px dashed var(--line-strong); border-radius: 14px; background: #fffdf8; touch-action: none; cursor: crosshair; }

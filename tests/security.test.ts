@@ -105,7 +105,10 @@ function assertInert(html: string, label: string) {
   const markup = withoutBlocks(html);
   for (const tag of markup.match(/<[a-zA-Z][^>]*>/g) ?? []) {
     const name = /^<([a-zA-Z0-9]+)/.exec(tag)![1].toLowerCase();
-    assert.ok(!["script", "iframe", "object", "embed", "base", "link", "form", "frame", "svg", "math"].includes(name), `${label}: <${name}>`);
+    assert.ok(!["script", "iframe", "object", "embed", "base", "link", "form", "frame", "math", "use", "image", "foreignobject", "a"].includes(name), `${label}: <${name}>`);
+    // The only SVG is the handwritten signature: fixed attributes, a path made of numbers.
+    if (name === "svg") assert.match(tag, /^<svg class="ink" viewBox="-?\d+ -?\d+ \d+ \d+" role="img" aria-label="Handschriftliche Unterschrift">$/, `${label}: svg ${tag.slice(0, 80)}`);
+    if (name === "path") assert.match(tag, /^<path d="M[MQLl0-9 .-]+" stroke-width="\d+"\/>$/, `${label}: path ${tag.slice(0, 80)}`);
     for (const m of tag.matchAll(/\s([^\s=>]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g)) {
       const attr = m[1].toLowerCase();
       const value = (m[2] ?? "").replace(/^["']|["']$/g, "");
@@ -120,8 +123,17 @@ function assertInert(html: string, label: string) {
   }
 }
 
+/** A card with handwriting and music, so the fuzzer also attacks those fields. */
+function inkCard(): CardData {
+  const d = defaultCardData({ recipientName: "Test", address: "du", occasion: "neujahr" });
+  d.effects.music = "festlich";
+  d.scenes = d.scenes.map((s) => (s.type === "finale" ? { ...s, ink: [[10, 20, 300, 200, 600, 50], [700, 300], [0, 0, 1000, 400]] } : s));
+  return d;
+}
+
 const BASES: CardData[] = [
   defaultCardData({ recipientName: "Test", address: "du", occasion: "geburtstag" }),
+  inkCard(),
   ...EXAMPLES.slice(0, 8).map((e) => exampleCard(e)),
 ];
 
@@ -144,6 +156,37 @@ test("fuzz: AI answers with attacks are cleaned the same way", () => {
     const d = normalizeCardData(extractJSON(answer), base);
     assertInert(renderCardHTML(d), `ai ${i}`);
   }
+});
+
+test("signature and music: only numbers and known tunes get through", () => {
+  const { normalizeInk } = require("../src/lib/validate") as typeof import("../src/lib/validate");
+  const evil: unknown = [
+    ["<script>alert(1)</script>", 5, 10, "20", 30, NaN, 40, Infinity, 50, 60],
+    "M0 0 L 1 1\"/><script>alert(1)</script>",
+    { length: 4, 0: 1, 1: 2 },
+    [1e12, -1e12, 12.6, 399.6, 7],
+    ...Array.from({ length: 100 }, () => Array.from({ length: 400 }, (_, i) => i)),
+  ];
+  const ink = normalizeInk(evil);
+  assert.deepEqual(ink[0], [50, 60]);
+  assert.deepEqual(ink[1], [1000, 0, 13, 400]);
+  assert.ok(ink.length <= 40, "at most 40 strokes");
+  assert.ok(ink.reduce((n, s) => n + s.length / 2, 0) <= 1500, "at most 1500 points");
+  for (const s of ink) for (const v of s) assert.ok(Number.isInteger(v) && v >= 0 && v <= 1000);
+  const base = inkCard();
+  const raw = JSON.parse(JSON.stringify(base));
+  raw.effects.music = "<script>";
+  raw.scenes[raw.scenes.length - 1].ink = evil;
+  const d = normalizeCardData(raw, base);
+  assert.equal(d.effects.music, "festlich", "unknown tune falls back");
+  const html = renderCardHTML(d);
+  assertInert(html, "ink");
+  assert.match(html, /<svg class="ink"/);
+  assert.match(html, /id="musicBtn"/);
+  raw.effects.music = "aus";
+  raw.scenes[raw.scenes.length - 1].ink = [];
+  const plain = renderCardHTML(normalizeCardData(raw, defaultCardData({ recipientName: "Test", address: "du", occasion: "neujahr" })));
+  assert.doesNotMatch(plain, /<svg|id="musicBtn"/, "without them, nothing changes");
 });
 
 test("links: garbage, oversize and zip bombs are refused quickly", async () => {
@@ -184,7 +227,7 @@ test("AI: name, vouchers and keys never reach the AI; injected text stays data; 
     scenes: [
       { type: "greeting", eyebrow: "x", morning: { title: "Guten Morgen, {{name}}. <img src=x onerror=alert(1)>", text: "Mail an a@evil.example" }, day: { title: "t", text: "www.evil.example/klick" }, evening: { title: "t", text: "javascript:alert(1)" }, note: "n", button: "Weiter →" },
       { type: "text", eyebrow: "e", title: "t", text: "Text", button: "Weiter →" },
-      { type: "finale", eyebrow: "e", title: "t", text: "Text <a href='https://evil.example'>hier</a>", button: "Nochmal" },
+      { type: "finale", eyebrow: "e", title: "t", text: "Text <a href='https://evil.example'>hier</a>", button: "Nochmal", ink: [[1, 2, 3, 4]] },
     ],
     cinema: { kicker: "k", forLabel: "Für", title: "t", final: "f https://evil.example", emoji: "✨" },
     reactions: { question: "q", options: [{ emoji: "🎉", label: "<b>x</b>" }] },
@@ -204,9 +247,14 @@ test("AI: name, vouchers and keys never reach the AI; injected text stays data; 
     );
     const voucherScene = { type: "gift" as const, eyebrow: "e", title: "t", teaser: "t", gift: "Kino", detail: "d", button: "b", voucher: { kind: "code" as const, label: "Code", code: "SECRET-VOUCHER-777", image: "", pdf: "", note: "", show: true } };
     await rewriteScene({ relation: "", address: "du", occasion: "geburtstag", mood: [], notes: "" }, voucherScene, "kürzer", cfg);
+    const fin = { type: "finale" as const, eyebrow: "e", title: "t", quote: "q", paragraphs: ["p"], signature: "s", ink: [[987, 321, 654, 123]], status: "", tiny: "", cinemaButton: "c" };
+    const rewritten = await rewriteScene({ relation: "", address: "du", occasion: "geburtstag", mood: [], notes: "" }, fin, "kürzer", cfg);
+    assert.deepEqual(rewritten.scene.type === "finale" && rewritten.scene.ink, [[987, 321, 654, 123]], "own signature stays");
+    assert.ok(!gen.scenes.some((x) => x.type === "finale" && x.ink), "a signature never comes from the AI");
     const d = defaultCardData({ recipientName: "Gisela Geheimname", address: "du", occasion: "geburtstag" });
     await restyle(d.theme, d.effects, "dunkler", cfg);
-    assert.equal(sent.length, 3);
+    assert.equal(sent.length, 4);
+    assert.ok(!sent[2].body.includes("987"), "signature never sent");
     for (const s of sent) {
       assert.ok(!s.body.includes("AIzaTESTKEY"), "key never in the request body");
       assert.ok(!s.url.includes("AIzaTESTKEY"), "key never in the address");

@@ -117,6 +117,42 @@ test("the card script is valid JavaScript for every design", () => {
   }
 });
 
+test("music and signature: valid script, short links, kept on new AI texts, offline wishes", async () => {
+  const { packStroke, simplifyStroke } = await import("../src/lib/ink");
+  const { musicWish } = await import("../src/lib/prompts");
+  const d = defaultCardData({ recipientName: "Test", address: "du", occasion: "geburtstag" });
+  // A realistic signature: 6 strokes with 300 raw points each, simplified like the editor does.
+  const ink = Array.from({ length: 6 }, (_, k) =>
+    packStroke(Array.from({ length: 300 }, (_, i) => [80 + k * 140 + i * 0.4 + Math.sin(i / 7) * 30, 200 + Math.cos(i / 5) * 90] as [number, number])),
+  );
+  assert.ok(simplifyStroke([[0, 0], [5, 0.5], [10, 0]]).length === 2, "nearly straight lines lose their middle point");
+  for (const music of ["aus", "spieluhr", "festlich", "ruhig"] as const) {
+    d.effects.music = music;
+    d.scenes = d.scenes.map((s) => (s.type === "finale" ? { ...s, ink } : s));
+    const html = renderCardHTML(d);
+    // The card's own script, cut by position (the JSON config block has attributes, so it is skipped).
+    const start = html.indexOf("<script>") + "<script>".length;
+    const js = html.slice(start, html.indexOf("</script>", start));
+    assert.ok(js.length > 1000, music);
+    assert.doesNotThrow(() => new Function(js), music);
+  }
+  const link = await encodeCard(d);
+  const back = await decodeCard(link.slice(link.indexOf("#") + 1));
+  assert.deepEqual(back && back.scenes.find((s) => s.type === "finale"), d.scenes.find((s) => s.type === "finale"));
+  assert.equal(back?.effects.music, "ruhig");
+  const plainLink = await encodeCard(defaultCardData({ recipientName: "Test", address: "du", occasion: "geburtstag" }));
+  assert.ok(link.length - plainLink.length < 6000, `signature adds ${link.length - plainLink.length} characters`);
+  const gen = withGenerated(d, { scenes: defaultCardData({ recipientName: "Test", address: "du", occasion: "geburtstag" }).scenes, cinema: d.cinema, topLine: "x", reactions: d.reactions, variant: "a", provider: "p" });
+  const fin = gen.scenes.find((s) => s.type === "finale");
+  assert.deepEqual(fin?.type === "finale" && fin.ink, ink, "new AI texts keep the signature");
+  assert.equal(musicWish("bitte mit musik", "neujahr"), "festlich");
+  assert.equal(musicWish("eine spieluhr", "danke"), "spieluhr");
+  assert.equal(musicWish("keine musik", "geburtstag"), "aus");
+  assert.equal(musicWish("ruhige musik", "geburtstag"), "ruhig");
+  assert.equal(musicWish("mehr konfetti", "geburtstag"), null);
+  assert.equal(restyleOffline(d, "mit Musik").effects.music, "spieluhr");
+});
+
 test("rewriting all texts keeps a gift page the AI left out", () => {
   const d = withVoucher(code);
   const noGift = defaultCardData({ recipientName: "Alex", address: "du", occasion: "neujahr" }).scenes;

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Scene } from "@/lib/types";
 import { List, Text } from "./fields";
+import { SignaturePad } from "./SignaturePad";
 
 export const SCENE_LABELS: Record<Scene["type"], string> = {
   greeting: "Begrüßung",
@@ -138,6 +139,13 @@ export function SceneFields({ scene, onChange }: { scene: Scene; onChange: (s: S
           <Text label="Zitat / Wunsch" multiline value={scene.quote} onChange={(v) => up({ quote: v })} />
           <List label="Absätze" multiline items={scene.paragraphs} onChange={(v) => up({ paragraphs: v })} addLabel="+ Absatz" />
           <Text label="Unterschrift" multiline value={scene.signature} onChange={(v) => up({ signature: v })} hint={markup} />
+          <SignaturePad
+            value={scene.ink}
+            onChange={(ink) => {
+              const { ink: _old, ...rest } = scene;
+              onChange(ink?.length ? { ...rest, ink } : rest);
+            }}
+          />
           <Text label="Status-Siegel" value={scene.status} onChange={(v) => up({ status: v })} />
           <Text label="Kleingedrucktes" value={scene.tiny} onChange={(v) => up({ tiny: v })} />
           <Text label="Button zum Kino-Finale" value={scene.cinemaButton} onChange={(v) => up({ cinemaButton: v })} />

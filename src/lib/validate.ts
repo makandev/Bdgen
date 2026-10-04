@@ -1,8 +1,9 @@
 import { Unzlib } from "fflate";
+import { INK_H, INK_W, MAX_INK_POINTS, MAX_INK_STROKES } from "./ink";
 import { DEFAULT_EFFECTS, OCCASIONS, PRESETS } from "./presets";
 import { blankScene, defaultReactions } from "./templates";
 import type {
-  Address, Backdrop, CardData, ParticleMotion, Particles, Voucher, ReactionOption, Reactions, CardStyle, Cinema, ConfettiShape, DayText, Effects, HeadingFont, Occasion, QuizOption, Scene,
+  Address, Backdrop, CardData, Music, ParticleMotion, Particles, Voucher, ReactionOption, Reactions, CardStyle, Cinema, ConfettiShape, DayText, Effects, HeadingFont, Occasion, QuizOption, Scene,
   SceneType, Theme,
 } from "./types";
 
@@ -14,6 +15,7 @@ const FONTS: HeadingFont[] = ["serif", "sans", "script", "mono", "block"];
 const STYLES: CardStyle[] = ["glass", "luxe", "holo", "terminal", "pixel"];
 const BACKDROPS: Backdrop[] = ["dots", "sparkle", "matrix", "blocks", "aurora", "fireworks"];
 const MOTIONS: ParticleMotion[] = ["rise", "fall", "float", "swirl", "pop"];
+const MUSIC: Music[] = ["aus", "spieluhr", "festlich", "ruhig"];
 
 /** Size caps for pictures inside a card (data URLs). */
 export const MAX_IMAGE_CHARS = 1_600_000;
@@ -165,6 +167,7 @@ export function normalizeScene(raw: unknown, addr: Address, forceType?: SceneTyp
         quote: str(o.quote, f.quote),
         paragraphs: strList(o.paragraphs, f.paragraphs),
         signature: str(o.signature, f.signature, 1000),
+        ...("ink" in o ? inkField(o.ink) : inkField(f.ink)),
         status: str(o.status, f.status, 120),
         tiny: str(o.tiny, f.tiny, 200),
         cinemaButton: str(o.cinemaButton, f.cinemaButton, 80),
@@ -276,6 +279,33 @@ export function normalizeParticles(raw: unknown): Particles | null {
   return { emoji, motion: oneOf(raw.motion, MOTIONS, "float"), amount: num(raw.amount, 1, 0.2, 2), size: num(raw.size, 1, 0.5, 2) };
 }
 
+/**
+ * Handwritten signature: only whole numbers inside the pad, at most MAX_INK_STROKES strokes and
+ * MAX_INK_POINTS points in total – anything else (strings, markup, NaN, huge lists) is dropped.
+ */
+export function normalizeInk(raw: unknown): number[][] {
+  if (!Array.isArray(raw)) return [];
+  const out: number[][] = [];
+  let left = MAX_INK_POINTS;
+  for (const s of raw.slice(0, MAX_INK_STROKES)) {
+    if (!Array.isArray(s) || left <= 0) continue;
+    const stroke: number[] = [];
+    for (let i = 0; i + 1 < s.length && stroke.length / 2 < left; i += 2) {
+      const x = s[i];
+      const y = s[i + 1];
+      if (typeof x !== "number" || typeof y !== "number" || !Number.isFinite(x) || !Number.isFinite(y)) continue;
+      stroke.push(Math.max(0, Math.min(INK_W, Math.round(x))), Math.max(0, Math.min(INK_H, Math.round(y))));
+    }
+    if (stroke.length) (out.push(stroke), (left -= stroke.length / 2));
+  }
+  return out;
+}
+
+function inkField(raw: unknown): { ink?: number[][] } {
+  const ink = normalizeInk(raw);
+  return ink.length ? { ink } : {};
+}
+
 export const MAX_SCENES = 20;
 
 export function normalizeScenes(raw: unknown, addr: Address, fallback: Scene[]): Scene[] {
@@ -326,6 +356,7 @@ export function normalizeEffects(raw: unknown, fb: Effects = DEFAULT_EFFECTS): E
     backdrop: oneOf(o.backdrop, BACKDROPS, oneOf(fb.backdrop, BACKDROPS, "dots")),
     confettiShape: oneOf(o.confettiShape, SHAPES, oneOf(fb.confettiShape, SHAPES, "strip")),
     particles: "particles" in o ? normalizeParticles(o.particles) : (fb.particles ?? null),
+    music: oneOf(o.music, MUSIC, oneOf(fb.music, MUSIC, "aus")),
   };
 }
 

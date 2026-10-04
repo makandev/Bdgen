@@ -57,6 +57,7 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/components/DesignPanel.tsx` | Design-Tab: KI-Wunsch, Vorlagen, Feineinstellungen, Effekt-Rezepte |
 | `src/components/SceneEditor.tsx` | Felder je Seitentyp, KI-Knöpfe pro Seite |
 | `src/components/VoucherFields.tsx` | Gutschein: Code, Foto oder PDF |
+| `src/components/SignaturePad.tsx` | Handschrift-Unterschrift im Finale: Zeichenfeld (Zeiger-Ereignisse), Rückgängig, Löschen |
 | `src/components/RatingBar.tsx` | 👍/👎 mit Gründen und Neuversuch |
 | `src/components/RelationPicker.tsx` | Beziehung mit Emoji auswählen |
 | `src/components/Swatch.tsx` | Design-Vorschau-Kacheln (`PresetGrid`) |
@@ -74,7 +75,8 @@ Jede Datei in einem Satz. **Neue Datei → hier eintragen** (sonst schlägt `tes
 | `src/lib/errors.ts` | `PublicError`: Fehler, deren Meldung der Server nach außen zeigen darf |
 | `src/lib/uploads.ts` | Prüfung gewählter Dateien: Größenlimits (Foto, PDF, Sicherung), Bildformat an den ersten Bytes |
 | `src/lib/validate.ts` | Prüfung/Bereinigung aller Daten von außen |
-| `src/lib/render.ts` | Karten-Renderer (HTML/CSS/JS der Karte) |
+| `src/lib/render.ts` | Karten-Renderer (HTML/CSS/JS der Karte, inkl. Hintergrundmusik und Unterschrift-Animation) |
+| `src/lib/ink.ts` | Handschrift-Unterschrift: Feldgröße, Obergrenzen, Vereinfachen der Striche, SVG-Pfad |
 | `src/lib/templates.ts` | Standardtexte je Anlass, du/Sie, Geschenkseite, Reaktionen |
 | `src/lib/presets.ts` | Anlässe, Beziehungen mit Emoji, Designs, Effekt-Standards, Beschriftungen |
 | `src/lib/examples.ts` | Beispielkarten der Galerie |

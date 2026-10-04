@@ -20,6 +20,14 @@ renderCardHTML
 └─ <script>CLIENT_JS</script>                 das Verhalten der Karte
 ```
 
+### Unterschrift und Musik
+
+- Die Unterschrift steht als **Inline-SVG** im Finale (`inkSvg`): `viewBox` auf die Striche zugeschnitten,
+  Pfade nur aus geprüften Zahlen (`inkPath`), Farbe aus dem Theme. Ohne JavaScript oder mit reduzierter
+  Bewegung ist sie sofort ganz zu sehen.
+- Die Melodien stehen als Notenlisten im Kartenskript (keine Dateien, keine Lizenzen); in den Daten steht
+  nur der Name (`effects.music`). Im Stumm-Modus des iPhones bleibt Web Audio still – so gewollt.
+
 ### Texte und Escaping
 
 - `esc()` maskiert `& < > " '`. **Jeder** Text geht durch `fmt()`: erst maskieren, dann die kleine
@@ -44,6 +52,8 @@ auf dem Handy, auch auf alten Geräten. Bausteine:
 | `burst`, `miniBurst`, `ribbonRain`, `sparkBurst` | Konfetti, Bänder, Funken |
 | `startCinema` / `closeCinema` | Kino-Finale |
 | `openGift` → `startShow` | Päckchen öffnen → Countdown 3-2-1 → Feuerwerk → Gutschein fliegt herein |
+| `drawInk` | Handschrift-Unterschrift im Finale Strich für Strich nachzeichnen (`stroke-dashoffset`) |
+| Musik (`SONGS`) | Hintergrundmelodie mit Web Audio (`webkitAudioContext` auf alten iPhones): startet beim ersten Antippen, Knopf 🔇/🔊 unten rechts, pausiert im Hintergrund-Tab; bei `prefers-reduced-motion` erst auf Knopfdruck |
 | `copyText`, `savePdf` | Gutschein-Code kopieren (mit Ersatzweg ohne Clipboard-API), PDF speichern |
 | Reaktionen | `reactionMode`: `send` (Server: POST; sonst Teilen/WhatsApp) oder `preview` |
 | `onRealResize` | reagiert nur auf echte Größenwechsel – nicht auf die ein-/ausfahrende Browserleiste |
