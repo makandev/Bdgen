@@ -83,7 +83,11 @@ function assertInert(html: string, label: string) {
   const styles = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n");
   assert.doesNotMatch(styles, /url\(\s*['"]?\s*(https?:|\/\/|javascript:)|@import|expression\(|<\//i, `${label}: CSS loads nothing`);
   // Every tag outside the own scripts: allowed name, no event handlers, no script or outside URLs.
-  const markup = html.replace(/<script[\s\S]*?<\/script>/g, "").replace(/<style>[\s\S]*?<\/style>/g, "");
+  let markup = html;
+  for (let prev = ""; prev !== markup; ) {
+    prev = markup;
+    markup = markup.replace(/<script\b[\s\S]*?<\/script\s*>/gi, "").replace(/<style\b[\s\S]*?<\/style\s*>/gi, "");
+  }
   for (const tag of markup.match(/<[a-zA-Z][^>]*>/g) ?? []) {
     const name = /^<([a-zA-Z0-9]+)/.exec(tag)![1].toLowerCase();
     assert.ok(!["script", "iframe", "object", "embed", "base", "link", "form", "frame", "svg", "math"].includes(name), `${label}: <${name}>`);
@@ -202,6 +206,9 @@ test("AI: name, vouchers and keys never reach the AI; injected text stays data; 
     assert.doesNotMatch(all, /evil\.example|<script|<img|<a |javascript:|<b>/i);
     assert.match(all, /Guten Morgen, \{\{name\}\}\./);
     assert.equal(scrubText("Alles Liebe <3 und **viel Glück** 🙂"), "Alles Liebe <3 und **viel Glück** 🙂");
+    for (const nested of ["<<b>script>alert(1)<</b>/script>", "<scr<i>ipt>x", "<<<a>a>a href=x>"]) {
+      assert.doesNotMatch(scrubText(nested), /<[a-z\/]/i, `nested tags: ${nested}`);
+    }
   } finally {
     globalThis.fetch = realFetch;
   }

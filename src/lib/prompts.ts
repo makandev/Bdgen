@@ -57,7 +57,13 @@ const TAG_LIKE = /<\/?[a-z!?][^>]*>?/gi;
 
 /** Removes links, addresses and markup an AI might have been tricked into writing. */
 export function scrubText(s: string): string {
-  return s.replace(TAG_LIKE, "").replace(URL_LIKE, "").replace(/[ \t]{2,}/g, " ").trim();
+  // Repeat until nothing changes: removing "<b>" from "<<b>script>" would otherwise leave "<script>".
+  let prev: string;
+  do {
+    prev = s;
+    s = s.replace(TAG_LIKE, "").replace(URL_LIKE, "");
+  } while (s !== prev);
+  return s.replace(/[ \t]{2,}/g, " ").trim();
 }
 
 /** Applies scrubText to every string inside a value (scenes, cinema, reactions …). */
