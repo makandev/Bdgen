@@ -236,10 +236,10 @@ export default function SettingsPage() {
                   </label>
                   <label className="field">
                     <span>Gemini-Modell</span>
-                    <input type="text" list="gemini-models" value={form.geminiModel} placeholder="gemini-flash-latest" onChange={(e) => set("geminiModel", e.target.value)} />
+                    <input type="text" list="gemini-models" value={form.geminiModel} placeholder="gemini-3.8-flash" onChange={(e) => set("geminiModel", e.target.value)} />
                     <datalist id="gemini-models">
-                      <option value="gemini-flash-latest" />
                       <option value="gemini-3.8-flash" />
+                      <option value="gemini-flash-latest" />
                       <option value="gemini-3.5-flash-lite" />
                     </datalist>
                   </label>

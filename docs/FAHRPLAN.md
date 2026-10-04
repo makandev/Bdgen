@@ -28,7 +28,7 @@ Keine Rechtsberatung – vor dem Verkauf von einer Anwältin oder einem Anwalt p
 | # | Was | Warum | Aufwand |
 |---|---|---|---|
 | 1 | **Auf echtem iPhone/Safari testen** (App ab iOS 15, Karten ab iOS 11) | Bisher nur im Chromium-Browser geprüft | klein |
-| 2 | **KI modernisieren** (`KI-PLAN.md`, Phase 1): feste Modell-ID `gemini-3.8-flash` statt `gemini-flash-latest`, `temperature` ersetzen (in `src/lib/ai.ts` noch drin), OpenRouter mit fester Gratis-Liste | Alias zeigt auf älteres, teureres Modell; `temperature` ist bei Google veraltet | 1–2 Tage |
+| 2 | **KI modernisieren, Rest** (`KI-PLAN.md`, Phase 1): OpenRouter mit fester Gratis-Liste statt `openrouter/free`; bei Gemini „Thinking-Level“ + JSON-Schema. Erledigt (0.9): fest `gemini-3.8-flash` mit Rückfall auf `gemini-flash-latest`, keine `temperature` mehr bei Gemini | `openrouter/free` würfelt auch ungeeignete Modelle | 1 Tag |
 | 3 | **Seiten „Impressum“, „Datenschutz“, „Lizenzen“** in der App (Texte aus Abschnitt 1) | Pflicht für Verkauf | klein, sobald Texte da sind |
 | 4 | **KI-Wahl einfach:** „Gratis / Günstig / Beste Qualität“ statt Modell-IDs (`KI-PLAN.md`, Phase 2) | Einstellungen sind für Laien zu technisch | 1–2 Tage |
 | 5 | **Mehrere Benutzer** mit eigenem Login (Server-Version) | Voraussetzung, um die Server-Version an Familien/Firmen zu verkaufen | groß |

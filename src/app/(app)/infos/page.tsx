@@ -6,8 +6,8 @@ import { TopBar } from "@/components/TopBar";
 import { SERVER } from "@/lib/repo";
 
 const GEMINI: [string, string, string][] = [
-  ["gemini-flash-latest", "Standard in Funkelpost", "Zeigt automatisch auf das neueste Flash-Modell – du musst nie etwas umstellen."],
-  ["gemini-3.8-flash", "⭐ Beste Texte (kostenlos)", "Aktuell das stärkste kostenlose Modell. Sehr gutes Deutsch, versteht Stimmungen gut."],
+  ["gemini-3.8-flash", "⭐ Standard in Funkelpost", "Aktuell das stärkste kostenlose Modell. Sehr gutes Deutsch, versteht Stimmungen gut – und im Bezahltarif günstiger als der Sammelname."],
+  ["gemini-flash-latest", "Rückfall", "Sammelname, den Google auf ein Flash-Modell zeigen lässt (derzeit das ältere 3.5). Funkelpost nimmt ihn automatisch, falls 3.8 einmal abgeschaltet wird."],
   ["gemini-3.5-flash-lite", "⚡ Am schnellsten", "Antwortet am schnellsten und hat die großzügigsten Gratis-Limits, die Texte sind etwas einfacher."],
   ["gemini-2.5-pro", "Nur für Alt-Projekte", "Für neue Schlüssel nicht mehr freigeschaltet."],
 ];
@@ -52,6 +52,7 @@ export default function InfoPage() {
             <li><b>👣 Person anlegen in drei Schritten:</b> Wer? · Erzählen · Design – mit einer Live-Vorschau daneben, die sich bei jeder Auswahl sofort ändert.</li>
             <li><b>📱 Menü unten auf dem Handy:</b> Start, Kalender, Beispiele, Infos, Hilfe und Einstellungen – mit Beschriftung statt nur Symbolen.</li>
             <li><b>🔑 KI einrichten in drei Schritten:</b> Schlüssel holen, kopieren, mit „📋 Einfügen“ übernehmen.</li>
+            <li><b>🤖 Neueres KI-Modell:</b> Standard ist jetzt fest <code>gemini-3.8-flash</code>; wird es einmal abgeschaltet, springt Funkelpost automatisch auf den Sammelnamen <code>gemini-flash-latest</code>.</li>
             <li><b>⚡ Schnellere Vorschauen:</b> Beispielkarten zeigen sofort ein Standbild; die Einführung erscheint nur noch auf der Startseite.</li>
           </ul>
         </section>
