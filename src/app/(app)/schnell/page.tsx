@@ -4,7 +4,7 @@ import { HOME } from "@/lib/base";
 import { withGenerated } from "@/lib/cardbase";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { errText } from "@/components/client";
+import { errText, copyText } from "@/components/client";
 import { RatingBar } from "@/components/RatingBar";
 import { RelationPicker } from "@/components/RelationPicker";
 import { TopBar } from "@/components/TopBar";
@@ -124,9 +124,12 @@ export default function QuickCard() {
         if ((e as Error).name === "AbortError") return;
       }
     }
-    await navigator.clipboard?.writeText(link).catch(() => {});
-    setError("");
-    alert("Link kopiert – jetzt einfach in WhatsApp, SMS oder eine Mail einfügen.");
+    if (await copyText(link)) {
+      setError("");
+      alert("Link kopiert – jetzt einfach in WhatsApp, SMS oder eine Mail einfügen.");
+    } else {
+      setError(`Kopieren ging hier nicht – bitte diesen Link markieren und kopieren: ${link}`);
+    }
   }
 
   return (
@@ -229,7 +232,7 @@ export default function QuickCard() {
               <h1>Die Überraschung für {result.data.recipientName}</h1>
             </div>
             <div className="quick-preview">
-              <iframe key={ratingKey} title="Vorschau" srcDoc={html} sandbox="allow-scripts" />
+              <iframe key={ratingKey} title="Vorschau" srcDoc={html} sandbox="allow-scripts allow-downloads allow-popups" />
             </div>
             {error && <div className="notice err">{error}</div>}
             <RatingBar key={ratingKey} attempt={attempt} aiReady={aiReady} busy={busy} onRate={rate} onRetry={retry} />

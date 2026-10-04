@@ -21,7 +21,8 @@ if (!password) {
 } else if (!config.gemini && !config.openrouter) {
   console.log("Kein KI-Schlüssel gesetzt – die App wird ohne Passwortsperre veröffentlicht.");
 } else {
-  if (password.length < 10) console.warn("Warnung: Das Passwort ist kurz. Empfohlen sind mindestens 12 Zeichen.");
+  // zugang.json is public – the password is all that protects the AI keys, and it can be guessed offline.
+  if (password.length < 14) console.warn("::warning::BDGEN_PASSWORD ist kurz. Weil zugang.json öffentlich abrufbar ist, empfehlen sich mindestens 14 Zeichen (z. B. vier zufällige Wörter) – und ein Ausgabenlimit beim KI-Anbieter.");
   const vault = await sealVault(config, password);
   writeFileSync(process.argv[2] || "out/zugang.json", JSON.stringify(vault));
   console.log("Passwortsperre aktiv: zugang.json geschrieben.");

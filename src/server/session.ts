@@ -3,7 +3,13 @@ export const SESSION_DAYS = 30;
 
 const enc = new TextEncoder();
 
+let warned = false;
+
 function secret(): string {
+  if (!process.env.AUTH_SECRET && !warned) {
+    warned = true;
+    console.warn("Hinweis: AUTH_SECRET ist nicht gesetzt – die Anmeldung wird dann mit dem App-Passwort signiert. Bitte einen Zufallswert in .env eintragen (install.sh macht das automatisch).");
+  }
   const s = process.env.AUTH_SECRET || process.env.APP_PASSWORD;
   if (!s) throw new Error("APP_PASSWORD ist nicht gesetzt (siehe .env.example).");
   return "bdgen:" + s;

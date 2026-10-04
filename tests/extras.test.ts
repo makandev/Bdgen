@@ -107,3 +107,30 @@ test("install help picks the right instructions per device", () => {
   assert.equal(detectPlatform("Mozilla/5.0 (Android 14; Mobile; rv:131.0) Gecko/131.0 Firefox/131.0"), "android-firefox");
   assert.equal(detectPlatform("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0"), "desktop-firefox");
 });
+
+test("the card script is valid JavaScript for every design", () => {
+  for (const ex of EXAMPLES) {
+    const html = renderCardHTML(exampleCard(ex));
+    const js = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+    assert.ok(js.length, ex.id);
+    for (const code of js) assert.doesNotThrow(() => new Function(code), `${ex.id}: card script does not parse`);
+  }
+});
+
+test("rewriting all texts keeps a gift page the AI left out", () => {
+  const d = withVoucher(code);
+  const noGift = defaultCardData({ recipientName: "Alex", address: "du", occasion: "neujahr" }).scenes;
+  const merged = withGenerated(d, { scenes: noGift, cinema: d.cinema, topLine: "x", reactions: d.reactions, variant: "A", provider: "gemini" });
+  const g = merged.scenes.find((s) => s.type === "gift") as GiftScene;
+  assert.ok(g, "gift page still there");
+  assert.deepEqual(g.voucher, code);
+  assert.equal(merged.scenes[merged.scenes.length - 1].type, "finale", "finale stays last");
+});
+
+test("too many pages never drop the finale", () => {
+  const d = defaultCardData({ recipientName: "Alex", address: "du", occasion: "geburtstag" });
+  const many = [...Array(25)].map(() => d.scenes[1]).concat(d.scenes[d.scenes.length - 1]);
+  const n = normalizeCardData({ ...d, scenes: many }, d);
+  assert.equal(n.scenes.length, 20);
+  assert.equal(n.scenes[19].type, "finale");
+});

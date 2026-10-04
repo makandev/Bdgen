@@ -52,7 +52,7 @@ export default function ExamplesPage() {
       {open && (
         <div className="demo-backdrop" role="dialog" aria-modal="true" aria-label={open.title}>
           <div className="demo">
-            <iframe title={open.title} srcDoc={full} sandbox="allow-scripts" />
+            <iframe title={open.title} srcDoc={full} sandbox="allow-scripts allow-downloads allow-popups" />
             <div className="demo-bar">
               <div className="small">
                 <strong>{relationEmoji(open.relation)} {open.title}</strong> · {PRESETS[open.preset].label} · {occasionLabel(open.occasion)}

@@ -21,3 +21,28 @@ export function download(filename: string, content: string, type: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
+/** Copies text; also works without navigator.clipboard (plain http in the home network). True = really copied. */
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {}
+  const el = document.createElement("textarea");
+  el.value = text;
+  el.setAttribute("readonly", "");
+  el.style.position = "fixed";
+  el.style.top = "0";
+  el.style.opacity = "0";
+  document.body.appendChild(el);
+  el.select();
+  el.setSelectionRange(0, text.length);
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } catch {}
+  el.remove();
+  return ok;
+}

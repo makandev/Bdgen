@@ -1,11 +1,12 @@
 "use client";
 
+import { clone } from "@/lib/id";
 import { HOME } from "@/lib/base";
 import { withGenerated } from "@/lib/cardbase";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { download, errText } from "@/components/client";
+import { download, errText, copyText } from "@/components/client";
 import { DesignPanel } from "@/components/DesignPanel";
 import { Text } from "@/components/fields";
 import { SCENE_LABELS, SceneAI, SceneFields, sceneSummary } from "@/components/SceneEditor";
@@ -152,7 +153,7 @@ function CardEditor() {
   }, [data, previewStart, previewKey]);
 
   const update = useCallback((fn: (d: CardData) => CardData) => setData((d) => (d ? fn(d) : d)), []);
-  const remember = () => data && setHistory((h) => [...h.slice(-19), structuredClone(data)]);
+  const remember = () => data && setHistory((h) => [...h.slice(-19), clone(data)]);
   const undo = () => {
     const prev = history[history.length - 1];
     if (!prev) return;
@@ -183,7 +184,7 @@ function CardEditor() {
   const duplicateScene = (i: number) => {
     if (!data || data.scenes.length >= MAX_SCENES) return;
     remember();
-    update((d) => ({ ...d, scenes: [...d.scenes.slice(0, i + 1), structuredClone(d.scenes[i]), ...d.scenes.slice(i + 1)] }));
+    update((d) => ({ ...d, scenes: [...d.scenes.slice(0, i + 1), clone(d.scenes[i]), ...d.scenes.slice(i + 1)] }));
   };
   const addScene = () => {
     if (!data) return;
@@ -326,8 +327,11 @@ function CardEditor() {
         if ((e as Error).name === "AbortError") return;
       }
     }
-    await navigator.clipboard?.writeText(link).catch(() => {});
-    setMsg({ kind: "ok", text: "Link kopiert – jetzt einfach in WhatsApp, SMS oder eine Mail einfügen." });
+    setMsg(
+      (await copyText(link))
+        ? { kind: "ok", text: "Link kopiert – jetzt einfach in WhatsApp, SMS oder eine Mail einfügen." }
+        : { kind: "err", text: "Kopieren ging hier nicht – bitte den Link im Feld antippen, markieren und kopieren." },
+    );
   }
 
   function exportFile() {
@@ -633,7 +637,7 @@ function CardEditor() {
 
         <aside className="editor-side">
           <div className="phone">
-            <iframe key={previewKey} className="preview-frame" title="Vorschau" srcDoc={html} sandbox="allow-scripts" />
+            <iframe key={previewKey} className="preview-frame" title="Vorschau" srcDoc={html} sandbox="allow-scripts allow-downloads allow-popups" />
           </div>
           <div className="preview-tools">
             {data.scenes.map((_, i) => (

@@ -1,8 +1,8 @@
 // Generates files in public/ before dev/build:
 //  - public/k/index.html: the standalone card viewer (works on older iPhones, no Next.js runtime)
 //  - public/vendor/pdfjs/: pdf.js, loaded only when someone attaches a PDF voucher
-import { build } from "esbuild";
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { build, transform } from "esbuild";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -43,6 +43,12 @@ try {
 
 const pdf = join(root, "node_modules/pdfjs-dist/legacy/build");
 mkdirSync(join(pub, "vendor/pdfjs"), { recursive: true });
-copyFileSync(join(pdf, "pdf.min.mjs"), join(pub, "vendor/pdfjs/pdf.min.js"));
-copyFileSync(join(pdf, "pdf.worker.min.mjs"), join(pub, "vendor/pdfjs/pdf.worker.min.js"));
+// pdf.js calls structuredClone (iOS 15.4+); this covers what it clones: plain data, typed arrays, Map, Set, Date.
+const CLONE_POLYFILL = `/*funkelpost:clone*/if(typeof globalThis.structuredClone!=="function"){globalThis.structuredClone=function(v){var seen=new Map();function c(x){if(x===null||typeof x!=="object")return x;if(seen.has(x))return seen.get(x);var o;if(ArrayBuffer.isView(x)){o=x instanceof DataView?new DataView(x.buffer.slice(0)):x.slice()}else if(x instanceof ArrayBuffer){o=x.slice(0)}else if(x instanceof Date){o=new Date(x.getTime())}else if(x instanceof Map){o=new Map();seen.set(x,o);x.forEach(function(val,k){o.set(c(k),c(val))});return o}else if(x instanceof Set){o=new Set();seen.set(x,o);x.forEach(function(val){o.add(c(val))});return o}else{o=Array.isArray(x)?[]:{};seen.set(x,o);for(var k in x)if(Object.prototype.hasOwnProperty.call(x,k))o[k]=c(x[k]);return o}seen.set(x,o);return o}return c(v)}}\n`;
+
+// Even the legacy build uses syntax from Safari 16.4 (class static blocks) – lower it for iOS 15.
+for (const [from, to] of [["pdf.min.mjs", "pdf.min.js"], ["pdf.worker.min.mjs", "pdf.worker.min.js"]]) {
+  const r = await transform(readFileSync(join(pdf, from), "utf8"), { target: "safari15", format: "esm", minify: true, legalComments: "none" });
+  writeFileSync(join(pub, "vendor/pdfjs", to), CLONE_POLYFILL + r.code);
+}
 console.log(`public/k/index.html (${Math.round(html.length / 1024)} KB), showcase.html + pdf.js ready`);

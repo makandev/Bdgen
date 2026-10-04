@@ -1,4 +1,5 @@
 import { aiEnabled } from "./ai";
+import { newId } from "./id";
 import { BASE } from "./base";
 import { briefFromCard, giftOf, startData, withGenerated, type CreateOpts } from "./cardbase";
 import { chooseVariant, excerpt, pickSamples, relationGroup } from "./learning";
@@ -50,7 +51,7 @@ export interface Feedback {
 /** Builds a rating from the current card; never contains the name or the notes. */
 export function buildRating(card: Card, data: CardData, contact: Contact | null, input: { value: 1 | -1; reasons: string[]; attempt: number }): Rating {
   return {
-    id: crypto.randomUUID(),
+    id: newId(),
     cardId: card.id,
     value: input.value,
     reasons: input.reasons,
