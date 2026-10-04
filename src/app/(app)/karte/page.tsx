@@ -1,5 +1,6 @@
 "use client";
 
+import { HOME } from "@/lib/base";
 import { withGenerated } from "@/lib/cardbase";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -118,7 +119,7 @@ function CardEditor() {
 
   useEffect(() => {
     if (!data) return;
-    const t = setTimeout(() => setHtml(renderCardHTML(data, { startScene: previewStart, preview: true })), 250);
+    const t = setTimeout(() => setHtml(renderCardHTML(data, { startScene: previewStart, reactionMode: "preview" })), 250);
     return () => clearTimeout(t);
   }, [data, previewStart, previewKey]);
 
@@ -274,7 +275,7 @@ function CardEditor() {
     if (!card || !confirm(`Diese Karte wirklich löschen? ${note}`)) return;
     try {
       await repo.deleteCard(card.id);
-      router.push(contact ? `/kontakt/?id=${contact.id}` : "/");
+      router.push(contact ? `/kontakt/?id=${contact.id}` : HOME);
     } catch (e) {
       setMsg({ kind: "err", text: errText(e) });
     }
@@ -316,7 +317,7 @@ function CardEditor() {
         {msg ? (
           <div className="stack">
             <div className="notice err">{msg.text}</div>
-            <div><Link href="/start/" className="btn ghost">← Zur Übersicht</Link></div>
+            <div><Link href={HOME} className="btn ghost">← Zur Übersicht</Link></div>
           </div>
         ) : (
           <p className="muted">Lädt …</p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { HOME } from "@/lib/base";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Thumb } from "@/components/Thumb";
@@ -10,7 +11,7 @@ import { renderCardHTML } from "@/lib/render";
 
 export default function ExamplesPage() {
   const [open, setOpen] = useState<Example | null>(null);
-  const full = useMemo(() => (open ? renderCardHTML(exampleCard(open), { preview: true }) : ""), [open]);
+  const full = useMemo(() => (open ? renderCardHTML(exampleCard(open), { reactionMode: "preview" }) : ""), [open]);
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && setOpen(null);
@@ -21,7 +22,7 @@ export default function ExamplesPage() {
   return (
     <div className="shell">
       <TopBar>
-        <Link href="/start/" className="btn ghost sm hide-sm">← Übersicht</Link>
+        <Link href={HOME} className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
       <div className="stack">
         <div>

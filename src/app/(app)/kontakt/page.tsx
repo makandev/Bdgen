@@ -1,5 +1,6 @@
 "use client";
 
+import { HOME } from "@/lib/base";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -111,7 +112,7 @@ function ContactEditor() {
     if (!confirm(`„${form.name}“ und alle Karten für diese Person wirklich löschen?`)) return;
     try {
       await repo.deleteContact(id);
-      router.push("/start/");
+      router.push(HOME);
     } catch (e) {
       setMsg({ kind: "err", text: errText(e) });
     }
@@ -142,7 +143,7 @@ function ContactEditor() {
   return (
     <div className="shell">
       <TopBar>
-        <Link href="/start/" className="btn ghost sm hide-sm">← Übersicht</Link>
+        <Link href={HOME} className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
 
       <div className="editor contact-layout">

@@ -2,9 +2,10 @@
 //  - public/k/index.html: the standalone card viewer (works on older iPhones, no Next.js runtime)
 //  - public/vendor/pdfjs/: pdf.js, loaded only when someone attaches a PDF voucher
 import { build } from "esbuild";
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const pub = join(root, "public");
@@ -30,8 +31,18 @@ mkdirSync(join(pub, "k"), { recursive: true });
 writeFileSync(join(pub, "k/index.html"), html);
 
 // The "legacy" build carries polyfills – the modern one needs browser features from 2026 (fails even in current Chrome/Safari).
+// Start page card: a static file the showcase iframe loads (keeps the page itself small).
+const show = await build({ entryPoints: [join(root, "scripts/viewer/showcase.ts")], bundle: true, platform: "node", format: "esm", write: false });
+const tmp = join(tmpdir(), `funkelpost-showcase-${process.pid}.mjs`);
+writeFileSync(tmp, show.outputFiles[0].text);
+try {
+  writeFileSync(join(pub, "showcase.html"), (await import(pathToFileURL(tmp).href)).showcaseHTML());
+} finally {
+  rmSync(tmp, { force: true });
+}
+
 const pdf = join(root, "node_modules/pdfjs-dist/legacy/build");
 mkdirSync(join(pub, "vendor/pdfjs"), { recursive: true });
 copyFileSync(join(pdf, "pdf.min.mjs"), join(pub, "vendor/pdfjs/pdf.min.js"));
 copyFileSync(join(pdf, "pdf.worker.min.mjs"), join(pub, "vendor/pdfjs/pdf.worker.min.js"));
-console.log(`public/k/index.html (${Math.round(html.length / 1024)} KB) + pdf.js ready`);
+console.log(`public/k/index.html (${Math.round(html.length / 1024)} KB), showcase.html + pdf.js ready`);

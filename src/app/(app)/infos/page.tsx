@@ -1,5 +1,6 @@
 "use client";
 
+import { HOME } from "@/lib/base";
 import Link from "next/link";
 import { TopBar } from "@/components/TopBar";
 import { SERVER } from "@/lib/repo";
@@ -29,7 +30,7 @@ export default function InfoPage() {
   return (
     <div className="shell" style={{ maxWidth: 860 }}>
       <TopBar>
-        <Link href="/start/" className="btn ghost sm hide-sm">← Übersicht</Link>
+        <Link href={HOME} className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
       <div className="stack">
         <div>

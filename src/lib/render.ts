@@ -9,10 +9,11 @@ export interface RenderOptions {
   exportFile?: boolean;
   /** Server version: where the recipient's reaction is posted. Without it, the reaction is sent back via share/WhatsApp. */
   reactUrl?: string;
-  /** Editor/gallery preview: reactions only show what the recipient would see. */
-  preview?: boolean;
-  /** Showcase on the start page: reactions just say thanks, nothing is sent. */
-  showcase?: boolean;
+  /**
+   * What a reaction tap does: "send" (default) posts it or opens the share sheet,
+   * "preview" (editor/gallery) explains it, "showcase" (start page) just says thanks.
+   */
+  reactionMode?: "send" | "preview" | "showcase";
 }
 
 export function esc(s: string): string {
@@ -496,8 +497,8 @@ document.querySelectorAll('[data-reactions]').forEach(function(box){var sent=nul
   box.querySelectorAll('.react').forEach(function(x){x.classList.toggle('picked',x===b)});
   var done=box.querySelector('.react-done'),th=box.querySelector('.react-thanks'),more=box.querySelector('.react-more'),send=box.querySelector('.react-send');
   done.classList.remove('hidden');box.querySelector('.react-big').textContent=em;floatEmoji(em);
-  if(CFG.showcase){th.textContent='Danke! 💌';return}
-  if(CFG.preview){th.textContent='Vorschau: So reagiert die Person – du bekommst die Reaktion dann.';return}
+  if(CFG.reactionMode==='showcase'){th.textContent='Danke! 💌';return}
+  if(CFG.reactionMode==='preview'){th.textContent='Vorschau: So reagiert die Person – du bekommst die Reaktion dann.';return}
   if(CFG.reactUrl){th.textContent='Wird gesendet …';
    fetch(CFG.reactUrl,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({emoji:em,label:lb,id:sent})}).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(j){sent=j.id;th.textContent='Deine Reaktion ist angekommen 💌';more.classList.remove('hidden')}).catch(function(){th.textContent='Hat gerade nicht geklappt – bitte nochmal tippen.'});return}
   th.textContent='Schick deine Reaktion zurück:';send.classList.remove('hidden');
@@ -514,8 +515,7 @@ export function renderCardHTML(d: CardData, opts: RenderOptions = {}): string {
   const t = d.theme;
   const cfg = {
     reactUrl: opts.reactUrl ?? null,
-    preview: !!opts.preview,
-    showcase: !!opts.showcase,
+    reactionMode: opts.reactionMode ?? "send",
     effects: d.effects,
     palette: t.confetti.length ? t.confetti : [t.accent],
     particle: t.accent,

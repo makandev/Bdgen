@@ -1,5 +1,6 @@
 "use client";
 
+import { HOME } from "@/lib/base";
 import { withGenerated } from "@/lib/cardbase";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -46,7 +47,7 @@ export default function QuickCard() {
   }, [step, result]);
 
   const questions = useMemo(() => questionsFor(relation, occasion), [relation, occasion]);
-  const html = useMemo(() => (result ? renderCardHTML(result.data, { preview: true }) : ""), [result]);
+  const html = useMemo(() => (result ? renderCardHTML(result.data, { reactionMode: "preview" }) : ""), [result]);
 
   function pickRelation(r: string) {
     setRelation(r);
@@ -127,7 +128,7 @@ export default function QuickCard() {
   return (
     <div className="shell">
       <TopBar>
-        <Link href="/start/" className="btn ghost sm hide-sm">← Übersicht</Link>
+        <Link href={HOME} className="btn ghost sm hide-sm">← Übersicht</Link>
       </TopBar>
       <div className="quick stack">
         <div className="quick-steps" aria-hidden="true">
