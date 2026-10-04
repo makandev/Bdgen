@@ -130,7 +130,11 @@ test("music and signature: valid script, short links, kept on new AI texts, offl
     d.effects.music = music;
     d.scenes = d.scenes.map((s) => (s.type === "finale" ? { ...s, ink } : s));
     const html = renderCardHTML(d);
-    for (const m of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) assert.doesNotThrow(() => new Function(m[1]), music);
+    // The card's own script, cut by position (the JSON config block has attributes, so it is skipped).
+    const start = html.indexOf("<script>") + "<script>".length;
+    const js = html.slice(start, html.indexOf("</script>", start));
+    assert.ok(js.length > 1000, music);
+    assert.doesNotThrow(() => new Function(js), music);
   }
   const link = await encodeCard(d);
   const back = await decodeCard(link.slice(link.indexOf("#") + 1));
